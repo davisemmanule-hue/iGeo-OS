@@ -1,0 +1,14 @@
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+node_modules/
+dist/
+build/
+.gitdata/
+.agents/
+.codex/
+.pnpm-cache/
+.pnpm-home/
+netlify-deploy/

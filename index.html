@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iGeo Operations System</title>
+    <meta name="theme-color" content="#0A66C2" />
+    <meta name="apple-mobile-web-app-title" content="iGeo" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="top-nav">
+      <a class="brand-lockup" href="#prime-crm" aria-label="iGeo Operations System home">
+        <span class="logo-frame">
+          <img id="brandLogo" alt="" />
+          <span id="brandFallback" class="logo-fallback">iG</span>
+        </span>
+        <span>
+          <strong data-brand="companyName">iGeo Solutions LLC</strong>
+          <small>Operations System</small>
+        </span>
+      </a>
+
+      <nav class="module-tabs" aria-label="Operations modules">
+        <button class="nav-tab active" type="button" data-module-tab="prime-crm">Prime Contractor CRM</button>
+        <button class="nav-tab" type="button" data-module-tab="quote-generator">Quote Generator</button>
+        <button class="nav-tab" type="button" data-module-tab="workforce-management">Workforce Management</button>
+        <button class="nav-tab" type="button" data-module-tab="vendor-registration">Vendor Registration Tracker</button>
+      </nav>
+    </header>
+
+    <main class="app-shell">
+      <section class="dashboard-hero" aria-label="iGeo dashboard header">
+        <div>
+          <img class="dashboard-logo" src="igeo-logo.png" alt="iGeo Solutions LLC logo" />
+          <p class="eyebrow">Corporate Dashboard</p>
+          <h1 data-brand="companyName">iGeo Solutions LLC</h1>
+          <p class="tagline" data-brand="tagline">Big Solutions For Small Business</p>
+        </div>
+        <div class="integration-strip" aria-label="Manual Google integration links">
+          <div class="integration-status">
+            <span>Google Sheets Manual Link</span>
+            <span>Google Drive Manual Link</span>
+            <span>Gmail Manual Link</span>
+          </div>
+          <div class="integration-actions">
+            <a class="integration-link" href="https://docs.google.com/spreadsheets/u/0/" target="_blank" rel="noopener noreferrer">Open Google Sheets</a>
+            <a class="integration-link" href="https://drive.google.com/drive/u/0/my-drive" target="_blank" rel="noopener noreferrer">Open Google Drive</a>
+            <a class="integration-link" href="https://mail.google.com/mail/u/0/" target="_blank" rel="noopener noreferrer">Open Gmail</a>
+          </div>
+          <div class="google-account-settings">
+            <p><strong>Current Operations Account:</strong> <a href="mailto:davisemmanule@gmail.com">davisemmanule@gmail.com</a></p>
+            <p><strong>Business Email Identity:</strong> <a href="mailto:admin@igeosolutionsllc.com">admin@igeosolutionsllc.com</a></p>
+            <a class="integration-link account-switch" href="https://accounts.google.com/AccountChooser" target="_blank" rel="noopener noreferrer">Switch Google Account</a>
+          </div>
+          <p class="integration-note">Google opens whichever Google account is currently active in your browser. Current iGeo working account: davisemmanule@gmail.com. Business-facing email identity: admin@igeosolutionsllc.com.</p>
+          <p class="integration-note">Future upgrade: migrate or sync iGeo operational files from davisemmanule@gmail.com to admin@igeosolutionsllc.com when ready.</p>
+        </div>
+      </section>
+
+      <section class="command-center panel" aria-label="Executive Command Center">
+        <div class="command-header">
+          <div>
+            <p class="eyebrow">Executive Command Center</p>
+            <h2>iGeo Operations Contact Hub</h2>
+          </div>
+          <div class="command-actions">
+            <button id="downloadCapability" class="button secondary" type="button">Download Capability Statement</button>
+            <button id="quickShare" class="button primary" type="button">Quick Share</button>
+          </div>
+        </div>
+
+        <div class="command-grid">
+          <article class="command-item">
+            <span>Company</span>
+            <strong id="commandCompany">iGeo Solutions LLC</strong>
+          </article>
+          <article class="command-item">
+            <span>Phone</span>
+            <strong id="commandPhone">(616) 224-2325</strong>
+            <button class="mini-action" type="button" data-copy-target="commandPhone">Copy Phone</button>
+          </article>
+          <article class="command-item">
+            <span>Email</span>
+            <strong><a id="commandEmail" href="mailto:admin@igeosolutionsllc.com">admin@igeosolutionsllc.com</a></strong>
+            <button class="mini-action" type="button" data-copy-value="admin@igeosolutionsllc.com">Copy Email</button>
+          </article>
+          <article class="command-item">
+            <span>Website</span>
+            <strong><a id="commandWebsite" href="https://igeosolutionsllc.com/" target="_blank" rel="noopener noreferrer">https://igeosolutionsllc.com</a></strong>
+            <div class="mini-actions">
+              <button class="mini-action" type="button" data-copy-value="https://igeosolutionsllc.com/">Copy Website</button>
+              <a class="mini-action link-action" href="https://igeosolutionsllc.com/" target="_blank" rel="noopener noreferrer">Open Website</a>
+            </div>
+          </article>
+          <article class="command-item">
+            <span>UEI</span>
+            <strong id="commandUei">PQ6GHN6ZS287</strong>
+            <button class="mini-action" type="button" data-copy-target="commandUei">Copy UEI</button>
+          </article>
+          <article class="command-item">
+            <span>Coverage</span>
+            <strong>Kentucky<br />Michigan<br />Nationwide Subcontract Support</strong>
+          </article>
+        </div>
+
+        <div class="business-card">
+          <div>
+            <p class="eyebrow">Digital Business Card</p>
+            <h3>iGeo Solutions LLC</h3>
+            <p>Big Solutions For Small Business</p>
+          </div>
+          <div class="business-card-lines">
+            <span>(616) 224-2325</span>
+            <span>admin@igeosolutionsllc.com</span>
+            <span>https://igeosolutionsllc.com</span>
+            <span>UEI: PQ6GHN6ZS287</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="prime-crm" class="module-page active" data-module-page="prime-crm">
+        <div class="module-heading">
+          <div>
+            <p class="eyebrow">Business Development</p>
+            <h2>Prime Contractor CRM</h2>
+          </div>
+          <div class="header-actions">
+            <button id="exportCsv" class="button secondary" type="button">
+              <span aria-hidden="true">CSV</span>
+              Export
+            </button>
+            <button id="exportExcel" class="button secondary" type="button">
+              <span aria-hidden="true">XLS</span>
+              Export
+            </button>
+            <button id="addRecord" class="button primary" type="button">
+              <span aria-hidden="true">+</span>
+              Prime
+            </button>
+          </div>
+        </div>
+
+        <section class="metric-grid" aria-label="CRM dashboard metrics">
+          <article class="metric">
+            <span>Total Prime Contractors</span>
+            <strong id="metricTotal">0</strong>
+          </article>
+          <article class="metric">
+            <span>Active Opportunities</span>
+            <strong id="metricOpportunities">0</strong>
+          </article>
+          <article class="metric urgent">
+            <span>Follow-Ups Due Today</span>
+            <strong id="metricDueToday">0</strong>
+          </article>
+          <article class="metric">
+            <span>Capability Statements Sent</span>
+            <strong id="metricCapability">0</strong>
+          </article>
+          <article class="metric">
+            <span>Meetings Scheduled</span>
+            <strong id="metricMeetings">0</strong>
+          </article>
+          <article class="metric success">
+            <span>Contracts Won</span>
+            <strong id="metricWon">0</strong>
+          </article>
+          <article class="metric success">
+            <span>Workers Available</span>
+            <strong id="metricWorkersAvailable">0</strong>
+          </article>
+          <article class="metric">
+            <span>Quotes Sent</span>
+            <strong id="metricQuotesSent">0</strong>
+          </article>
+          <article class="metric success">
+            <span>Vendor Registrations Submitted</span>
+            <strong id="metricVendorSubmitted">0</strong>
+          </article>
+        </section>
+
+        <section class="workspace">
+          <aside class="panel filters" aria-label="Filters and alerts">
+            <div class="panel-heading">
+              <h2>Pipeline Controls</h2>
+              <button id="resetFilters" class="icon-button" type="button" title="Reset filters" aria-label="Reset filters">R</button>
+            </div>
+
+            <label class="field">
+              <span>Search Companies</span>
+              <input id="searchInput" type="search" placeholder="Company, contact, NAICS..." />
+            </label>
+
+            <label class="field">
+              <span>Filter By Status</span>
+              <select id="statusFilter"></select>
+            </label>
+
+            <label class="field">
+              <span>Filter By Service Type</span>
+              <select id="serviceFilter"></select>
+            </label>
+
+            <label class="field">
+              <span>Filter By Follow-Up Date</span>
+              <select id="followFilter">
+                <option value="all">All follow-ups</option>
+                <option value="overdue">Overdue</option>
+                <option value="today">Due today</option>
+                <option value="week">Due within 7 days</option>
+                <option value="future">Future follow-ups</option>
+                <option value="none">No follow-up set</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Sort By Last Contact Date</span>
+              <select id="sortSelect">
+                <option value="recent">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="company">Company A-Z</option>
+                <option value="due">Next follow-up</option>
+              </select>
+            </label>
+
+            <div class="alerts">
+              <h2>Follow-Up Alerts</h2>
+              <div id="alertList" class="alert-list"></div>
+            </div>
+          </aside>
+
+          <section class="content-stack">
+            <section class="panel reports" aria-label="Reports">
+              <div class="panel-heading">
+                <h2>Reports</h2>
+                <span id="recordCount" class="count-pill">0 records</span>
+              </div>
+              <div class="report-grid">
+                <button class="report-card" type="button" data-report="contacted">
+                  <span>Prime Contractors Contacted</span>
+                  <strong id="reportContacted">0</strong>
+                </button>
+                <button class="report-card" type="button" data-report="capability">
+                  <span>Capability Statements Sent</span>
+                  <strong id="reportCapability">0</strong>
+                </button>
+                <button class="report-card" type="button" data-report="active">
+                  <span>Active Opportunities</span>
+                  <strong id="reportActive">0</strong>
+                </button>
+                <button class="report-card" type="button" data-report="meetings">
+                  <span>Meetings Scheduled</span>
+                  <strong id="reportMeetings">0</strong>
+                </button>
+                <button class="report-card" type="button" data-report="awarded">
+                  <span>Contracts Awarded</span>
+                  <strong id="reportAwarded">0</strong>
+                </button>
+                <button class="report-card" type="button" data-report="followup">
+                  <span>Follow-Up Activity</span>
+                  <strong id="reportFollowup">0</strong>
+                </button>
+              </div>
+            </section>
+
+            <section class="panel table-panel" aria-label="Prime contractor records">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Company</th>
+                      <th>Status</th>
+                      <th>Primary Contact</th>
+                      <th>Services</th>
+                      <th>Opportunity</th>
+                      <th>Last Contact</th>
+                      <th>Next Follow-Up</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="contractorTable"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+        </section>
+      </section>
+
+      <section id="quote-generator" class="module-page" data-module-page="quote-generator">
+        <div class="module-heading">
+          <div>
+            <p class="eyebrow">Pricing Operations</p>
+            <h2>Quote Generator</h2>
+          </div>
+          <div class="header-actions">
+            <button id="exportQuotesCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
+            <button id="exportQuotesExcel" class="button secondary" type="button"><span>XLS</span> Export</button>
+            <button id="addQuote" class="button primary" type="button">New Quote</button>
+          </div>
+        </div>
+        <section class="panel module-tools">
+          <label class="field"><span>Search Quotes</span><input id="quoteSearch" type="search" placeholder="Client, opportunity, service..." /></label>
+        </section>
+        <section class="panel table-panel" aria-label="Quote records">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Opportunity</th>
+                  <th>Service</th>
+                  <th>Labor Cost</th>
+                  <th>Subtotal</th>
+                  <th>Final Quote</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="quoteTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="workforce-management" class="module-page" data-module-page="workforce-management">
+        <div class="module-heading">
+          <div>
+            <p class="eyebrow">Service Delivery</p>
+            <h2>Workforce Management</h2>
+          </div>
+          <div class="header-actions">
+            <a class="button secondary" href="worker-intake.html" target="_blank" rel="noopener noreferrer">Public Worker Intake Form</a>
+            <button id="exportWorkersCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
+            <button id="exportWorkersExcel" class="button secondary" type="button"><span>XLS</span> Export</button>
+            <button id="addWorker" class="button primary" type="button">Add Worker</button>
+          </div>
+        </div>
+        <section class="panel module-tools">
+          <label class="field"><span>Search Workers</span><input id="workerSearch" type="search" placeholder="Name, email, phone..." /></label>
+          <label class="field"><span>Service Category</span><select id="workerServiceFilter"></select></label>
+          <label class="field"><span>City</span><input id="workerCityFilter" placeholder="Any city" /></label>
+          <label class="field"><span>State</span><input id="workerStateFilter" placeholder="Any state" /></label>
+          <label class="field"><span>Status</span><select id="workerStatusFilter"></select></label>
+        </section>
+        <section class="panel table-panel" aria-label="Worker records">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Worker / Company</th>
+                  <th>Type</th>
+                  <th>Service</th>
+                  <th>Location</th>
+                  <th>Rates</th>
+                  <th>Credentials</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="workerTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="vendor-registration" class="module-page" data-module-page="vendor-registration">
+        <div class="module-heading">
+          <div>
+            <p class="eyebrow">Compliance & Access</p>
+            <h2>Vendor Registration Tracker</h2>
+          </div>
+          <div class="header-actions">
+            <button id="exportVendorsCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
+            <button id="exportVendorsExcel" class="button secondary" type="button"><span>XLS</span> Export</button>
+            <button id="addRegistration" class="button primary" type="button">Add Registration</button>
+          </div>
+        </div>
+        <section class="panel module-tools">
+          <label class="field"><span>Search Registrations</span><input id="vendorSearch" type="search" placeholder="Company, portal, contact..." /></label>
+          <label class="field"><span>Registration Status</span><select id="vendorStatusFilter"></select></label>
+        </section>
+        <section class="panel table-panel" aria-label="Vendor registration records">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Portal Type</th>
+                  <th>Status</th>
+                  <th>Date Submitted</th>
+                  <th>Login</th>
+                  <th>Contact</th>
+                  <th>Follow-Up</th>
+                  <th>Capability Sent</th>
+                </tr>
+              </thead>
+              <tbody id="vendorTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <dialog id="recordDialog">
+      <form id="recordForm" method="dialog">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">Prime Contractor Record</p>
+            <h2 id="dialogTitle">Add Contractor</h2>
+          </div>
+          <button id="closeDialog" class="icon-button" type="button" aria-label="Close">X</button>
+        </div>
+
+        <input id="recordId" type="hidden" />
+
+        <div class="form-section">
+          <h3>Company Information</h3>
+          <div class="form-grid">
+            <label class="field required"><span>Company Name</span><input id="companyName" required /></label>
+            <label class="field"><span>Website</span><input id="website" type="url" placeholder="https://..." /></label>
+            <label class="field"><span>Industry</span><input id="industry" /></label>
+            <label class="field"><span>Headquarters Location</span><input id="headquarters" /></label>
+            <label class="field wide"><span>Service Areas</span><input id="serviceAreas" /></label>
+            <label class="field wide"><span>NAICS Codes</span><input id="naics" placeholder="561720, 561110..." /></label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Primary Contact</h3>
+          <div class="form-grid">
+            <label class="field"><span>First Name</span><input id="firstName" /></label>
+            <label class="field"><span>Last Name</span><input id="lastName" /></label>
+            <label class="field"><span>Job Title</span><input id="jobTitle" /></label>
+            <label class="field"><span>Email</span><input id="email" type="email" /></label>
+            <label class="field"><span>Phone Number</span><input id="phone" type="tel" /></label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Small Business Contact</h3>
+          <div class="form-grid">
+            <label class="field"><span>SBLO Name</span><input id="sbloName" /></label>
+            <label class="field"><span>SBLO Email</span><input id="sbloEmail" type="email" /></label>
+            <label class="field"><span>SBLO Phone</span><input id="sbloPhone" type="tel" /></label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Relationship & Communication</h3>
+          <div class="form-grid">
+            <label class="field"><span>Status</span><select id="status"></select></label>
+            <label class="field"><span>Date First Contacted</span><input id="dateFirstContacted" type="date" /></label>
+            <label class="field"><span>Last Contact Date</span><input id="lastContactDate" type="date" /></label>
+            <label class="field"><span>Next Follow-Up Date</span><input id="nextFollowUpDate" type="date" /></label>
+            <label class="field wide"><span>Notes</span><textarea id="communicationNotes" rows="3"></textarea></label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Capability Statement</h3>
+          <div class="form-grid align-end">
+            <label class="check-field"><input id="capabilitySent" type="checkbox" /> <span>Sent</span></label>
+            <label class="field"><span>Date Sent</span><input id="capabilityDateSent" type="date" /></label>
+            <label class="field"><span>Version Sent</span><input id="capabilityVersion" /></label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Opportunity Tracking</h3>
+          <div class="form-grid">
+            <label class="field"><span>Opportunity Name</span><input id="opportunityName" /></label>
+            <label class="field"><span>Solicitation Number</span><input id="solicitationNumber" /></label>
+            <label class="field"><span>Contract Type</span><input id="contractType" placeholder="IDIQ, BPA, Task Order..." /></label>
+            <label class="field"><span>Estimated Value</span><input id="estimatedValue" /></label>
+            <label class="field"><span>Due Date</span><input id="dueDate" type="date" /></label>
+            <label class="field wide"><span>Notes</span><textarea id="opportunityNotes" rows="3"></textarea></label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Services of Interest</h3>
+          <div id="servicesChecklist" class="check-grid"></div>
+        </div>
+
+        <div class="dialog-actions">
+          <button id="deleteRecord" class="button danger" type="button">Delete</button>
+          <div>
+            <button id="cancelDialog" class="button secondary" type="button">Cancel</button>
+            <button class="button primary" type="submit">Save Record</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="workerDialog">
+      <form id="workerForm" method="dialog">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">Workforce Management</p>
+            <h2>Add Worker</h2>
+          </div>
+          <button id="closeWorkerDialog" class="icon-button" type="button" aria-label="Close">X</button>
+        </div>
+        <div class="form-section">
+          <div class="form-grid">
+            <label class="field required"><span>Worker / Company Name</span><input id="workerName" required /></label>
+            <label class="field"><span>Worker Type</span><input id="workerType" placeholder="Individual, company, subcontractor..." /></label>
+            <label class="field"><span>Service Category</span><select id="workerServiceCategory"></select></label>
+            <label class="field"><span>City</span><input id="workerCity" /></label>
+            <label class="field"><span>State</span><input id="workerState" maxlength="2" /></label>
+            <label class="field"><span>Phone</span><input id="workerPhone" type="tel" /></label>
+            <label class="field"><span>Email</span><input id="workerEmail" type="email" /></label>
+            <label class="field"><span>Availability</span><input id="workerAvailability" /></label>
+            <label class="field"><span>Hourly Rate</span><input id="workerHourlyRate" type="number" min="0" step="0.01" /></label>
+            <label class="field"><span>Day Rate</span><input id="workerDayRate" type="number" min="0" step="0.01" /></label>
+            <label class="field"><span>Per Job Rate</span><input id="workerJobRate" type="number" min="0" step="0.01" /></label>
+            <label class="field"><span>Insurance?</span><select id="workerInsurance"><option>No</option><option>Yes</option></select></label>
+            <label class="field"><span>Background Check OK?</span><select id="workerBackground"><option>No</option><option>Yes</option></select></label>
+            <label class="field"><span>Driver's License?</span><select id="workerLicense"><option>No</option><option>Yes</option></select></label>
+            <label class="field"><span>Vehicle?</span><select id="workerVehicle"><option>No</option><option>Yes</option></select></label>
+            <label class="field"><span>Can Work Government Site?</span><select id="workerGovernmentSite"><option>No</option><option>Yes</option></select></label>
+            <label class="field"><span>Status</span><select id="workerStatus"></select></label>
+            <label class="field wide"><span>Notes</span><textarea id="workerNotes" rows="3"></textarea></label>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <span></span>
+          <div>
+            <button id="cancelWorkerDialog" class="button secondary" type="button">Cancel</button>
+            <button class="button primary" type="submit">Save Worker</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="quoteDialog">
+      <form id="quoteForm" method="dialog">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">Quote Generator</p>
+            <h2>New Quote</h2>
+          </div>
+          <button id="closeQuoteDialog" class="icon-button" type="button" aria-label="Close">X</button>
+        </div>
+        <div class="form-section">
+          <div class="form-grid">
+            <label class="field required"><span>Client / Company Name</span><input id="quoteClient" required /></label>
+            <label class="field"><span>Opportunity Name</span><input id="quoteOpportunity" /></label>
+            <label class="field"><span>Service Type</span><input id="quoteServiceType" /></label>
+            <label class="field"><span>Location</span><input id="quoteLocation" /></label>
+            <label class="field"><span>Estimated Hours</span><input id="quoteHours" type="number" min="0" step="0.01" /></label>
+            <label class="field"><span>Number of Workers Needed</span><input id="quoteWorkerCount" type="number" min="0" step="1" /></label>
+            <label class="field"><span>Worker Hourly Rate</span><input id="quoteHourlyRate" type="number" min="0" step="0.01" /></label>
+            <label class="field"><span>Supplies Cost</span><input id="quoteSupplies" type="number" min="0" step="0.01" /></label>
+            <label class="field"><span>Travel Cost</span><input id="quoteTravel" type="number" min="0" step="0.01" /></label>
+            <label class="field"><span>Other Cost</span><input id="quoteOther" type="number" min="0" step="0.01" /></label>
+            <label class="field"><span>Markup Percentage</span><input id="quoteMarkup" type="number" min="0" step="0.01" /></label>
+            <label class="field"><span>Final Quote Amount</span><input id="quoteFinal" type="number" min="0" step="0.01" readonly /></label>
+            <label class="field"><span>Quote Status</span><select id="quoteStatus"></select></label>
+            <label class="field wide"><span>Notes</span><textarea id="quoteNotes" rows="3"></textarea></label>
+          </div>
+        </div>
+        <div class="quote-summary">
+          <span>Labor Cost: <strong id="quoteLaborPreview">$0.00</strong></span>
+          <span>Subtotal: <strong id="quoteSubtotalPreview">$0.00</strong></span>
+        </div>
+        <div class="dialog-actions">
+          <span></span>
+          <div>
+            <button id="cancelQuoteDialog" class="button secondary" type="button">Cancel</button>
+            <button class="button primary" type="submit">Save Quote</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="vendorDialog">
+      <form id="vendorForm" method="dialog">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">Vendor Registration Tracker</p>
+            <h2>Add Registration</h2>
+          </div>
+          <button id="closeVendorDialog" class="icon-button" type="button" aria-label="Close">X</button>
+        </div>
+        <div class="form-section">
+          <div class="form-grid">
+            <label class="field required"><span>Company Name</span><input id="vendorCompany" required /></label>
+            <label class="field"><span>Website</span><input id="vendorWebsite" type="url" /></label>
+            <label class="field"><span>Portal Type</span><input id="vendorPortalType" /></label>
+            <label class="field"><span>Registration Status</span><select id="vendorStatus"></select></label>
+            <label class="field"><span>Date Submitted</span><input id="vendorDateSubmitted" type="date" /></label>
+            <label class="field"><span>Login Email</span><input id="vendorLoginEmail" type="email" /></label>
+            <label class="field"><span>Username</span><input id="vendorUsername" /></label>
+            <label class="field"><span>Password Hint</span><input id="vendorPasswordHint" /></label>
+            <label class="field"><span>Contact Name</span><input id="vendorContactName" /></label>
+            <label class="field"><span>Contact Email</span><input id="vendorContactEmail" type="email" /></label>
+            <label class="field"><span>Follow-Up Date</span><input id="vendorFollowUpDate" type="date" /></label>
+            <label class="field"><span>Capability Statement Sent?</span><select id="vendorCapabilitySent"><option>No</option><option>Yes</option></select></label>
+            <label class="field wide"><span>Notes</span><textarea id="vendorNotes" rows="3"></textarea></label>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <span></span>
+          <div>
+            <button id="cancelVendorDialog" class="button secondary" type="button">Cancel</button>
+            <button class="button primary" type="submit">Save Registration</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="branding-settings.js"></script>
+    <script src="integration-config.js"></script>
+    <script src="worker-intake-config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

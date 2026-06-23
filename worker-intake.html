@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iGeo Worker Intake</title>
+    <meta name="theme-color" content="#0A66C2" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="intake-body">
+    <main class="intake-shell">
+      <section class="intake-card">
+        <div class="intake-brand">
+          <img src="igeo-logo.png" alt="iGeo Solutions LLC logo" />
+          <div>
+            <p class="eyebrow">Worker Intake</p>
+            <h1>Join the iGeo Workforce Network</h1>
+            <p>Submit your availability and service details for iGeo Solutions LLC opportunities.</p>
+          </div>
+        </div>
+
+        <form id="workerIntakeForm" class="intake-form">
+          <div class="form-grid">
+            <label class="field required"><span>First Name</span><input id="firstName" name="firstName" required /></label>
+            <label class="field required"><span>Last Name</span><input id="lastName" name="lastName" required /></label>
+            <label class="field required"><span>Phone</span><input id="phone" name="phone" type="tel" required /></label>
+            <label class="field required"><span>Email</span><input id="email" name="email" type="email" required /></label>
+            <label class="field"><span>City</span><input id="city" name="city" /></label>
+            <label class="field"><span>State</span><input id="state" name="state" maxlength="2" /></label>
+            <label class="field required"><span>Service Category</span><select id="serviceCategory" name="serviceCategory" required></select></label>
+            <label class="field"><span>Availability</span><input id="availability" name="availability" placeholder="Weekdays, evenings, weekends..." /></label>
+            <label class="field"><span>Hourly Rate</span><input id="hourlyRate" name="hourlyRate" type="number" min="0" step="0.01" /></label>
+            <label class="field"><span>Driver License</span><select id="driverLicense" name="driverLicense"><option>No</option><option>Yes</option></select></label>
+            <label class="field"><span>Vehicle</span><select id="vehicle" name="vehicle"><option>No</option><option>Yes</option></select></label>
+            <label class="field"><span>Background Check</span><select id="backgroundCheck" name="backgroundCheck"><option>No</option><option>Yes</option></select></label>
+            <label class="field wide"><span>Notes</span><textarea id="notes" name="notes" rows="4"></textarea></label>
+          </div>
+
+          <div id="intakeMessage" class="intake-message" role="status" aria-live="polite"></div>
+          <div class="dialog-actions">
+            <a class="button secondary" href="index.html#workforce-management">Back to Dashboard</a>
+            <button class="button primary" type="submit">Submit Worker Intake</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="worker-intake-config.js"></script>
+    <script src="worker-intake.js"></script>
+  </body>
+</html>
