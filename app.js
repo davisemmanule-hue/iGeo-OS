@@ -3,6 +3,7 @@ const STORAGE_KEYS = {
   legacyPrimes: "igeo-prime-contractor-crm-v1",
   primeMigration: "igeo_prime_contractors_google_migration",
   primePending: "igeo_prime_contractors_pending_operations",
+  primeRecoverySnapshot: "igeo_prime_contractors_recovery_snapshot",
   workers: "igeo_workers",
   quotes: "igeo_quotes",
   vendors: "igeo_vendor_registrations",
@@ -208,6 +209,7 @@ const sampleVendorRecords = [
 ];
 
 let records = loadPrimeRecords();
+capturePrimeRecoverySnapshot();
 let workers = loadCollection(STORAGE_KEYS.workers, []);
 let quotes = loadCollection(STORAGE_KEYS.quotes, []);
 let vendors = seedVendorRegistrations(loadCollection(STORAGE_KEYS.vendors, []));
@@ -260,6 +262,7 @@ function bindElements() {
     "closeDialog",
     "cancelDialog",
     "addRecord",
+    "forcePrimeSync",
     "exportCsv",
     "exportExcel",
     "servicesChecklist",
@@ -377,6 +380,14 @@ function bindEvents() {
   });
   els.resetFilters.addEventListener("click", resetPrimeFilters);
   els.addRecord.addEventListener("click", () => openPrimeDialog());
+  els.forcePrimeSync.addEventListener("click", async () => {
+    try {
+      await forcePrimeCrmRecovery();
+    } catch (error) {
+      console.error("Prime CRM recovery failed:", error);
+      showToast(error.message || "Prime CRM recovery failed.");
+    }
+  });
   els.closeDialog.addEventListener("click", closePrimeDialog);
   els.cancelDialog.addEventListener("click", closePrimeDialog);
   els.deleteRecord.addEventListener("click", deleteCurrentRecord);
@@ -1159,6 +1170,39 @@ async function migratePrimeRecordsToGoogleSheets(options = {}) {
   return receipt;
 }
 
+async function forcePrimeCrmRecovery(options = {}) {
+  if (!isPrimeCrmEndpointConfigured()) throw new Error("Prime CRM Google Sheets endpoint is not configured.");
+  const snapshot = loadCollection(STORAGE_KEYS.primeRecoverySnapshot, null);
+  if (!Array.isArray(snapshot) || snapshot.length === 0) {
+    throw new Error("No laptop recovery snapshot is available.");
+  }
+
+  const approved = options.confirm === false || window.confirm(
+    `Replace the active cloud CRM with this laptop's ${snapshot.length} contractor record(s)? `
+      + "Cloud contractors missing from the laptop snapshot will be archived.",
+  );
+  if (!approved) return { ok: false, cancelled: true };
+
+  const result = await postPrimeCrmAction({
+    action: "reconcile",
+    records: snapshot,
+    confirmArchiveMissing: true,
+  });
+  if (!result.ok) throw new Error(result.error || "Cloud reconciliation failed.");
+
+  saveCollection(STORAGE_KEYS.primeMigration, {
+    completed: true,
+    reconciled: true,
+    active: result.active,
+    archived: result.archived,
+    completedAt: new Date().toISOString(),
+  });
+  saveCollection(STORAGE_KEYS.primePending, []);
+  await loadPrimeRecordsFromGoogleSheets();
+  showToast(`Cloud CRM synchronized: ${result.active} active, ${result.archived} archived.`);
+  return result;
+}
+
 async function flushPendingPrimeOperations() {
   const pending = loadCollection(STORAGE_KEYS.primePending, []);
   if (!Array.isArray(pending) || pending.length === 0) return { synced: 0 };
@@ -1259,8 +1303,23 @@ function isPrimeCrmEndpointConfigured() {
   );
 }
 
-window.migratePrimeRecordsToGoogleSheets = (options = {}) =>
-  migratePrimeRecordsToGoogleSheets({ force: true, announce: true, ...options });
+function capturePrimeRecoverySnapshot() {
+  const existing = loadCollection(STORAGE_KEYS.primeRecoverySnapshot, null);
+  if (Array.isArray(existing)) return existing;
+  const snapshot = Array.isArray(records) ? records.map((record) => ({ ...record })) : [];
+  saveCollection(STORAGE_KEYS.primeRecoverySnapshot, snapshot);
+  return snapshot;
+}
+
+window.forcePrimeCrmMigration = (options = {}) =>
+  migratePrimeRecordsToGoogleSheets({
+    force: true,
+    announce: true,
+    ...options,
+  });
+
+window.forcePrimeCrmRecovery = (options = {}) =>
+  forcePrimeCrmRecovery({ confirm: true, ...options });
 
 function loadCollection(key, fallback) {
   try {
