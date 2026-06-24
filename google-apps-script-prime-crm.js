@@ -53,6 +53,9 @@ function doPost(e) {
     if (action === "upsert") return json_(upsertRecord_(payload.record));
     if (action === "archive") return json_(archiveRecord_(payload.id));
     if (action === "migrate") return json_(migrateRecords_(payload.records || []));
+    if (action === "reconcile") {
+      return json_(reconcileRecords_(payload.records || [], payload.confirmArchiveMissing));
+    }
     return json_({ ok: false, error: `Unsupported POST action: ${action}` });
   } catch (error) {
     return json_({ ok: false, error: error.message, stack: error.stack });
@@ -135,6 +138,82 @@ function migrateRecords_(incoming) {
   syncProjectionSheets_();
   additions.forEach((record) => logActivity_("MIGRATE", record, "Migrated from browser localStorage."));
   return { ok: true, action: "migrated", migrated: additions.length, skipped, totalReceived: incoming.length };
+}
+
+function reconcileRecords_(incoming, confirmArchiveMissing) {
+  if (confirmArchiveMissing !== true) throw new Error("Cloud archive confirmation is required.");
+  if (!Array.isArray(incoming) || incoming.length === 0) {
+    throw new Error("At least one recovery record is required.");
+  }
+
+  const sheet = getSheet_(PRIME_SHEET);
+  const existing = readPrimeRecords_();
+  const existingById = new Map(existing.map((record) => [String(record.id), record]));
+  const incomingIds = new Set();
+  const now = new Date().toISOString();
+  let created = 0;
+  let updated = 0;
+  let archived = 0;
+
+  const activeRecords = incoming.map((input) => {
+    if (!input || !input.id) throw new Error("Every recovery record must have an id.");
+    const id = String(input.id);
+    if (incomingIds.has(id)) throw new Error(`Duplicate recovery record id: ${id}`);
+    incomingIds.add(id);
+
+    const previous = existingById.get(id) || {};
+    if (previous.id) updated += 1;
+    else created += 1;
+    return normalizeRecord_({
+      ...previous,
+      ...input,
+      isDeleted: false,
+      archivedAt: "",
+      createdAt: previous.createdAt || input.createdAt || now,
+      updatedAt: now,
+    });
+  });
+
+  const retainedArchivedRecords = existing
+    .filter((record) => !incomingIds.has(String(record.id)))
+    .map((record) => {
+      if (toBoolean_(record.isDeleted)) return normalizeRecord_(record);
+      archived += 1;
+      return normalizeRecord_({
+        ...record,
+        isDeleted: true,
+        archivedAt: now,
+        updatedAt: now,
+      });
+    });
+
+  replaceData_(
+    sheet,
+    PRIME_HEADERS,
+    [...activeRecords, ...retainedArchivedRecords].map(recordToRow_),
+  );
+  syncProjectionSheets_();
+  activeRecords.forEach((record) => logActivity_(
+    existingById.has(String(record.id)) ? "RECOVER_UPDATE" : "RECOVER_CREATE",
+    record,
+    "Reconciled from approved laptop recovery snapshot.",
+  ));
+  retainedArchivedRecords
+    .filter((record) => record.archivedAt === now)
+    .forEach((record) => logActivity_(
+      "RECOVER_ARCHIVE",
+      record,
+      "Archived because record was absent from approved laptop recovery snapshot.",
+    ));
+
+  return {
+    ok: true,
+    action: "reconciled",
+    active: activeRecords.length,
+    created,
+    updated,
+    archived,
+  };
 }
 
 function readPrimeRecords_() {
