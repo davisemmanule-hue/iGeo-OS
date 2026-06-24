@@ -1120,9 +1120,9 @@ async function initializePrimeCrmData() {
   }
 
   try {
-    await migratePrimeRecordsToGoogleSheets();
-    await flushPendingPrimeOperations();
     await loadPrimeRecordsFromGoogleSheets();
+    const pendingResult = await flushPendingPrimeOperations();
+    if (pendingResult.synced > 0) await loadPrimeRecordsFromGoogleSheets();
   } catch (error) {
     console.error("Prime CRM is using the offline fallback:", error);
     showToast("Google Sheets unavailable. Using offline CRM data.");
