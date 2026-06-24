@@ -382,7 +382,7 @@ function bindEvents() {
   els.addRecord.addEventListener("click", () => openPrimeDialog());
   els.forcePrimeSync.addEventListener("click", async () => {
     try {
-      await forcePrimeCrmRecovery();
+      await reconcileLaptopPrimeSnapshotToCloud();
     } catch (error) {
       console.error("Prime CRM recovery failed:", error);
       showToast(error.message || "Prime CRM recovery failed.");
@@ -1170,7 +1170,7 @@ async function migratePrimeRecordsToGoogleSheets(options = {}) {
   return receipt;
 }
 
-async function forcePrimeCrmRecovery(options = {}) {
+async function reconcileLaptopPrimeSnapshotToCloud(options = {}) {
   if (!isPrimeCrmEndpointConfigured()) throw new Error("Prime CRM Google Sheets endpoint is not configured.");
   const snapshot = loadCollection(STORAGE_KEYS.primeRecoverySnapshot, null);
   if (!Array.isArray(snapshot) || snapshot.length === 0) {
@@ -1319,7 +1319,7 @@ window.forcePrimeCrmMigration = (options = {}) =>
   });
 
 window.forcePrimeCrmRecovery = (options = {}) =>
-  forcePrimeCrmRecovery({ confirm: true, ...options });
+  reconcileLaptopPrimeSnapshotToCloud({ confirm: true, ...options });
 
 function loadCollection(key, fallback) {
   try {
