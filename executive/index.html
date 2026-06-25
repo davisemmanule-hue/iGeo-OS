@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#162235" />
+    <title>iGeo Executive Command Center</title>
+    <link rel="stylesheet" href="/executive/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Return to iGeo Operations System">
+        <span class="brand-mark">iG</span>
+        <span><strong>iGeo Solutions LLC</strong><small>Executive Command Center</small></span>
+      </a>
+      <div class="topbar-actions">
+        <span class="sync-status pending" id="syncStatus">Syncing</span>
+        <button class="icon-button" id="refreshButton" type="button" title="Refresh cloud data" aria-label="Refresh cloud data">↻</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-heading">
+        <div>
+          <p class="eyebrow">Executive Overview</p>
+          <h1>iGeo Operations</h1>
+          <p>Read-only operating summary across contracting, workforce, vendors, alerts, and revenue.</p>
+        </div>
+        <time id="lastUpdated">Awaiting cloud data</time>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="system-card">
+          <div class="card-heading">
+            <div><span class="card-icon">P</span><h2>Prime Contractor CRM</h2></div>
+            <a href="/#prime-crm">Open CRM →</a>
+          </div>
+          <div class="metrics">
+            <div><span>Total Prime Contractors</span><strong id="primeTotal">—</strong></div>
+            <div><span>Opportunities</span><strong id="primeOpportunities">—</strong></div>
+            <div><span>Follow-Ups Due Today</span><strong id="primeFollowUps">—</strong></div>
+          </div>
+        </article>
+
+        <article class="system-card">
+          <div class="card-heading">
+            <div><span class="card-icon accent-green">W</span><h2>Workforce</h2></div>
+            <a href="/workforce/">Open Workforce →</a>
+          </div>
+          <div class="metrics">
+            <div><span>Total Workers</span><strong id="workerTotal">—</strong></div>
+            <div><span>New Applications</span><strong id="workerNew">—</strong></div>
+            <div><span>Workers Available</span><strong id="workerAvailable">—</strong></div>
+          </div>
+        </article>
+
+        <article class="system-card">
+          <div class="card-heading">
+            <div><span class="card-icon accent-gold">V</span><h2>Vendor Registrations</h2></div>
+            <a href="/#vendor-registration">Open Vendors →</a>
+          </div>
+          <div class="metrics">
+            <div><span>Total Registered</span><strong id="vendorTotal">—</strong></div>
+            <div><span>Follow-Ups</span><strong id="vendorFollowUps">—</strong></div>
+            <div><span>Pending</span><strong id="vendorPending">—</strong></div>
+          </div>
+          <p class="source-note" id="vendorSource">Same-browser dashboard data</p>
+        </article>
+
+        <article class="system-card alerts-card">
+          <div class="card-heading">
+            <div><span class="card-icon accent-red">!</span><h2>Gmail Executive Alerts</h2></div>
+            <a href="https://mail.google.com/" target="_blank" rel="noopener noreferrer">Open Gmail →</a>
+          </div>
+          <div class="alert-grid">
+            <div><span>Critical</span><strong id="gmailCritical">—</strong></div>
+            <div><span>Contracts</span><strong id="gmailContracts">—</strong></div>
+            <div><span>Payments</span><strong id="gmailPayments">—</strong></div>
+            <div><span>Workforce</span><strong id="gmailWorkforce">—</strong></div>
+            <div><span>SAM/CAGE</span><strong id="gmailSamCage">—</strong></div>
+          </div>
+        </article>
+
+        <article class="system-card health-card">
+          <div class="card-heading">
+            <div><span class="card-icon accent-blue">H</span><h2>Business Health</h2></div>
+          </div>
+          <div class="health-list">
+            <div><span>Google Sheets Sync</span><strong class="health pending" id="healthSheets">Checking</strong></div>
+            <div><span>Apps Script Status</span><strong class="health pending" id="healthScript">Checking</strong></div>
+            <div><span>Netlify Status</span><strong class="health pending" id="healthNetlify">Checking</strong></div>
+            <div><span>GitHub Status</span><strong class="health pending" id="healthGithub">Checking</strong></div>
+          </div>
+        </article>
+
+        <article class="system-card revenue-card">
+          <div class="card-heading">
+            <div><span class="card-icon accent-purple">$</span><h2>Revenue Pipeline</h2></div>
+            <a href="/#quote-generator">Open Quotes →</a>
+          </div>
+          <div class="metrics">
+            <div><span>Active Opportunities</span><strong id="revenueActive">—</strong></div>
+            <div><span>Estimated Contract Value</span><strong id="revenueValue">—</strong></div>
+            <div><span>Submitted</span><strong id="revenueSubmitted">—</strong></div>
+            <div><span>Awarded</span><strong id="revenueAwarded">—</strong></div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="/executive/config.js"></script>
+    <script src="/executive/app.js"></script>
+  </body>
+</html>
