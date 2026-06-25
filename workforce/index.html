@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iGeo Workforce Dashboard</title>
+    <link rel="stylesheet" href="/workforce/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Dashboard navigation">
+        <div class="brand">
+          <div class="brand-mark">iG</div>
+          <div>
+            <strong>iGeo Solutions</strong>
+            <span>Workforce</span>
+          </div>
+        </div>
+
+        <nav class="nav-list">
+          <a class="nav-item active" href="#dashboard" aria-current="page">
+            <span class="icon" aria-hidden="true">⌂</span>
+            Dashboard
+          </a>
+          <a class="nav-item" href="#workers">
+            <span class="icon" aria-hidden="true">◫</span>
+            Workers
+          </a>
+          <a class="nav-item" href="#services">
+            <span class="icon" aria-hidden="true">✓</span>
+            Services
+          </a>
+          <a class="nav-item" href="#reports">
+            <span class="icon" aria-hidden="true">↧</span>
+            Reports
+          </a>
+        </nav>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Workforce Management</p>
+            <h1>iGeo Solutions LLC</h1>
+          </div>
+          <div class="topbar-actions">
+            <div class="sync-tools" aria-live="polite">
+              <span class="sync-status is-pending" id="syncStatus">Offline Local Backup</span>
+              <button class="secondary-button" id="refreshCloudButton" type="button">Refresh Cloud Data</button>
+            </div>
+            <button class="primary-button" id="addWorkerButton" type="button">
+              <span aria-hidden="true">+</span>
+              Add Worker
+            </button>
+          </div>
+        </header>
+
+        <section class="summary-grid" aria-label="Workforce summary">
+          <article class="metric-card">
+            <span>Total Workers</span>
+            <strong id="totalWorkers">0</strong>
+          </article>
+          <article class="metric-card">
+            <span>Available This Week</span>
+            <strong id="availableWorkers">0</strong>
+          </article>
+          <article class="metric-card">
+            <span>Cleared Checks</span>
+            <strong id="clearedWorkers">0</strong>
+          </article>
+          <article class="metric-card">
+            <span>Service Areas</span>
+            <strong id="serviceCount">0</strong>
+          </article>
+        </section>
+
+        <section class="workspace" id="dashboard">
+          <div class="panel form-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Worker Profile</p>
+                <h2 id="formTitle">Add workforce member</h2>
+              </div>
+              <button class="ghost-button" id="clearFormButton" type="button">Clear</button>
+            </div>
+
+            <form id="workerForm">
+              <input type="hidden" id="workerId" />
+              <div class="field-grid">
+                <label>
+                  Worker Name
+                  <input id="workerName" name="workerName" autocomplete="name" required />
+                </label>
+                <label>
+                  Phone
+                  <input id="phone" name="phone" type="tel" autocomplete="tel" required />
+                </label>
+                <label>
+                  Email
+                  <input id="email" name="email" type="email" autocomplete="email" required />
+                </label>
+                <label>
+                  City
+                  <input id="city" name="city" autocomplete="address-level2" required />
+                </label>
+                <label>
+                  State
+                  <input id="state" name="state" maxlength="2" autocomplete="address-level1" placeholder="TX" required />
+                </label>
+                <label>
+                  Availability
+                  <select id="availability" name="availability" required>
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Weekends">Weekends</option>
+                    <option value="On-call">On-call</option>
+                    <option value="Unavailable">Unavailable</option>
+                  </select>
+                </label>
+                <label>
+                  Background Check
+                  <select id="backgroundCheck" name="backgroundCheck" required>
+                    <option value="Cleared">Cleared</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Not Started">Not Started</option>
+                  </select>
+                </label>
+                <label>
+                  Drug Screen
+                  <select id="drugScreen" name="drugScreen" required>
+                    <option value="Cleared">Cleared</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Not Started">Not Started</option>
+                  </select>
+                </label>
+              </div>
+
+              <fieldset class="services-fieldset">
+                <legend>Services Available</legend>
+                <div class="service-options" id="serviceOptions"></div>
+              </fieldset>
+
+              <label class="notes-label">
+                Notes
+                <textarea id="notes" name="notes" rows="4" placeholder="Certifications, preferred shifts, client notes..."></textarea>
+              </label>
+
+              <button class="primary-button full-width" type="submit">Save Worker</button>
+            </form>
+          </div>
+
+          <div class="panel table-panel" id="workers">
+            <div class="panel-heading table-heading">
+              <div>
+                <p class="eyebrow">Roster</p>
+                <h2>Worker directory</h2>
+              </div>
+              <button class="secondary-button" id="exportButton" type="button">
+                <span aria-hidden="true">↧</span>
+                Export CSV
+              </button>
+            </div>
+
+            <div class="toolbar">
+              <label class="search-field">
+                <span aria-hidden="true">⌕</span>
+                <input id="searchInput" type="search" placeholder="Search workers, city, email, service..." />
+              </label>
+              <select id="serviceFilter" aria-label="Filter by service">
+                <option value="All Services">All Services</option>
+              </select>
+              <select id="statusFilter" aria-label="Filter by clearance status">
+                <option value="All Statuses">All Statuses</option>
+                <option value="Cleared">Cleared</option>
+                <option value="Pending">Pending</option>
+                <option value="Not Started">Not Started</option>
+              </select>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Worker</th>
+                    <th>Location</th>
+                    <th>Services</th>
+                    <th>Checks</th>
+                    <th>Availability</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="workerTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="mobile-list" id="mobileWorkerList" aria-label="Mobile worker list"></div>
+            <p class="empty-state" id="emptyState">No workers match the current search or filters.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/workforce/worker-config.js"></script>
+    <script src="/workforce/script.js"></script>
+  </body>
+</html>
