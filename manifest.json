@@ -5,8 +5,10 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "theme_color": "#0A66C2",
   "background_color": "#FFFFFF",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "assets/icons/icon-192x192.png",
@@ -19,6 +21,28 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Prime Contractor CRM",
+      "short_name": "CRM",
+      "url": "./index.html#prime-crm"
+    },
+    {
+      "name": "Quote Generator",
+      "short_name": "Quotes",
+      "url": "./index.html#quote-generator"
+    },
+    {
+      "name": "Worker Intake",
+      "short_name": "Intake",
+      "url": "./worker-intake.html"
+    },
+    {
+      "name": "Workforce",
+      "short_name": "Workforce",
+      "url": "./workforce/"
     }
   ]
 }

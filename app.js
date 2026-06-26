@@ -68,6 +68,7 @@ const commandCenter = {
   uei: "PQ6GHN6ZS287",
   coverage: ["Kentucky", "Michigan", "Nationwide Subcontract Support"],
 };
+const SHEET_CACHE_TTL_MS = 60000;
 
 const samplePrimeRecords = [
   {
@@ -226,6 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
   render();
   initializePrimeCrmData();
   syncWorkersFromGoogleSheet();
+  registerServiceWorker();
 });
 
 function bindElements() {
@@ -563,29 +565,20 @@ function syncWorkersFromGoogleSheet() {
   const endpoint = window.IGEO_WORKER_INTAKE?.endpointUrl;
   if (!endpoint) return;
 
-  const callbackName = `igeoWorkerIntake${Date.now()}`;
-  const script = document.createElement("script");
-  const separator = endpoint.includes("?") ? "&" : "?";
-
-  window[callbackName] = (response) => {
-    try {
+  jsonpRequest(endpoint, {}, {
+    cacheKey: "worker-intake:list",
+    cacheTtl: SHEET_CACHE_TTL_MS,
+    timeout: 12000,
+    errorMessage: "Worker intake sync failed.",
+  })
+    .then((response) => {
       if (response?.ok && Array.isArray(response.rows)) {
         workers = response.rows.filter((row) => row["First Name"] || row["Last Name"] || row.Email).map(sheetWorkerToAppWorker);
         renderMetrics();
         renderWorkers();
       }
-    } finally {
-      delete window[callbackName];
-      script.remove();
-    }
-  };
-
-  script.onerror = () => {
-    delete window[callbackName];
-    script.remove();
-  };
-  script.src = `${endpoint}${separator}callback=${callbackName}`;
-  document.body.appendChild(script);
+    })
+    .catch((error) => console.warn("Worker intake sync unavailable:", error));
 }
 
 function sheetWorkerToAppWorker(row) {
@@ -847,7 +840,7 @@ async function savePrimeRecord(event) {
       if (savedIndex >= 0) records[savedIndex] = normalizePrimeRecord(result.record);
       saveCollection(STORAGE_KEYS.primes, records);
     } else {
-      const cloudRecords = await loadPrimeRecordsFromGoogleSheets();
+      const cloudRecords = await loadPrimeRecordsFromGoogleSheets({ cache: false });
       if (!cloudRecords.some((item) => item.id === record.id)) throw new Error("Saved record was not returned by Google Sheets.");
     }
     showToast("Prime contractor saved to Google Sheets.");
@@ -869,7 +862,7 @@ async function deleteCurrentRecord() {
   try {
     const result = await postPrimeCrmAction({ action: "archive", id });
     if (!result.ok) throw new Error(result.error || "Google Sheets rejected the archive.");
-    const cloudRecords = await loadPrimeRecordsFromGoogleSheets();
+    const cloudRecords = await loadPrimeRecordsFromGoogleSheets({ cache: false });
     if (cloudRecords.some((record) => record.id === id)) throw new Error("Archived record is still active in Google Sheets.");
     showToast("Prime contractor archived in Google Sheets.");
   } catch (error) {
@@ -1129,8 +1122,8 @@ async function initializePrimeCrmData() {
   }
 }
 
-async function loadPrimeRecordsFromGoogleSheets() {
-  const result = await getPrimeCrmData({ action: "list", _: Date.now() });
+async function loadPrimeRecordsFromGoogleSheets(options = {}) {
+  const result = await getPrimeCrmData({ action: "list" }, options);
   if (!result.ok || !Array.isArray(result.records)) throw new Error(result.error || "Invalid Google Sheets response.");
 
   records = result.records.map(normalizePrimeRecord).filter((record) => !record.isDeleted);
@@ -1150,14 +1143,14 @@ async function migratePrimeRecordsToGoogleSheets(options = {}) {
     return emptyResult;
   }
 
-  const before = await getPrimeCrmData({ action: "list", includeDeleted: true, _: Date.now() });
+  const before = await getPrimeCrmData({ action: "list", includeDeleted: true }, { cache: false });
   const existingIds = new Set((before.records || []).map((record) => String(record.id)));
   const result = await postPrimeCrmAction({ action: "migrate", records: localRecords });
   if (!result.ok) throw new Error(result.error || "Migration failed.");
   let migrated = result.migrated;
   let skipped = result.skipped;
   if (migrated == null || skipped == null) {
-    const after = await getPrimeCrmData({ action: "list", includeDeleted: true, _: Date.now() });
+    const after = await getPrimeCrmData({ action: "list", includeDeleted: true }, { cache: false });
     const afterIds = new Set((after.records || []).map((record) => String(record.id)));
     migrated = localRecords.filter((record) => !existingIds.has(String(record.id)) && afterIds.has(String(record.id))).length;
     skipped = localRecords.length - migrated;
@@ -1244,15 +1237,31 @@ async function postPrimeCrmAction(payload) {
   }
 }
 
-function getPrimeCrmData(parameters) {
+function getPrimeCrmData(parameters, options = {}) {
   if (!isPrimeCrmEndpointConfigured()) return Promise.reject(new Error("Prime CRM Google Sheets endpoint is not configured."));
+  const cacheKey = options.cache === false ? "" : `prime-crm:${JSON.stringify(parameters)}`;
+  return jsonpRequest(primeCrmIntegration.endpointUrl, parameters, {
+    cacheKey,
+    cacheTtl: SHEET_CACHE_TTL_MS,
+    timeout: 20000,
+    errorMessage: "Google Sheets load failed.",
+  });
+}
+
+function jsonpRequest(url, parameters = {}, options = {}) {
   return new Promise((resolve, reject) => {
-    const callback = `igeoPrimeCrmCallback_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const cached = options.cacheKey ? readSessionCache(options.cacheKey, options.cacheTtl || 0) : null;
+    if (cached) {
+      resolve(cached);
+      return;
+    }
+
+    const callback = `igeoJsonp_${Date.now()}_${Math.random().toString(16).slice(2)}`;
     const script = document.createElement("script");
     const timeout = window.setTimeout(() => {
       cleanup();
-      reject(new Error("Google Sheets load timed out."));
-    }, 20000);
+      reject(new Error(options.errorMessage || "Request timed out."));
+    }, options.timeout || 15000);
     const cleanup = () => {
       window.clearTimeout(timeout);
       delete window[callback];
@@ -1260,15 +1269,45 @@ function getPrimeCrmData(parameters) {
     };
     window[callback] = (data) => {
       cleanup();
+      if (options.cacheKey) writeSessionCache(options.cacheKey, data);
       resolve(data);
     };
     script.onerror = () => {
       cleanup();
-      reject(new Error("Google Sheets load failed."));
+      reject(new Error(options.errorMessage || "Request failed."));
     };
     const query = new URLSearchParams({ ...parameters, callback });
-    script.src = `${primeCrmIntegration.endpointUrl}?${query.toString()}`;
+    const separator = url.includes("?") ? "&" : "?";
+    script.async = true;
+    script.src = `${url}${separator}${query.toString()}`;
     document.head.appendChild(script);
+  });
+}
+
+function readSessionCache(key, ttl) {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(key));
+    if (!cached || Date.now() - cached.cachedAt > ttl) return null;
+    return cached.value;
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionCache(key, value) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify({ cachedAt: Date.now(), value }));
+  } catch {
+    // Cache writes can fail in private browsing or under tight storage quotas.
+  }
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((error) => {
+      console.warn("Service worker registration skipped:", error);
+    });
   });
 }
 

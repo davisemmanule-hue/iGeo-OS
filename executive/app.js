@@ -1,4 +1,5 @@
 const config = window.IGEO_EXECUTIVE || {};
+const dashboardCacheTtlMs = 60000;
 const ids = [
   "primeTotal", "primeOpportunities", "primeFollowUps", "workerTotal", "workerNew",
   "workerAvailable", "vendorTotal", "vendorFollowUps", "vendorPending", "gmailCritical",
@@ -11,6 +12,7 @@ elements.syncStatus = document.getElementById("syncStatus");
 elements.lastUpdated = document.getElementById("lastUpdated");
 
 elements.refreshButton.addEventListener("click", refreshDashboard);
+registerServiceWorker();
 refreshDashboard();
 
 async function refreshDashboard() {
@@ -81,11 +83,11 @@ function loadExecutiveSummary() {
   if (!config.endpointUrl || config.endpointUrl.includes("PASTE_")) {
     return Promise.reject(new Error("Executive endpoint is not configured."));
   }
-  return jsonp(config.endpointUrl, { action: "summary", _: Date.now() });
+  return jsonp(config.endpointUrl, { action: "summary" }, { cacheKey: "executive:summary" });
 }
 
 function checkJsonp(url, parameters) {
-  return jsonp(url, { ...parameters, _: Date.now() });
+  return jsonp(url, parameters, { cacheKey: `executive:health:${url}:${JSON.stringify(parameters)}` });
 }
 
 async function checkGithub() {
@@ -94,9 +96,15 @@ async function checkGithub() {
   return response.json();
 }
 
-function jsonp(url, parameters) {
+function jsonp(url, parameters, options = {}) {
   return new Promise((resolve, reject) => {
     if (!url) return reject(new Error("Missing endpoint."));
+    const cached = options.cacheKey ? readCache(options.cacheKey) : null;
+    if (cached) {
+      resolve(cached);
+      return;
+    }
+
     const callback = `igeoExecutive_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const script = document.createElement("script");
     const timer = setTimeout(() => cleanup(new Error("Request timed out.")), 15000);
@@ -108,10 +116,39 @@ function jsonp(url, parameters) {
       error ? reject(error) : resolve(value);
     }
 
-    window[callback] = (value) => cleanup(null, value);
+    window[callback] = (value) => {
+      if (options.cacheKey) writeCache(options.cacheKey, value);
+      cleanup(null, value);
+    };
     script.onerror = () => cleanup(new Error("Request failed."));
+    script.async = true;
     script.src = `${url}?${new URLSearchParams({ ...parameters, callback })}`;
     document.head.appendChild(script);
+  });
+}
+
+function readCache(key) {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(key));
+    if (!cached || Date.now() - cached.cachedAt > dashboardCacheTtlMs) return null;
+    return cached.value;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(key, value) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify({ cachedAt: Date.now(), value }));
+  } catch {
+    // Non-critical cache.
+  }
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("../sw.js").catch(() => {});
   });
 }
 

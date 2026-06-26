@@ -14,12 +14,14 @@
 }
 
 * { box-sizing: border-box; }
+html { overflow-x: hidden; }
 body {
   margin: 0;
   min-height: 100vh;
   background: var(--page);
   color: var(--ink);
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
 }
 button { font: inherit; cursor: pointer; }
 .topbar {
@@ -35,7 +37,7 @@ button { font: inherit; cursor: pointer; }
   display: flex;
   align-items: center;
 }
-.brand { gap: 12px; color: inherit; text-decoration: none; }
+.brand { gap: 12px; color: inherit; min-width: 0; text-decoration: none; }
 .brand-mark {
   display: grid;
   width: 42px;
@@ -71,7 +73,7 @@ main { max-width: 1480px; margin: 0 auto; padding: 30px clamp(16px, 4vw, 48px) 5
 .page-heading { display: flex; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .eyebrow { margin: 0 0 5px; color: var(--blue); font-size: 0.74rem; font-weight: 900; text-transform: uppercase; }
 h1, h2, p { margin-top: 0; }
-h1 { margin-bottom: 7px; font-size: clamp(2rem, 4vw, 3.2rem); }
+h1 { margin-bottom: 7px; font-size: clamp(2rem, 4vw, 3.2rem); overflow-wrap: anywhere; }
 .page-heading p { max-width: 680px; margin-bottom: 0; color: var(--muted); }
 .page-heading time { align-self: flex-end; color: var(--muted); font-size: 0.82rem; }
 .dashboard-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -126,7 +128,8 @@ h1 { margin-bottom: 7px; font-size: clamp(2rem, 4vw, 3.2rem); }
   .dashboard-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 620px) {
-  .topbar { align-items: flex-start; }
+  .topbar { align-items: flex-start; flex-direction: column; }
+  .topbar-actions { width: 100%; justify-content: space-between; }
   .brand small { max-width: 150px; }
   main { padding-top: 22px; }
   .page-heading { flex-direction: column; }

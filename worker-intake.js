@@ -16,12 +16,15 @@ const intakeServices = [
 const form = document.getElementById("workerIntakeForm");
 const message = document.getElementById("intakeMessage");
 const serviceSelect = document.getElementById("serviceCategory");
+const submitButton = form.querySelector('button[type="submit"]');
 
 serviceSelect.innerHTML = intakeServices.map((service) => `<option>${service}</option>`).join("");
+registerServiceWorker();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   setMessage("Submitting worker intake...", "info");
+  submitButton.disabled = true;
 
   const payload = Object.fromEntries(new FormData(form).entries());
   payload.state = (payload.state || "").toUpperCase();
@@ -59,6 +62,8 @@ form.addEventListener("submit", async (event) => {
     setMessage("Worker intake submitted. The Workforce database will update from Google Sheets.", "success");
   } catch {
     setMessage("Submission failed. Please try again or contact iGeo Solutions LLC.", "error");
+  } finally {
+    submitButton.disabled = false;
   }
 });
 
@@ -101,7 +106,15 @@ function readWorkerRows(endpoint) {
       script.remove();
     }
 
+    script.async = true;
     script.src = `${endpoint}${separator}callback=${callbackName}`;
     document.body.appendChild(script);
+  });
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
   });
 }

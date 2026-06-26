@@ -53,6 +53,8 @@ const starterWorkers = [
 const storageKey = "igeo-workforce-workers";
 const pendingKey = "igeo-workforce-pending-operations";
 const cloudConfig = window.IGEO_WORKFORCE || {};
+const cloudCacheKey = "igeo-workforce-cloud-cache";
+const cloudCacheTtlMs = 60000;
 let workers = loadLocalBackup();
 let pendingOperations = loadPendingOperations();
 let syncInProgress = false;
@@ -119,6 +121,7 @@ async function init() {
   renderServiceFilter();
   bindEvents();
   render();
+  registerServiceWorker();
   await refreshCloudData();
 }
 
@@ -270,7 +273,7 @@ async function performCloudOperation(operation) {
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     await wait(700 + attempt * 500);
-    const cloudRows = await readCloudRows();
+    const cloudRows = await readCloudRows({ cache: false });
     const cloudWorkers = cloudRows.map(normalizeCloudWorker).filter((worker) => worker.workerName);
     if (cloudOperationIsVisible(operation, cloudWorkers)) {
       workers = cloudWorkers;
@@ -303,12 +306,18 @@ async function loadCloudWorkers() {
   render();
 }
 
-function readCloudRows() {
+function readCloudRows(options = {}) {
   if (!cloudConfig.endpointUrl) {
     return Promise.reject(new Error("Missing workforce endpoint."));
   }
 
   return new Promise((resolve, reject) => {
+    const cached = options.cache === false ? null : readCloudCache();
+    if (cached) {
+      resolve(cached);
+      return;
+    }
+
     const callbackName = `igeoWorkforce_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const script = document.createElement("script");
     const timeout = window.setTimeout(() => finish(new Error("Cloud request timed out.")), 12000);
@@ -325,11 +334,13 @@ function readCloudRows() {
         finish(new Error(response?.error || "Cloud returned an invalid response."));
         return;
       }
+      writeCloudCache(response.rows);
       finish(null, response.rows);
     };
 
     script.onerror = () => finish(new Error("Cloud data could not be loaded."));
-    script.src = `${cloudConfig.endpointUrl}?callback=${callbackName}&t=${Date.now()}`;
+    script.async = true;
+    script.src = `${cloudConfig.endpointUrl}?callback=${callbackName}`;
     document.head.appendChild(script);
   });
 }
@@ -344,6 +355,32 @@ async function postCloudOperation(operation) {
     mode: "no-cors",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(operation),
+  });
+  sessionStorage.removeItem(cloudCacheKey);
+}
+
+function readCloudCache() {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(cloudCacheKey));
+    if (!cached || Date.now() - cached.cachedAt > cloudCacheTtlMs) return null;
+    return cached.rows;
+  } catch {
+    return null;
+  }
+}
+
+function writeCloudCache(rows) {
+  try {
+    sessionStorage.setItem(cloudCacheKey, JSON.stringify({ cachedAt: Date.now(), rows }));
+  } catch {
+    // Non-critical cache.
+  }
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("../sw.js").catch(() => {});
   });
 }
 
