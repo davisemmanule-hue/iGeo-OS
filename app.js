@@ -1,10 +1,15 @@
 const STORAGE_KEYS = {
   primes: "igeo_prime_contractors",
   legacyPrimes: "igeo-prime-contractor-crm-v1",
+  primeMigration: "igeo_prime_contractors_google_migration",
+  primePending: "igeo_prime_contractors_pending_operations",
+  primeRecoverySnapshot: "igeo_prime_contractors_recovery_snapshot",
   workers: "igeo_workers",
   quotes: "igeo_quotes",
   vendors: "igeo_vendor_registrations",
 };
+
+const primeCrmIntegration = window.IGEO_INTEGRATIONS?.googleSheets?.primeCrm || {};
 
 const statuses = [
   "Prospect",
@@ -204,6 +209,7 @@ const sampleVendorRecords = [
 ];
 
 let records = loadPrimeRecords();
+capturePrimeRecoverySnapshot();
 let workers = loadCollection(STORAGE_KEYS.workers, []);
 let quotes = loadCollection(STORAGE_KEYS.quotes, []);
 let vendors = seedVendorRegistrations(loadCollection(STORAGE_KEYS.vendors, []));
@@ -218,6 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindEvents();
   activateModule(getInitialModule());
   render();
+  initializePrimeCrmData();
   syncWorkersFromGoogleSheet();
 });
 
@@ -255,6 +262,7 @@ function bindElements() {
     "closeDialog",
     "cancelDialog",
     "addRecord",
+    "forcePrimeSync",
     "exportCsv",
     "exportExcel",
     "servicesChecklist",
@@ -372,6 +380,14 @@ function bindEvents() {
   });
   els.resetFilters.addEventListener("click", resetPrimeFilters);
   els.addRecord.addEventListener("click", () => openPrimeDialog());
+  els.forcePrimeSync.addEventListener("click", async () => {
+    try {
+      await reconcileLaptopPrimeSnapshotToCloud();
+    } catch (error) {
+      console.error("Prime CRM recovery failed:", error);
+      showToast(error.message || "Prime CRM recovery failed.");
+    }
+  });
   els.closeDialog.addEventListener("click", closePrimeDialog);
   els.cancelDialog.addEventListener("click", closePrimeDialog);
   els.deleteRecord.addEventListener("click", deleteCurrentRecord);
@@ -783,7 +799,7 @@ function closePrimeDialog() {
   closeModal(els.recordDialog, els.recordForm);
 }
 
-function savePrimeRecord(event) {
+async function savePrimeRecord(event) {
   event.preventDefault();
   const record = {
     id: value("recordId") || crypto.randomUUID(),
@@ -823,17 +839,44 @@ function savePrimeRecord(event) {
   saveCollection(STORAGE_KEYS.primes, records);
   closePrimeDialog();
   render();
-  showToast("Prime contractor saved.");
+  try {
+    const result = await postPrimeCrmAction({ action: "upsert", record });
+    if (!result.ok) throw new Error(result.error || "Google Sheets rejected the save.");
+    if (result.record) {
+      const savedIndex = records.findIndex((item) => item.id === record.id);
+      if (savedIndex >= 0) records[savedIndex] = normalizePrimeRecord(result.record);
+      saveCollection(STORAGE_KEYS.primes, records);
+    } else {
+      const cloudRecords = await loadPrimeRecordsFromGoogleSheets();
+      if (!cloudRecords.some((item) => item.id === record.id)) throw new Error("Saved record was not returned by Google Sheets.");
+    }
+    showToast("Prime contractor saved to Google Sheets.");
+  } catch (error) {
+    queuePrimeOperation({ action: "upsert", record });
+    showToast("Saved offline. Google Sheets sync will retry automatically.");
+    console.error("Prime CRM save queued:", error);
+  }
 }
 
-function deleteCurrentRecord() {
+async function deleteCurrentRecord() {
   const id = value("recordId");
   if (!id) return;
+  const archivedRecord = records.find((record) => record.id === id);
   records = records.filter((record) => record.id !== id);
   saveCollection(STORAGE_KEYS.primes, records);
   closePrimeDialog();
   render();
-  showToast("Prime contractor deleted.");
+  try {
+    const result = await postPrimeCrmAction({ action: "archive", id });
+    if (!result.ok) throw new Error(result.error || "Google Sheets rejected the archive.");
+    const cloudRecords = await loadPrimeRecordsFromGoogleSheets();
+    if (cloudRecords.some((record) => record.id === id)) throw new Error("Archived record is still active in Google Sheets.");
+    showToast("Prime contractor archived in Google Sheets.");
+  } catch (error) {
+    queuePrimeOperation({ action: "archive", id, record: archivedRecord });
+    showToast("Archived offline. Google Sheets sync will retry automatically.");
+    console.error("Prime CRM archive queued:", error);
+  }
 }
 
 function saveWorker(event) {
@@ -1070,6 +1113,214 @@ function loadPrimeRecords() {
   return recordsToUse;
 }
 
+async function initializePrimeCrmData() {
+  if (!isPrimeCrmEndpointConfigured()) {
+    console.warn("Prime CRM Google Sheets endpoint is not configured; using localStorage fallback.");
+    return;
+  }
+
+  try {
+    await loadPrimeRecordsFromGoogleSheets();
+    const pendingResult = await flushPendingPrimeOperations();
+    if (pendingResult.synced > 0) await loadPrimeRecordsFromGoogleSheets();
+  } catch (error) {
+    console.error("Prime CRM is using the offline fallback:", error);
+    showToast("Google Sheets unavailable. Using offline CRM data.");
+  }
+}
+
+async function loadPrimeRecordsFromGoogleSheets() {
+  const result = await getPrimeCrmData({ action: "list", _: Date.now() });
+  if (!result.ok || !Array.isArray(result.records)) throw new Error(result.error || "Invalid Google Sheets response.");
+
+  records = result.records.map(normalizePrimeRecord).filter((record) => !record.isDeleted);
+  saveCollection(STORAGE_KEYS.primes, records);
+  render();
+  return records;
+}
+
+async function migratePrimeRecordsToGoogleSheets(options = {}) {
+  if (!isPrimeCrmEndpointConfigured()) throw new Error("Prime CRM Google Sheets endpoint is not configured.");
+  const localRecords = loadCollection(STORAGE_KEYS.primes, []);
+  const previous = loadCollection(STORAGE_KEYS.primeMigration, null);
+  if (!options.force && previous && previous.completed) return previous;
+  if (!Array.isArray(localRecords) || localRecords.length === 0) {
+    const emptyResult = { completed: true, migrated: 0, skipped: 0, totalReceived: 0, completedAt: new Date().toISOString() };
+    saveCollection(STORAGE_KEYS.primeMigration, emptyResult);
+    return emptyResult;
+  }
+
+  const before = await getPrimeCrmData({ action: "list", includeDeleted: true, _: Date.now() });
+  const existingIds = new Set((before.records || []).map((record) => String(record.id)));
+  const result = await postPrimeCrmAction({ action: "migrate", records: localRecords });
+  if (!result.ok) throw new Error(result.error || "Migration failed.");
+  let migrated = result.migrated;
+  let skipped = result.skipped;
+  if (migrated == null || skipped == null) {
+    const after = await getPrimeCrmData({ action: "list", includeDeleted: true, _: Date.now() });
+    const afterIds = new Set((after.records || []).map((record) => String(record.id)));
+    migrated = localRecords.filter((record) => !existingIds.has(String(record.id)) && afterIds.has(String(record.id))).length;
+    skipped = localRecords.length - migrated;
+  }
+  const receipt = { ...result, migrated, skipped, totalReceived: localRecords.length, completed: true, completedAt: new Date().toISOString() };
+  saveCollection(STORAGE_KEYS.primeMigration, receipt);
+  window.IGEO_PRIME_CRM_LAST_MIGRATION = receipt;
+  console.info(`Prime CRM migration complete: ${result.migrated} migrated, ${result.skipped} skipped.`);
+  if (options.announce !== false) showToast(`${result.migrated} CRM records migrated; ${result.skipped} duplicates skipped.`);
+  return receipt;
+}
+
+async function reconcileLaptopPrimeSnapshotToCloud(options = {}) {
+  if (!isPrimeCrmEndpointConfigured()) throw new Error("Prime CRM Google Sheets endpoint is not configured.");
+  const snapshot = loadCollection(STORAGE_KEYS.primeRecoverySnapshot, null);
+  if (!Array.isArray(snapshot) || snapshot.length === 0) {
+    throw new Error("No laptop recovery snapshot is available.");
+  }
+
+  const approved = options.confirm === false || window.confirm(
+    `Replace the active cloud CRM with this laptop's ${snapshot.length} contractor record(s)? `
+      + "Cloud contractors missing from the laptop snapshot will be archived.",
+  );
+  if (!approved) return { ok: false, cancelled: true };
+
+  const result = await postPrimeCrmAction({
+    action: "reconcile",
+    records: snapshot,
+    confirmArchiveMissing: true,
+  });
+  if (!result.ok) throw new Error(result.error || "Cloud reconciliation failed.");
+
+  saveCollection(STORAGE_KEYS.primeMigration, {
+    completed: true,
+    reconciled: true,
+    active: result.active,
+    archived: result.archived,
+    completedAt: new Date().toISOString(),
+  });
+  saveCollection(STORAGE_KEYS.primePending, []);
+  await loadPrimeRecordsFromGoogleSheets();
+  showToast(`Cloud CRM synchronized: ${result.active} active, ${result.archived} archived.`);
+  return result;
+}
+
+async function flushPendingPrimeOperations() {
+  const pending = loadCollection(STORAGE_KEYS.primePending, []);
+  if (!Array.isArray(pending) || pending.length === 0) return { synced: 0 };
+
+  const remaining = [];
+  let synced = 0;
+  for (const operation of pending) {
+    try {
+      const result = await postPrimeCrmAction(operation);
+      if (!result.ok) throw new Error(result.error || "Pending operation failed.");
+      synced += 1;
+    } catch (error) {
+      remaining.push(operation);
+      console.error("Prime CRM pending operation still queued:", error);
+    }
+  }
+  saveCollection(STORAGE_KEYS.primePending, remaining);
+  return { synced, remaining: remaining.length };
+}
+
+async function postPrimeCrmAction(payload) {
+  if (!isPrimeCrmEndpointConfigured()) throw new Error("Prime CRM Google Sheets endpoint is not configured.");
+  try {
+    const response = await fetch(primeCrmIntegration.endpointUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(`Google Sheets request failed (${response.status}).`);
+    return response.json();
+  } catch (corsError) {
+    await fetch(primeCrmIntegration.endpointUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+    });
+    return { ok: true, accepted: true, verificationRequired: true };
+  }
+}
+
+function getPrimeCrmData(parameters) {
+  if (!isPrimeCrmEndpointConfigured()) return Promise.reject(new Error("Prime CRM Google Sheets endpoint is not configured."));
+  return new Promise((resolve, reject) => {
+    const callback = `igeoPrimeCrmCallback_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const script = document.createElement("script");
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Google Sheets load timed out."));
+    }, 20000);
+    const cleanup = () => {
+      window.clearTimeout(timeout);
+      delete window[callback];
+      script.remove();
+    };
+    window[callback] = (data) => {
+      cleanup();
+      resolve(data);
+    };
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("Google Sheets load failed."));
+    };
+    const query = new URLSearchParams({ ...parameters, callback });
+    script.src = `${primeCrmIntegration.endpointUrl}?${query.toString()}`;
+    document.head.appendChild(script);
+  });
+}
+
+function queuePrimeOperation(operation) {
+  const pending = loadCollection(STORAGE_KEYS.primePending, []);
+  const queue = Array.isArray(pending) ? pending : [];
+  const withoutOlderCopy = queue.filter((item) => {
+    const itemId = item.id || item.record?.id;
+    const operationId = operation.id || operation.record?.id;
+    return !operationId || itemId !== operationId;
+  });
+  withoutOlderCopy.push({ ...operation, queuedAt: new Date().toISOString() });
+  saveCollection(STORAGE_KEYS.primePending, withoutOlderCopy);
+}
+
+function normalizePrimeRecord(record) {
+  return {
+    ...record,
+    capabilitySent: record.capabilitySent === true || String(record.capabilitySent).toLowerCase() === "true",
+    isDeleted: record.isDeleted === true || String(record.isDeleted).toLowerCase() === "true",
+    services: Array.isArray(record.services)
+      ? record.services
+      : String(record.services || "").split("|").map((service) => service.trim()).filter(Boolean),
+  };
+}
+
+function isPrimeCrmEndpointConfigured() {
+  return Boolean(
+    primeCrmIntegration.enabled
+      && primeCrmIntegration.endpointUrl
+      && !primeCrmIntegration.endpointUrl.includes("PASTE_WEB_APP_URL"),
+  );
+}
+
+function capturePrimeRecoverySnapshot() {
+  const existing = loadCollection(STORAGE_KEYS.primeRecoverySnapshot, null);
+  if (Array.isArray(existing)) return existing;
+  const snapshot = Array.isArray(records) ? records.map((record) => ({ ...record })) : [];
+  saveCollection(STORAGE_KEYS.primeRecoverySnapshot, snapshot);
+  return snapshot;
+}
+
+window.forcePrimeCrmMigration = (options = {}) =>
+  migratePrimeRecordsToGoogleSheets({
+    force: true,
+    announce: true,
+    ...options,
+  });
+
+window.forcePrimeCrmRecovery = (options = {}) =>
+  reconcileLaptopPrimeSnapshotToCloud({ confirm: true, ...options });
+
 function loadCollection(key, fallback) {
   try {
     const stored = localStorage.getItem(key);
@@ -1185,7 +1436,10 @@ function toIsoDate(date) {
 
 function formatDate(date) {
   if (!date) return "Not set";
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${date}T00:00:00`));
+  const text = String(date);
+  const parsed = new Date(/^\d{4}-\d{2}-\d{2}$/.test(text) ? `${text}T00:00:00` : text);
+  if (Number.isNaN(parsed.getTime())) return text;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(parsed);
 }
 
 function money(value) {
