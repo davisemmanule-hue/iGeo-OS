@@ -9,9 +9,9 @@ binding = "ASSETS"
 not_found_handling = "none"
 
 [[routes]]
-pattern = "igeosolutionsllc.com/*"
+pattern = "igeosolutionsllc.com"
 custom_domain = true
 
 [[routes]]
-pattern = "www.igeosolutionsllc.com/*"
+pattern = "www.igeosolutionsllc.com"
 custom_domain = true
