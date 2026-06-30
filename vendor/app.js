@@ -69,7 +69,7 @@ const TAB_SCHEMAS = {
   ],
 };
 
-const vendorIntegration = window.IGEO_INTEGRATIONS?.googleSheets?.vendorTracker || {};
+const vendorIntegration = window.IGEO_VENDOR_TRACKER_CONFIG || window.IGEO_INTEGRATIONS?.googleSheets?.vendorTracker || {};
 let activeTab = "Vendor Registrations";
 let dataStore = {};
 let selectedRecord = null;
