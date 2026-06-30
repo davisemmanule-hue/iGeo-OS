@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vendor Registration Tracker | iGeo Operations System</title>
+    <meta name="theme-color" content="#0A66C2" />
+    <link rel="manifest" href="../manifest.json" />
+    <link rel="icon" href="../favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="vendor.css" />
+  </head>
+  <body>
+    <header class="top-nav">
+      <a class="brand-lockup" href="../" aria-label="iGeo Operations System home">
+        <span class="logo-frame has-logo">
+          <img src="../igeo-logo.png" alt="iGeo Solutions LLC logo" />
+        </span>
+        <span>
+          <strong>iGeo Solutions LLC</strong>
+          <small>Operations System</small>
+        </span>
+      </a>
+      <nav class="module-tabs" aria-label="Operations modules">
+        <a class="nav-tab" href="../#prime-crm">Prime Contractor CRM</a>
+        <a class="nav-tab" href="../#quote-generator">Quote Generator</a>
+        <a class="nav-tab" href="../#workforce-management">Workforce Management</a>
+        <a class="nav-tab active" href="./">Vendor Registration Tracker</a>
+      </nav>
+    </header>
+
+    <main class="app-shell vendor-shell">
+      <section class="dashboard-hero vendor-hero">
+        <div>
+          <img class="dashboard-logo" src="../igeo-logo.png" alt="iGeo Solutions LLC logo" />
+          <p class="eyebrow">Compliance & Access</p>
+          <h1>Vendor Registration Tracker</h1>
+          <p class="tagline">Google Sheets synchronized vendor compliance workspace.</p>
+        </div>
+        <div class="vendor-sync-card">
+          <span id="syncState" class="status-pill">Checking Google Sheets</span>
+          <strong id="syncTitle">Source of truth: Google Sheets</strong>
+          <p id="syncMessage">Loading vendor compliance records from the configured Google Apps Script endpoint.</p>
+          <div class="sync-actions">
+            <button id="refreshVendorData" class="button secondary" type="button">Refresh Sync</button>
+            <a id="openVendorSheet" class="button secondary" href="https://sheets.google.com" target="_blank" rel="noopener noreferrer">Open Sheet</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="command-center panel" aria-label="Executive Command Center">
+        <div class="command-header">
+          <div>
+            <p class="eyebrow">Executive Command Center</p>
+            <h2>iGeo Operations Contact Hub</h2>
+          </div>
+          <a class="button secondary" href="../">Back to Dashboard</a>
+        </div>
+        <div class="command-grid">
+          <article class="command-item"><span>Company</span><strong>iGeo Solutions LLC</strong></article>
+          <article class="command-item"><span>Phone</span><strong>(616) 224-2325</strong></article>
+          <article class="command-item"><span>Email</span><strong><a href="mailto:admin@igeosolutionsllc.com">admin@igeosolutionsllc.com</a></strong></article>
+          <article class="command-item"><span>Website</span><strong><a href="https://igeosolutionsllc.com/" target="_blank" rel="noopener noreferrer">igeosolutionsllc.com</a></strong></article>
+          <article class="command-item"><span>UEI</span><strong>PQ6GHN6ZS287</strong></article>
+          <article class="command-item"><span>Coverage</span><strong>Kentucky<br />Michigan<br />Nationwide Subcontract Support</strong></article>
+        </div>
+      </section>
+
+      <section class="metric-grid" aria-label="Vendor dashboard metrics">
+        <article class="metric"><span>Total Records</span><strong id="metricTotalRecords">0</strong></article>
+        <article class="metric"><span>Submitted</span><strong id="metricSubmitted">0</strong></article>
+        <article class="metric success"><span>Approved</span><strong id="metricApproved">0</strong></article>
+        <article class="metric urgent"><span>Expiring Within 30 Days</span><strong id="metricExpiring">0</strong></article>
+        <article class="metric urgent"><span>Renewals Due</span><strong id="metricRenewals">0</strong></article>
+        <article class="metric"><span>Documents Tracked</span><strong id="metricDocuments">0</strong></article>
+      </section>
+
+      <section class="panel vendor-controls">
+        <div class="vendor-tabbar" role="tablist" aria-label="Vendor tracker tabs">
+          <button class="nav-tab active" type="button" data-vendor-tab="Vendor Registrations">Vendor Registrations</button>
+          <button class="nav-tab" type="button" data-vendor-tab="Certifications">Certifications</button>
+          <button class="nav-tab" type="button" data-vendor-tab="SAM Tracking">SAM Tracking</button>
+          <button class="nav-tab" type="button" data-vendor-tab="CAGE Tracking">CAGE Tracking</button>
+          <button class="nav-tab" type="button" data-vendor-tab="Renewals">Renewals</button>
+          <button class="nav-tab" type="button" data-vendor-tab="Documents">Documents</button>
+        </div>
+        <div class="vendor-toolbar">
+          <label class="field"><span>Search</span><input id="vendorSearch" type="search" placeholder="Company, status, document, notes..." /></label>
+          <label class="field"><span>Status</span><select id="vendorStatusFilter"></select></label>
+          <label class="field"><span>Alert Window</span><select id="vendorAlertFilter"><option value="all">All records</option><option value="renewal">Renewal reminders</option><option value="expiration">Expiration alerts</option></select></label>
+          <div class="header-actions">
+            <button id="exportVendorCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
+            <button id="exportVendorXls" class="button secondary" type="button"><span>XLS</span> Export</button>
+            <button id="addVendorRecord" class="button primary" type="button">Add Record</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel alert-panel" aria-label="Vendor alerts">
+        <div class="panel-heading">
+          <h2>Renewal Reminders & Expiration Alerts</h2>
+          <span id="alertCount" class="count-pill">0 alerts</span>
+        </div>
+        <div id="vendorAlerts" class="alert-list"></div>
+      </section>
+
+      <section class="panel table-panel" aria-label="Vendor tracker records">
+        <div class="table-wrap">
+          <table id="vendorDataTable">
+            <thead id="vendorTableHead"></thead>
+            <tbody id="vendorTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="vendorRecordDialog">
+      <form id="vendorRecordForm" method="dialog">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow" id="dialogTabLabel">Vendor Registration Tracker</p>
+            <h2 id="dialogTitle">Add Record</h2>
+          </div>
+          <button id="closeVendorDialog" class="icon-button" type="button" aria-label="Close">X</button>
+        </div>
+        <input id="recordId" type="hidden" />
+        <div id="dynamicFields" class="form-grid"></div>
+        <div class="dialog-actions">
+          <button id="deleteVendorRecord" class="button danger" type="button">Delete</button>
+          <div>
+            <button id="cancelVendorDialog" class="button secondary" type="button">Cancel</button>
+            <button class="button primary" type="submit">Save Record</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="../branding-settings.js"></script>
+    <script src="../integration-config.js"></script>
+    <script src="vendor.js"></script>
+  </body>
+</html>

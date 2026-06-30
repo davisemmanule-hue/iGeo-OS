@@ -9,6 +9,20 @@ window.IGEO_INTEGRATIONS = {
       spreadsheetUrl: "https://docs.google.com/spreadsheets/d/1FqWUPmg1alDzUMBEjprdq_zEJcXIm_LHwcqI8hvr4L8/edit",
       endpointUrl: "https://script.google.com/macros/s/AKfycbyTccXyMv9_KMfQe9wFxlV8aNez7-T8efagw5TsTKOile_ZXCJ04ukXVLPunpHImju3sQ/exec",
     },
+    vendorTracker: {
+      enabled: false,
+      spreadsheetId: "",
+      spreadsheetUrl: "",
+      endpointUrl: "PASTE_VENDOR_TRACKER_WEB_APP_URL",
+      tabs: [
+        "Vendor Registrations",
+        "Certifications",
+        "SAM Tracking",
+        "CAGE Tracking",
+        "Renewals",
+        "Documents",
+      ],
+    },
   },
   googleDrive: {
     enabled: false,
