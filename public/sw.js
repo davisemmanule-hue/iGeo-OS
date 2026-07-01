@@ -1,4 +1,4 @@
-const CACHE_NAME = "igeo-operations-v3";
+const CACHE_NAME = "igeo-operations-v4";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -17,16 +17,6 @@ const STATIC_ASSETS = [
   "./assets/icons/apple-touch-icon.png",
   "./assets/icons/icon-192x192.png",
   "./assets/icons/icon-512x512.png",
-  "./workforce/",
-  "./workforce/index.html",
-  "./workforce/styles.css",
-  "./workforce/script.js",
-  "./workforce/worker-config.js",
-  "./executive/",
-  "./executive/index.html",
-  "./executive/styles.css",
-  "./executive/app.js",
-  "./executive/config.js",
 ];
 
 self.addEventListener("install", (event) => {

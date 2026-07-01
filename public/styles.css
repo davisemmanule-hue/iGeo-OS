@@ -166,6 +166,12 @@ h3 {
   white-space: nowrap;
 }
 
+.nav-link {
+  align-items: center;
+  display: inline-flex;
+  text-decoration: none;
+}
+
 .nav-tab.active,
 .nav-tab:hover {
   background: var(--blue-soft);
@@ -219,6 +225,82 @@ h3 {
   gap: 10px;
   max-width: 520px;
   min-width: 320px;
+}
+
+.today-panel,
+.partner-panel,
+.settings-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.today-grid,
+.settings-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.today-card,
+.settings-grid article {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.today-card span,
+.settings-grid p {
+  color: var(--muted);
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.today-card strong {
+  display: block;
+  font-size: clamp(28px, 5vw, 42px);
+  margin-top: 8px;
+}
+
+.today-card.urgent {
+  border-left: 5px solid var(--danger);
+}
+
+.mode-switches,
+.partner-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mode-switches label,
+.partner-grid a {
+  align-items: center;
+  background: var(--blue-soft);
+  border: 1px solid #b8ddfb;
+  border-radius: 8px;
+  color: var(--secondary-blue);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 900;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  text-decoration: none;
+}
+
+body.partner-view .integration-strip,
+body.partner-view .command-center,
+body.partner-view .filters,
+body.partner-view .reports {
+  display: none;
+}
+
+body:not(.advanced-view) #forcePrimeSync,
+body:not(.advanced-view) .integration-note {
+  display: none;
 }
 
 .integration-status,
@@ -983,7 +1065,9 @@ form {
   }
 
   .metric-grid,
-  .report-grid {
+  .report-grid,
+  .today-grid,
+  .settings-grid {
     grid-template-columns: repeat(3, minmax(140px, 1fr));
   }
 
@@ -1042,6 +1126,8 @@ form {
 
   .metric-grid,
   .report-grid,
+  .today-grid,
+  .settings-grid,
   .module-tools,
   .command-grid,
   .form-grid,

@@ -1,16 +1,18 @@
 # iGeo Solutions LLC Operations System
 
-Static browser-based operations dashboard for iGeo Solutions LLC.
+Single operational dashboard for iGeo Solutions LLC.
 
-## Modules
+## Active Workflow
 
-- Prime Contractor CRM
+- Today
+- Prime CRM
+- Workforce
+- Worker Intake
 - Quote Generator
-- Workforce Management
-- Vendor Registration Tracker
+- Vendor Registration Tracking
+- Executive Email Alerts
+- Settings
 
-## Deployment
+## Main App
 
-This project is a static site. Deploy the repository root to GitHub Pages or Cloudflare Pages.
-
-Entry point: `index.html`
+Production entry point: `https://igeosolutionsllc.com`

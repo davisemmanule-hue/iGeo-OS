@@ -69,6 +69,7 @@ const commandCenter = {
   coverage: ["Kentucky", "Michigan", "Nationwide Subcontract Support"],
 };
 const SHEET_CACHE_TTL_MS = 60000;
+let executiveEmailCounts = { critical: 0, pending: 0, contracts: 0, payments: 0, applications: 0 };
 
 const samplePrimeRecords = [
   {
@@ -227,6 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
   render();
   initializePrimeCrmData();
   syncWorkersFromGoogleSheet();
+  refreshExecutiveEmailAlerts();
   registerServiceWorker();
 });
 
@@ -241,6 +243,19 @@ function bindElements() {
     "metricWorkersAvailable",
     "metricQuotesSent",
     "metricVendorSubmitted",
+    "todayUrgentEmails",
+    "todayFollowUps",
+    "todayPrimeContacts",
+    "todayWorkersAvailable",
+    "todayRegistrationsPending",
+    "todayQuotesPending",
+    "todayDocumentsNeeded",
+    "settingsEmailAlerts",
+    "settingsNotifications",
+    "settingsPartnerView",
+    "simpleModeToggle",
+    "partnerViewToggle",
+    "advancedModeToggle",
     "searchInput",
     "statusFilter",
     "serviceFilter",
@@ -437,6 +452,9 @@ function bindEvents() {
   });
   els.downloadCapability.addEventListener("click", downloadCapabilityStatement);
   els.quickShare.addEventListener("click", quickShareBusinessCard);
+  if (els.simpleModeToggle) els.simpleModeToggle.addEventListener("change", applyViewMode);
+  if (els.partnerViewToggle) els.partnerViewToggle.addEventListener("change", applyViewMode);
+  if (els.advancedModeToggle) els.advancedModeToggle.addEventListener("change", applyViewMode);
 
   document.querySelectorAll("[data-module-tab]").forEach((tab) => {
     tab.addEventListener("click", () => activateModule(tab.dataset.moduleTab));
@@ -455,6 +473,7 @@ function bindEvents() {
 
 function render() {
   renderMetrics();
+  renderToday();
   renderReports();
   renderAlerts();
   renderPrimeTable(getVisiblePrimeRecords());
@@ -475,6 +494,53 @@ function renderMetrics() {
   els.metricVendorSubmitted.textContent = vendors.filter((vendor) =>
     ["Submitted", "Approved", "Waiting Response", "Follow Up Needed"].includes(vendor.registrationStatus),
   ).length;
+}
+
+function renderToday() {
+  const followUpsToday = records.filter((record) => record.nextFollowUpDate === isoToday).length;
+  const workersAvailable = workers.filter((worker) => worker.status === "Available").length;
+  const registrationsPending = vendors.filter((vendor) =>
+    ["Not Started", "In Progress", "Waiting Response", "Follow Up Needed"].includes(vendor.registrationStatus),
+  ).length;
+  const quotesPending = quotes.filter((quote) => ["Draft", "Sent", "Follow Up"].includes(quote.quoteStatus)).length;
+  const documentsNeeded = records.filter((record) => !record.capabilitySent && isActiveOpportunity(record)).length
+    + vendors.filter((vendor) => !vendor.capabilitySent).length;
+
+  setText("todayUrgentEmails", executiveEmailCounts.critical);
+  setText("todayFollowUps", followUpsToday);
+  setText("todayPrimeContacts", records.length);
+  setText("todayWorkersAvailable", workersAvailable);
+  setText("todayRegistrationsPending", registrationsPending);
+  setText("todayQuotesPending", quotesPending);
+  setText("todayDocumentsNeeded", documentsNeeded);
+  setText("settingsEmailAlerts", `${executiveEmailCounts.critical} urgent emails`);
+  setText("settingsNotifications", "On");
+  setText("settingsPartnerView", els.partnerViewToggle?.checked ? "On" : "Off");
+}
+
+async function refreshExecutiveEmailAlerts() {
+  try {
+    const response = await fetch("/api/executive-email-alerts", { cache: "no-store" });
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error(result.error || "Email alerts unavailable.");
+    executiveEmailCounts = { ...executiveEmailCounts, ...(result.gmail || {}) };
+  } catch (error) {
+    console.warn("Executive email alerts are unavailable:", error);
+  } finally {
+    renderToday();
+  }
+}
+
+function applyViewMode() {
+  document.body.classList.toggle("partner-view", Boolean(els.partnerViewToggle?.checked));
+  document.body.classList.toggle("advanced-view", Boolean(els.advancedModeToggle?.checked));
+  if (els.simpleModeToggle && els.advancedModeToggle?.checked) els.simpleModeToggle.checked = false;
+  if (els.simpleModeToggle && !els.advancedModeToggle?.checked) els.simpleModeToggle.checked = true;
+  renderToday();
+}
+
+function setText(id, value) {
+  if (els[id]) els[id].textContent = value;
 }
 
 function renderReports() {

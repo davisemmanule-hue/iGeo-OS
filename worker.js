@@ -15,6 +15,18 @@ export default {
       url.pathname = "/worker-intake.html";
     }
 
+    const archivedRoutes = {
+      "/executive": "/#today",
+      "/executive/": "/#today",
+      "/vendor": "/#vendor-registration",
+      "/vendor/": "/#vendor-registration",
+      "/workforce": "/#workforce-management",
+      "/workforce/": "/#workforce-management",
+    };
+    if (archivedRoutes[url.pathname]) {
+      return Response.redirect(new URL(archivedRoutes[url.pathname], url.origin).toString(), 301);
+    }
+
     return env.ASSETS.fetch(new Request(url, request));
   },
 };
@@ -87,7 +99,7 @@ async function handleExecutiveEmailAlerts(request, env) {
 function validateGmailConfig(env) {
   const required = ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"];
   const missing = required.filter((key) => !env[key]);
-  return missing.length ? `Missing Cloudflare Worker secrets: ${missing.join(", ")}` : "";
+  return missing.length ? `Missing email alert settings: ${missing.join(", ")}` : "";
 }
 
 async function getGoogleAccessToken(env) {

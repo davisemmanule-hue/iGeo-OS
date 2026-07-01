@@ -35,6 +35,7 @@
         <button class="nav-tab" type="button" data-module-tab="quote-generator">Quote Generator</button>
         <button class="nav-tab" type="button" data-module-tab="workforce-management">Workforce Management</button>
         <button class="nav-tab" type="button" data-module-tab="vendor-registration">Vendor Registration Tracker</button>
+        <a class="nav-tab nav-link" href="#settings">Settings</a>
       </nav>
     </header>
 
@@ -42,7 +43,7 @@
       <section class="dashboard-hero" aria-label="iGeo dashboard header">
         <div>
           <img class="dashboard-logo" src="igeo-logo.png" alt="iGeo Solutions LLC logo" />
-          <p class="eyebrow">Corporate Dashboard</p>
+          <p class="eyebrow">Main Dashboard</p>
           <h1 data-brand="companyName">iGeo Solutions LLC</h1>
           <p class="tagline" data-brand="tagline">Big Solutions For Small Business</p>
         </div>
@@ -67,10 +68,51 @@
         </div>
       </section>
 
-      <section class="command-center panel" aria-label="Executive Command Center">
+      <section id="today" class="today-panel panel" aria-label="Today dashboard">
         <div class="command-header">
           <div>
-            <p class="eyebrow">Executive Command Center</p>
+            <p class="eyebrow">Today</p>
+            <h2>What Needs Attention</h2>
+          </div>
+          <div class="mode-switches" aria-label="View settings">
+            <label><input id="simpleModeToggle" type="checkbox" checked /> Simple Mode</label>
+            <label><input id="partnerViewToggle" type="checkbox" /> Partner View</label>
+            <label><input id="advancedModeToggle" type="checkbox" /> Advanced Mode</label>
+          </div>
+        </div>
+        <div class="today-grid">
+          <article class="today-card urgent"><span>Urgent Emails</span><strong id="todayUrgentEmails">0</strong></article>
+          <article class="today-card"><span>Follow Ups</span><strong id="todayFollowUps">0</strong></article>
+          <article class="today-card"><span>Prime Contacts</span><strong id="todayPrimeContacts">0</strong></article>
+          <article class="today-card"><span>Workers Available</span><strong id="todayWorkersAvailable">0</strong></article>
+          <article class="today-card"><span>Registrations Pending</span><strong id="todayRegistrationsPending">0</strong></article>
+          <article class="today-card"><span>Quotes Pending</span><strong id="todayQuotesPending">0</strong></article>
+          <article class="today-card"><span>Documents Needed</span><strong id="todayDocumentsNeeded">0</strong></article>
+        </div>
+      </section>
+
+      <section class="partner-panel panel" aria-label="Partner view">
+        <div class="command-header">
+          <div>
+            <p class="eyebrow">Partner View</p>
+            <h2>Simple Work List</h2>
+          </div>
+        </div>
+        <div class="partner-grid">
+          <a href="#today">Today's Tasks</a>
+          <a href="https://mail.google.com/mail/u/0/" target="_blank" rel="noopener noreferrer">Messages</a>
+          <a href="#prime-crm">Contacts</a>
+          <a href="#workforce-management">Workers</a>
+          <a href="#vendor-registration">Registrations</a>
+          <a href="#quote-generator">Quotes</a>
+          <a href="#settings">Alerts</a>
+        </div>
+      </section>
+
+      <section class="command-center panel" aria-label="Executive Summary">
+        <div class="command-header">
+          <div>
+            <p class="eyebrow">Executive Summary</p>
             <h2>iGeo Operations Contact Hub</h2>
           </div>
           <div class="command-actions">
@@ -339,7 +381,6 @@
             <h2>Workforce Management</h2>
           </div>
           <div class="header-actions">
-            <a class="button primary" href="workforce/">Open Workforce Management</a>
             <a class="button secondary" href="worker-intake.html" target="_blank" rel="noopener noreferrer">Public Worker Intake Form</a>
             <button id="exportWorkersCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
             <button id="exportWorkersExcel" class="button secondary" type="button"><span>XLS</span> Export</button>
@@ -382,7 +423,6 @@
           <div class="header-actions">
             <button id="exportVendorsCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
             <button id="exportVendorsExcel" class="button secondary" type="button"><span>XLS</span> Export</button>
-            <a class="button secondary" href="vendor/">Open Full Tracker</a>
             <button id="addRegistration" class="button primary" type="button">Add Registration</button>
           </div>
         </div>
@@ -409,6 +449,32 @@
             </table>
           </div>
         </section>
+      </section>
+
+      <section id="settings" class="settings-panel panel" aria-label="Settings">
+        <div class="command-header">
+          <div>
+            <p class="eyebrow">Settings</p>
+            <h2>Alerts and Notifications</h2>
+          </div>
+        </div>
+        <div class="settings-grid">
+          <article>
+            <h3>Executive Email Alerts</h3>
+            <p>Only business-critical emails should create owner alerts.</p>
+            <strong id="settingsEmailAlerts">0 urgent emails</strong>
+          </article>
+          <article>
+            <h3>Notifications</h3>
+            <p>Send owner alerts for contracts, payments, deadlines, registrations, and worker applications.</p>
+            <strong id="settingsNotifications">On</strong>
+          </article>
+          <article>
+            <h3>Partner View</h3>
+            <p>Shows simple task names without technical deployment details.</p>
+            <strong id="settingsPartnerView">Off</strong>
+          </article>
+        </div>
       </section>
     </main>
 
