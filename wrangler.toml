@@ -7,11 +7,3 @@ workers_dev = true
 directory = "./public"
 binding = "ASSETS"
 not_found_handling = "none"
-
-[[routes]]
-pattern = "igeosolutionsllc.com"
-custom_domain = true
-
-[[routes]]
-pattern = "www.igeosolutionsllc.com"
-custom_domain = true
