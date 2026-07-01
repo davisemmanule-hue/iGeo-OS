@@ -31,6 +31,7 @@ async function refreshDashboard() {
 
   const results = await Promise.allSettled([
     loadExecutiveSummary(),
+    loadExecutiveEmailAlerts(),
     checkJsonp(config.primeEndpointUrl, { action: "health" }),
     checkJsonp(config.workforceEndpointUrl, {}),
     checkGithub(),
@@ -48,8 +49,13 @@ async function refreshDashboard() {
     setSync("failed", "Partial Data");
   }
 
-  setHealth("healthNetlify", true, "Online");
-  setHealth("healthGithub", results[3].status === "fulfilled", results[3].status === "fulfilled" ? "Connected" : "Unavailable");
+  const alerts = results[1];
+  if (alerts.status === "fulfilled" && alerts.value?.ok) {
+    renderExecutiveAlerts(alerts.value.gmail || {});
+  }
+
+  setHealth("healthCloudflare", true, "Online");
+  setHealth("healthGithub", results[4].status === "fulfilled", results[4].status === "fulfilled" ? "Connected" : "Unavailable");
   elements.lastUpdated.textContent = `Updated ${new Date().toLocaleString()}`;
   elements.refreshButton.disabled = false;
 }
@@ -88,6 +94,14 @@ function renderCloudSummary(data) {
   setText("revenueAwarded", revenue.awarded);
 }
 
+function renderExecutiveAlerts(gmail) {
+  setText("gmailCritical", gmail.critical);
+  setText("gmailPending", gmail.pending);
+  setText("gmailContracts", gmail.contracts);
+  setText("gmailPayments", gmail.payments);
+  setText("gmailApplications", gmail.applications);
+}
+
 function loadExecutiveSummary() {
   if (!config.endpointUrl || config.endpointUrl.includes("PASTE_")) {
     return Promise.reject(new Error("Executive endpoint is not configured."));
@@ -99,6 +113,20 @@ function loadExecutiveSummary() {
     ownerMode: String(settings.ownerMode),
     partnerNotifications: String(settings.partnerNotifications),
   }, { cacheKey: `executive:summary:${JSON.stringify(settings)}` });
+}
+
+async function loadExecutiveEmailAlerts() {
+  const settings = readAlertSettings();
+  const response = await fetch(`${config.emailAlertsUrl}?${new URLSearchParams({
+    alertThreshold: settings.alertThreshold,
+    ownerMode: String(settings.ownerMode),
+    partnerNotifications: String(settings.partnerNotifications),
+  })}`, { cache: "no-store" });
+  const data = await response.json();
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || "Executive email alerts unavailable.");
+  }
+  return data;
 }
 
 function checkJsonp(url, parameters) {
