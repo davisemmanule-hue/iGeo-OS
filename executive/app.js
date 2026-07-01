@@ -3,15 +3,24 @@ const dashboardCacheTtlMs = 60000;
 const ids = [
   "primeTotal", "primeOpportunities", "primeFollowUps", "workerTotal", "workerNew",
   "workerAvailable", "vendorTotal", "vendorFollowUps", "vendorPending", "gmailCritical",
-  "gmailContracts", "gmailPayments", "gmailWorkforce", "gmailSamCage", "revenueActive",
+  "gmailPending", "gmailContracts", "gmailPayments", "gmailApplications", "revenueActive",
   "revenueValue", "revenueSubmitted", "revenueAwarded",
 ];
 const elements = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
 elements.refreshButton = document.getElementById("refreshButton");
 elements.syncStatus = document.getElementById("syncStatus");
 elements.lastUpdated = document.getElementById("lastUpdated");
+elements.alertThreshold = document.getElementById("alertThreshold");
+elements.ownerModeToggle = document.getElementById("ownerModeToggle");
+elements.partnerNotificationsToggle = document.getElementById("partnerNotificationsToggle");
+elements.smsFutureToggle = document.getElementById("smsFutureToggle");
+elements.alertModeStatus = document.getElementById("alertModeStatus");
 
 elements.refreshButton.addEventListener("click", refreshDashboard);
+elements.alertThreshold.addEventListener("change", handleAlertSettingsChange);
+elements.ownerModeToggle.addEventListener("change", handleAlertSettingsChange);
+elements.partnerNotificationsToggle.addEventListener("change", handleAlertSettingsChange);
+loadAlertSettings();
 registerServiceWorker();
 refreshDashboard();
 
@@ -70,10 +79,10 @@ function renderCloudSummary(data) {
   setText("workerNew", workforce.newApplications);
   setText("workerAvailable", workforce.available);
   setText("gmailCritical", gmail.critical);
+  setText("gmailPending", gmail.pending);
   setText("gmailContracts", gmail.contracts);
   setText("gmailPayments", gmail.payments);
-  setText("gmailWorkforce", gmail.workforce);
-  setText("gmailSamCage", gmail.samCage);
+  setText("gmailApplications", gmail.applications);
   setText("revenueActive", revenue.activeOpportunities);
   setText("revenueValue", formatCurrency(revenue.estimatedContractValue));
   setText("revenueAwarded", revenue.awarded);
@@ -83,7 +92,13 @@ function loadExecutiveSummary() {
   if (!config.endpointUrl || config.endpointUrl.includes("PASTE_")) {
     return Promise.reject(new Error("Executive endpoint is not configured."));
   }
-  return jsonp(config.endpointUrl, { action: "summary" }, { cacheKey: "executive:summary" });
+  const settings = readAlertSettings();
+  return jsonp(config.endpointUrl, {
+    action: "summary",
+    alertThreshold: settings.alertThreshold,
+    ownerMode: String(settings.ownerMode),
+    partnerNotifications: String(settings.partnerNotifications),
+  }, { cacheKey: `executive:summary:${JSON.stringify(settings)}` });
 }
 
 function checkJsonp(url, parameters) {
@@ -140,6 +155,62 @@ function readCache(key) {
 function writeCache(key, value) {
   try {
     sessionStorage.setItem(key, JSON.stringify({ cachedAt: Date.now(), value }));
+  } catch {
+    // Non-critical cache.
+  }
+}
+
+function readAlertSettings() {
+  try {
+    return {
+      ...defaultAlertSettings(),
+      ...JSON.parse(localStorage.getItem("igeo_executive_alert_settings")),
+    };
+  } catch {
+    return defaultAlertSettings();
+  }
+}
+
+function defaultAlertSettings() {
+  return {
+    alertThreshold: "high",
+    ownerMode: true,
+    partnerNotifications: true,
+    smsFutureSupport: false,
+  };
+}
+
+function loadAlertSettings() {
+  const settings = readAlertSettings();
+  elements.alertThreshold.value = settings.alertThreshold === "all" ? "all" : "high";
+  elements.ownerModeToggle.checked = settings.ownerMode !== false;
+  elements.partnerNotificationsToggle.checked = settings.partnerNotifications !== false;
+  elements.smsFutureToggle.checked = false;
+  updateAlertModeStatus();
+}
+
+function handleAlertSettingsChange() {
+  const settings = {
+    alertThreshold: elements.alertThreshold.value,
+    ownerMode: elements.ownerModeToggle.checked,
+    partnerNotifications: elements.partnerNotificationsToggle.checked,
+    smsFutureSupport: false,
+  };
+  localStorage.setItem("igeo_executive_alert_settings", JSON.stringify(settings));
+  clearExecutiveCache();
+  updateAlertModeStatus();
+  refreshDashboard();
+}
+
+function updateAlertModeStatus() {
+  elements.alertModeStatus.textContent = elements.ownerModeToggle.checked ? "Owner Mode" : "Monitor Only";
+}
+
+function clearExecutiveCache() {
+  try {
+    Object.keys(sessionStorage)
+      .filter((key) => key.startsWith("executive:summary"))
+      .forEach((key) => sessionStorage.removeItem(key));
   } catch {
     // Non-critical cache.
   }

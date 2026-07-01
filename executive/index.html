@@ -71,15 +71,40 @@
 
         <article class="system-card alerts-card">
           <div class="card-heading">
-            <div><span class="card-icon accent-red">!</span><h2>Gmail Executive Alerts</h2></div>
+            <div><span class="card-icon accent-red">!</span><h2>Executive Alerts</h2></div>
             <a href="https://mail.google.com/" target="_blank" rel="noopener noreferrer">Open Gmail</a>
           </div>
           <div class="alert-grid">
             <div><span>Critical</span><strong id="gmailCritical">--</strong></div>
+            <div><span>Pending</span><strong id="gmailPending">--</strong></div>
             <div><span>Contracts</span><strong id="gmailContracts">--</strong></div>
             <div><span>Payments</span><strong id="gmailPayments">--</strong></div>
-            <div><span>Workforce</span><strong id="gmailWorkforce">--</strong></div>
-            <div><span>SAM/CAGE</span><strong id="gmailSamCage">--</strong></div>
+            <div><span>Applications</span><strong id="gmailApplications">--</strong></div>
+          </div>
+          <div class="settings-panel" aria-label="Executive alert settings">
+            <div class="settings-heading">
+              <h3>Alert Settings</h3>
+              <span id="alertModeStatus">Owner Mode</span>
+            </div>
+            <label class="setting-row">
+              <span>Alert Threshold</span>
+              <select id="alertThreshold">
+                <option value="high" selected>High Priority Only</option>
+                <option value="all">All Important</option>
+              </select>
+            </label>
+            <label class="setting-row">
+              <span>Owner Mode</span>
+              <input id="ownerModeToggle" type="checkbox" checked />
+            </label>
+            <label class="setting-row">
+              <span>Partner Notifications</span>
+              <input id="partnerNotificationsToggle" type="checkbox" checked />
+            </label>
+            <label class="setting-row disabled">
+              <span>SMS Future Support</span>
+              <input id="smsFutureToggle" type="checkbox" disabled />
+            </label>
           </div>
         </article>
 
