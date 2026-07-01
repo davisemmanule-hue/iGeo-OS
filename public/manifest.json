@@ -1,7 +1,7 @@
 {
-  "name": "iGeo Operations System",
+  "name": "iGeo Operator Dashboard",
   "short_name": "iGeo",
-  "description": "iGeo Solutions LLC Operations System",
+  "description": "iGeo operator dashboard",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

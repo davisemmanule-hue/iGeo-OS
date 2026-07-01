@@ -1,4 +1,4 @@
-# iGeo Solutions LLC Operations System
+# iGeo Operator Dashboard
 
 Single operational dashboard for iGeo Solutions LLC.
 

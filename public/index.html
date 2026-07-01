@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>iGeo Operations System</title>
+    <title>iGeo Operator Dashboard</title>
     <meta name="theme-color" content="#0A66C2" />
     <meta name="apple-mobile-web-app-title" content="iGeo" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -19,75 +19,77 @@
   </head>
   <body>
     <header class="top-nav">
-      <a class="brand-lockup" href="#prime-crm" aria-label="iGeo Operations System home">
+      <a class="brand-lockup" href="#today" aria-label="iGeo Operator Dashboard home">
         <span class="logo-frame">
           <img id="brandLogo" alt="" />
           <span id="brandFallback" class="logo-fallback">iG</span>
         </span>
         <span>
           <strong data-brand="companyName">iGeo Solutions LLC</strong>
-          <small>Operations System</small>
+          <small>Operator Dashboard</small>
         </span>
       </a>
 
       <nav class="module-tabs" aria-label="Operations modules">
-        <button class="nav-tab active" type="button" data-module-tab="prime-crm">Prime Contractor CRM</button>
-        <button class="nav-tab" type="button" data-module-tab="quote-generator">Quote Generator</button>
-        <button class="nav-tab" type="button" data-module-tab="workforce-management">Workforce Management</button>
-        <button class="nav-tab" type="button" data-module-tab="vendor-registration">Vendor Registration Tracker</button>
+        <a class="nav-tab nav-link active" href="#today">Today</a>
+        <button class="nav-tab" type="button" data-module-tab="prime-crm">Contacts</button>
+        <button class="nav-tab" type="button" data-module-tab="quote-generator">Quotes</button>
+        <button class="nav-tab" type="button" data-module-tab="workforce-management">Applications</button>
+        <button class="nav-tab" type="button" data-module-tab="vendor-registration">Registrations</button>
         <a class="nav-tab nav-link" href="#settings">Settings</a>
       </nav>
     </header>
 
     <main class="app-shell">
-      <section class="dashboard-hero" aria-label="iGeo dashboard header">
-        <div>
-          <img class="dashboard-logo" src="igeo-logo.png" alt="iGeo Solutions LLC logo" />
-          <p class="eyebrow">Main Dashboard</p>
-          <h1 data-brand="companyName">iGeo Solutions LLC</h1>
-          <p class="tagline" data-brand="tagline">Big Solutions For Small Business</p>
-        </div>
-        <div class="integration-strip" aria-label="Manual Google integration links">
-          <div class="integration-status">
-            <span>Google Sheets Manual Link</span>
-            <span>Google Drive Manual Link</span>
-            <span>Gmail Manual Link</span>
-          </div>
-          <div class="integration-actions">
-            <a class="integration-link" href="https://docs.google.com/spreadsheets/u/0/" target="_blank" rel="noopener noreferrer">Open Google Sheets</a>
-            <a class="integration-link" href="https://drive.google.com/drive/u/0/my-drive" target="_blank" rel="noopener noreferrer">Open Google Drive</a>
-            <a class="integration-link" href="https://mail.google.com/mail/u/0/" target="_blank" rel="noopener noreferrer">Open Gmail</a>
-          </div>
-          <div class="google-account-settings">
-            <p><strong>Current Operations Account:</strong> <a href="mailto:davisemmanule@gmail.com">davisemmanule@gmail.com</a></p>
-            <p><strong>Business Email Identity:</strong> <a href="mailto:admin@igeosolutionsllc.com">admin@igeosolutionsllc.com</a></p>
-            <a class="integration-link account-switch" href="https://accounts.google.com/AccountChooser" target="_blank" rel="noopener noreferrer">Switch Google Account</a>
-          </div>
-          <p class="integration-note">Google opens whichever Google account is currently active in your browser. Current iGeo working account: davisemmanule@gmail.com. Business-facing email identity: admin@igeosolutionsllc.com.</p>
-          <p class="integration-note">Future upgrade: migrate or sync iGeo operational files from davisemmanule@gmail.com to admin@igeosolutionsllc.com when ready.</p>
-        </div>
-      </section>
-
       <section id="today" class="today-panel panel" aria-label="Today dashboard">
         <div class="command-header">
           <div>
-            <p class="eyebrow">Today</p>
-            <h2>What Needs Attention</h2>
-          </div>
-          <div class="mode-switches" aria-label="View settings">
-            <label><input id="simpleModeToggle" type="checkbox" checked /> Simple Mode</label>
-            <label><input id="partnerViewToggle" type="checkbox" /> Partner View</label>
-            <label><input id="advancedModeToggle" type="checkbox" /> Advanced Mode</label>
+            <p class="eyebrow">Operator Dashboard</p>
+            <h1>TODAY</h1>
           </div>
         </div>
         <div class="today-grid">
           <article class="today-card urgent"><span>Urgent Emails</span><strong id="todayUrgentEmails">0</strong></article>
-          <article class="today-card"><span>Follow Ups</span><strong id="todayFollowUps">0</strong></article>
-          <article class="today-card"><span>Prime Contacts</span><strong id="todayPrimeContacts">0</strong></article>
-          <article class="today-card"><span>Workers Available</span><strong id="todayWorkersAvailable">0</strong></article>
+          <article class="today-card"><span>Worker Applications</span><strong id="todayWorkerApplications">0</strong></article>
+          <article class="today-card"><span>Follow Ups Due</span><strong id="todayFollowUps">0</strong></article>
+          <article class="today-card"><span>Open Opportunities</span><strong id="todayOpenOpportunities">0</strong></article>
           <article class="today-card"><span>Registrations Pending</span><strong id="todayRegistrationsPending">0</strong></article>
-          <article class="today-card"><span>Quotes Pending</span><strong id="todayQuotesPending">0</strong></article>
-          <article class="today-card"><span>Documents Needed</span><strong id="todayDocumentsNeeded">0</strong></article>
+          <article class="today-card"><span>Quotes Waiting</span><strong id="todayQuotesWaiting">0</strong></article>
+          <article class="today-card"><span>Contracts Active</span><strong id="todayContractsActive">0</strong></article>
+        </div>
+      </section>
+
+      <section id="my-day" class="my-day-panel panel" aria-label="My Day">
+        <div class="command-header">
+          <div>
+            <p class="eyebrow">My Day</p>
+            <h2>Checklist</h2>
+          </div>
+        </div>
+        <div class="checklist-grid">
+          <label><input type="checkbox" /> Check important emails</label>
+          <label><input type="checkbox" /> Follow up with primes</label>
+          <label><input type="checkbox" /> Review worker applications</label>
+          <label><input type="checkbox" /> Submit registrations</label>
+          <label><input type="checkbox" /> Send capability statements</label>
+          <label><input type="checkbox" /> Review opportunities</label>
+        </div>
+      </section>
+
+      <section id="alerts" class="alerts-panel panel" aria-label="Alerts">
+        <div class="command-header">
+          <div>
+            <p class="eyebrow">Alerts</p>
+            <h2>Needs Attention</h2>
+          </div>
+        </div>
+        <div class="alert-badge-grid">
+          <article><span>Contracts</span><strong id="alertContracts">0</strong></article>
+          <article><span>Payments</span><strong id="alertPayments">0</strong></article>
+          <article><span>Deadlines</span><strong id="alertDeadlines">0</strong></article>
+          <article><span>Applications</span><strong id="alertApplications">0</strong></article>
+          <article><span>SAM</span><strong id="alertSam">0</strong></article>
+          <article><span>Vendor Registrations</span><strong id="alertVendorRegistrations">0</strong></article>
         </div>
       </section>
 
@@ -95,100 +97,48 @@
         <div class="command-header">
           <div>
             <p class="eyebrow">Partner View</p>
-            <h2>Simple Work List</h2>
+            <h2>Simple Work</h2>
           </div>
         </div>
         <div class="partner-grid">
-          <a href="#today">Today's Tasks</a>
-          <a href="https://mail.google.com/mail/u/0/" target="_blank" rel="noopener noreferrer">Messages</a>
+          <a href="#today">Today</a>
+          <a href="#my-day">Tasks</a>
+          <a href="#workforce-management">Applications</a>
           <a href="#prime-crm">Contacts</a>
-          <a href="#workforce-management">Workers</a>
+          <a href="#prime-crm">Opportunities</a>
           <a href="#vendor-registration">Registrations</a>
-          <a href="#quote-generator">Quotes</a>
-          <a href="#settings">Alerts</a>
         </div>
       </section>
 
-      <section class="command-center panel" aria-label="Executive Summary">
+      <section class="owner-panel panel" aria-label="Owner View">
         <div class="command-header">
           <div>
-            <p class="eyebrow">Executive Summary</p>
-            <h2>iGeo Operations Contact Hub</h2>
-          </div>
-          <div class="command-actions">
-            <button id="downloadCapability" class="button secondary" type="button">Download Capability Statement</button>
-            <button id="quickShare" class="button primary" type="button">Quick Share</button>
+            <p class="eyebrow">Owner View</p>
+            <h2>Controls</h2>
           </div>
         </div>
-
-        <div class="command-grid">
-          <article class="command-item">
-            <span>Company</span>
-            <strong id="commandCompany">iGeo Solutions LLC</strong>
-          </article>
-          <article class="command-item">
-            <span>Phone</span>
-            <strong id="commandPhone">(616) 224-2325</strong>
-            <button class="mini-action" type="button" data-copy-target="commandPhone">Copy Phone</button>
-          </article>
-          <article class="command-item">
-            <span>Email</span>
-            <strong><a id="commandEmail" href="mailto:admin@igeosolutionsllc.com">admin@igeosolutionsllc.com</a></strong>
-            <button class="mini-action" type="button" data-copy-value="admin@igeosolutionsllc.com">Copy Email</button>
-          </article>
-          <article class="command-item">
-            <span>Website</span>
-            <strong><a id="commandWebsite" href="https://igeosolutionsllc.com/" target="_blank" rel="noopener noreferrer">https://igeosolutionsllc.com</a></strong>
-            <div class="mini-actions">
-              <button class="mini-action" type="button" data-copy-value="https://igeosolutionsllc.com/">Copy Website</button>
-              <a class="mini-action link-action" href="https://igeosolutionsllc.com/" target="_blank" rel="noopener noreferrer">Open Website</a>
-            </div>
-          </article>
-          <article class="command-item">
-            <span>UEI</span>
-            <strong id="commandUei">PQ6GHN6ZS287</strong>
-            <button class="mini-action" type="button" data-copy-target="commandUei">Copy UEI</button>
-          </article>
-          <article class="command-item">
-            <span>Coverage</span>
-            <strong>Kentucky<br />Michigan<br />Nationwide Subcontract Support</strong>
-          </article>
-        </div>
-
-        <div class="business-card">
-          <div>
-            <p class="eyebrow">Digital Business Card</p>
-            <h3>iGeo Solutions LLC</h3>
-            <p>Big Solutions For Small Business</p>
-          </div>
-          <div class="business-card-lines">
-            <span>(616) 224-2325</span>
-            <span>admin@igeosolutionsllc.com</span>
-            <span>https://igeosolutionsllc.com</span>
-            <span>UEI: PQ6GHN6ZS287</span>
-          </div>
+        <div class="owner-grid">
+          <a href="#alerts">Alerts</a>
+          <a href="#settings">Settings</a>
+          <a href="#settings">Email Notifications</a>
+          <a href="#settings">Automation Status</a>
         </div>
       </section>
 
       <section id="prime-crm" class="module-page active" data-module-page="prime-crm">
         <div class="module-heading">
           <div>
-            <p class="eyebrow">Business Development</p>
-            <h2>Prime Contractor CRM</h2>
+            <p class="eyebrow">Contacts</p>
+            <h2>Contacts & Opportunities</h2>
           </div>
           <div class="header-actions">
             <button id="exportCsv" class="button secondary" type="button">
               <span aria-hidden="true">CSV</span>
               Export
             </button>
-            <button id="exportExcel" class="button secondary" type="button">
-              <span aria-hidden="true">XLS</span>
-              Export
-            </button>
-            <button id="forcePrimeSync" class="button secondary" type="button">Force Sync Laptop Data to Cloud</button>
             <button id="addRecord" class="button primary" type="button">
               <span aria-hidden="true">+</span>
-              Prime
+              Contact
             </button>
           </div>
         </div>
@@ -342,12 +292,11 @@
       <section id="quote-generator" class="module-page" data-module-page="quote-generator">
         <div class="module-heading">
           <div>
-            <p class="eyebrow">Pricing Operations</p>
-            <h2>Quote Generator</h2>
+            <p class="eyebrow">Quotes</p>
+            <h2>Quotes Waiting</h2>
           </div>
           <div class="header-actions">
             <button id="exportQuotesCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
-            <button id="exportQuotesExcel" class="button secondary" type="button"><span>XLS</span> Export</button>
             <button id="addQuote" class="button primary" type="button">New Quote</button>
           </div>
         </div>
@@ -377,13 +326,12 @@
       <section id="workforce-management" class="module-page" data-module-page="workforce-management">
         <div class="module-heading">
           <div>
-            <p class="eyebrow">Service Delivery</p>
-            <h2>Workforce Management</h2>
+            <p class="eyebrow">Applications</p>
+            <h2>Worker Applications</h2>
           </div>
           <div class="header-actions">
-            <a class="button secondary" href="worker-intake.html" target="_blank" rel="noopener noreferrer">Public Worker Intake Form</a>
+            <a class="button secondary" href="worker-intake.html" target="_blank" rel="noopener noreferrer">Worker Intake Form</a>
             <button id="exportWorkersCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
-            <button id="exportWorkersExcel" class="button secondary" type="button"><span>XLS</span> Export</button>
             <button id="addWorker" class="button primary" type="button">Add Worker</button>
           </div>
         </div>
@@ -417,12 +365,11 @@
       <section id="vendor-registration" class="module-page" data-module-page="vendor-registration">
         <div class="module-heading">
           <div>
-            <p class="eyebrow">Compliance & Access</p>
-            <h2>Vendor Registration Tracker</h2>
+            <p class="eyebrow">Registrations</p>
+            <h2>Vendor Registrations</h2>
           </div>
           <div class="header-actions">
             <button id="exportVendorsCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
-            <button id="exportVendorsExcel" class="button secondary" type="button"><span>XLS</span> Export</button>
             <button id="addRegistration" class="button primary" type="button">Add Registration</button>
           </div>
         </div>
@@ -455,24 +402,18 @@
         <div class="command-header">
           <div>
             <p class="eyebrow">Settings</p>
-            <h2>Alerts and Notifications</h2>
+            <h2>Operator Settings</h2>
           </div>
         </div>
         <div class="settings-grid">
-          <article>
-            <h3>Executive Email Alerts</h3>
-            <p>Only business-critical emails should create owner alerts.</p>
-            <strong id="settingsEmailAlerts">0 urgent emails</strong>
-          </article>
-          <article>
-            <h3>Notifications</h3>
-            <p>Send owner alerts for contracts, payments, deadlines, registrations, and worker applications.</p>
-            <strong id="settingsNotifications">On</strong>
-          </article>
-          <article>
-            <h3>Partner View</h3>
-            <p>Shows simple task names without technical deployment details.</p>
-            <strong id="settingsPartnerView">Off</strong>
+          <label class="setting-toggle"><span>Partner Notifications</span><input id="partnerNotificationsToggle" type="checkbox" checked /></label>
+          <label class="setting-toggle"><span>Email Alerts</span><input id="emailAlertsToggle" type="checkbox" checked /></label>
+          <label class="setting-toggle"><span>Simple Mode</span><input id="simpleModeToggle" type="checkbox" checked /></label>
+          <label class="setting-toggle"><span>Advanced Mode</span><input id="advancedModeToggle" type="checkbox" /></label>
+          <label class="setting-toggle"><span>Partner View</span><input id="partnerViewToggle" type="checkbox" /></label>
+          <article class="settings-status">
+            <h3>Automation Status</h3>
+            <strong id="settingsAutomationStatus">Monitoring</strong>
           </article>
         </div>
       </section>

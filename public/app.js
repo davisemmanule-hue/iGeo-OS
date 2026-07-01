@@ -245,17 +245,23 @@ function bindElements() {
     "metricVendorSubmitted",
     "todayUrgentEmails",
     "todayFollowUps",
-    "todayPrimeContacts",
-    "todayWorkersAvailable",
+    "todayWorkerApplications",
+    "todayOpenOpportunities",
     "todayRegistrationsPending",
-    "todayQuotesPending",
-    "todayDocumentsNeeded",
-    "settingsEmailAlerts",
-    "settingsNotifications",
-    "settingsPartnerView",
+    "todayQuotesWaiting",
+    "todayContractsActive",
+    "alertContracts",
+    "alertPayments",
+    "alertDeadlines",
+    "alertApplications",
+    "alertSam",
+    "alertVendorRegistrations",
+    "partnerNotificationsToggle",
+    "emailAlertsToggle",
     "simpleModeToggle",
     "partnerViewToggle",
     "advancedModeToggle",
+    "settingsAutomationStatus",
     "searchInput",
     "statusFilter",
     "serviceFilter",
@@ -333,7 +339,7 @@ function bindElements() {
 }
 
 function applyBranding() {
-  document.title = `${branding.companyName} Operations System`;
+  document.title = `${branding.companyName} Operator Dashboard`;
   Object.entries(branding.colors || {}).forEach(([key, color]) => {
     document.documentElement.style.setProperty(toCssVariable(key), color);
   });
@@ -397,7 +403,7 @@ function bindEvents() {
   });
   els.resetFilters.addEventListener("click", resetPrimeFilters);
   els.addRecord.addEventListener("click", () => openPrimeDialog());
-  els.forcePrimeSync.addEventListener("click", async () => {
+  if (els.forcePrimeSync) els.forcePrimeSync.addEventListener("click", async () => {
     try {
       await reconcileLaptopPrimeSnapshotToCloud();
     } catch (error) {
@@ -410,7 +416,7 @@ function bindEvents() {
   els.deleteRecord.addEventListener("click", deleteCurrentRecord);
   els.recordForm.addEventListener("submit", savePrimeRecord);
   els.exportCsv.addEventListener("click", () => exportDataset("primes", "csv"));
-  els.exportExcel.addEventListener("click", () => exportDataset("primes", "xls"));
+  if (els.exportExcel) els.exportExcel.addEventListener("click", () => exportDataset("primes", "xls"));
 
   els.addWorker.addEventListener("click", () => openModal(els.workerDialog, els.workerForm));
   els.closeWorkerDialog.addEventListener("click", () => closeModal(els.workerDialog, els.workerForm));
@@ -420,7 +426,7 @@ function bindEvents() {
     els[id].addEventListener("input", renderWorkers);
   });
   els.exportWorkersCsv.addEventListener("click", () => exportDataset("workers", "csv"));
-  els.exportWorkersExcel.addEventListener("click", () => exportDataset("workers", "xls"));
+  if (els.exportWorkersExcel) els.exportWorkersExcel.addEventListener("click", () => exportDataset("workers", "xls"));
 
   els.addQuote.addEventListener("click", () => {
     openModal(els.quoteDialog, els.quoteForm);
@@ -434,7 +440,7 @@ function bindEvents() {
   });
   els.quoteSearch.addEventListener("input", renderQuotes);
   els.exportQuotesCsv.addEventListener("click", () => exportDataset("quotes", "csv"));
-  els.exportQuotesExcel.addEventListener("click", () => exportDataset("quotes", "xls"));
+  if (els.exportQuotesExcel) els.exportQuotesExcel.addEventListener("click", () => exportDataset("quotes", "xls"));
 
   els.addRegistration.addEventListener("click", () => openModal(els.vendorDialog, els.vendorForm));
   els.closeVendorDialog.addEventListener("click", () => closeModal(els.vendorDialog, els.vendorForm));
@@ -442,7 +448,7 @@ function bindEvents() {
   els.vendorForm.addEventListener("submit", saveVendorRegistration);
   ["vendorSearch", "vendorStatusFilter"].forEach((id) => els[id].addEventListener("input", renderVendors));
   els.exportVendorsCsv.addEventListener("click", () => exportDataset("vendors", "csv"));
-  els.exportVendorsExcel.addEventListener("click", () => exportDataset("vendors", "xls"));
+  if (els.exportVendorsExcel) els.exportVendorsExcel.addEventListener("click", () => exportDataset("vendors", "xls"));
 
   document.querySelectorAll("[data-copy-target], [data-copy-value]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -450,8 +456,10 @@ function bindEvents() {
       copyText(valueToCopy, `${button.textContent.trim().replace("Copy ", "")} copied.`);
     });
   });
-  els.downloadCapability.addEventListener("click", downloadCapabilityStatement);
-  els.quickShare.addEventListener("click", quickShareBusinessCard);
+  if (els.downloadCapability) els.downloadCapability.addEventListener("click", downloadCapabilityStatement);
+  if (els.quickShare) els.quickShare.addEventListener("click", quickShareBusinessCard);
+  if (els.partnerNotificationsToggle) els.partnerNotificationsToggle.addEventListener("change", applyViewMode);
+  if (els.emailAlertsToggle) els.emailAlertsToggle.addEventListener("change", applyViewMode);
   if (els.simpleModeToggle) els.simpleModeToggle.addEventListener("change", applyViewMode);
   if (els.partnerViewToggle) els.partnerViewToggle.addEventListener("change", applyViewMode);
   if (els.advancedModeToggle) els.advancedModeToggle.addEventListener("change", applyViewMode);
@@ -498,29 +506,42 @@ function renderMetrics() {
 
 function renderToday() {
   const followUpsToday = records.filter((record) => record.nextFollowUpDate === isoToday).length;
-  const workersAvailable = workers.filter((worker) => worker.status === "Available").length;
+  const workerApplications = workers.filter((worker) => ["New", "Contacted"].includes(worker.status)).length;
+  const openOpportunities = records.filter(isActiveOpportunity).length;
   const registrationsPending = vendors.filter((vendor) =>
     ["Not Started", "In Progress", "Waiting Response", "Follow Up Needed"].includes(vendor.registrationStatus),
   ).length;
-  const quotesPending = quotes.filter((quote) => ["Draft", "Sent", "Follow Up"].includes(quote.quoteStatus)).length;
-  const documentsNeeded = records.filter((record) => !record.capabilitySent && isActiveOpportunity(record)).length
-    + vendors.filter((vendor) => !vendor.capabilitySent).length;
+  const quotesWaiting = quotes.filter((quote) => ["Draft", "Sent", "Follow Up"].includes(quote.quoteStatus)).length;
+  const contractsActive = records.filter((record) => record.status === "Contract Awarded").length;
+  const deadlines = records.filter((record) => record.nextFollowUpDate === isoToday || isWithinDays(record.dueDate, 7)).length;
+  const samRegistrations = vendors.filter((vendor) => String(vendor.portalType || vendor.companyName || "").toLowerCase().includes("sam")).length;
 
   setText("todayUrgentEmails", executiveEmailCounts.critical);
+  setText("todayWorkerApplications", workerApplications);
   setText("todayFollowUps", followUpsToday);
-  setText("todayPrimeContacts", records.length);
-  setText("todayWorkersAvailable", workersAvailable);
+  setText("todayOpenOpportunities", openOpportunities);
   setText("todayRegistrationsPending", registrationsPending);
-  setText("todayQuotesPending", quotesPending);
-  setText("todayDocumentsNeeded", documentsNeeded);
-  setText("settingsEmailAlerts", `${executiveEmailCounts.critical} urgent emails`);
-  setText("settingsNotifications", "On");
-  setText("settingsPartnerView", els.partnerViewToggle?.checked ? "On" : "Off");
+  setText("todayQuotesWaiting", quotesWaiting);
+  setText("todayContractsActive", contractsActive);
+  setText("alertContracts", executiveEmailCounts.contracts || openOpportunities);
+  setText("alertPayments", executiveEmailCounts.payments || 0);
+  setText("alertDeadlines", deadlines);
+  setText("alertApplications", executiveEmailCounts.applications || workerApplications);
+  setText("alertSam", samRegistrations);
+  setText("alertVendorRegistrations", registrationsPending);
+  setText("settingsAutomationStatus", els.emailAlertsToggle?.checked ? "Monitoring" : "Paused");
 }
 
 async function refreshExecutiveEmailAlerts() {
+  if (els.emailAlertsToggle && !els.emailAlertsToggle.checked) {
+    executiveEmailCounts = { critical: 0, pending: 0, contracts: 0, payments: 0, applications: 0 };
+    renderToday();
+    return;
+  }
   try {
-    const response = await fetch("/api/executive-email-alerts", { cache: "no-store" });
+    const response = await fetch(`/api/executive-email-alerts?${new URLSearchParams({
+      partnerNotifications: String(els.partnerNotificationsToggle?.checked !== false),
+    })}`, { cache: "no-store" });
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error || "Email alerts unavailable.");
     executiveEmailCounts = { ...executiveEmailCounts, ...(result.gmail || {}) };
@@ -536,6 +557,7 @@ function applyViewMode() {
   document.body.classList.toggle("advanced-view", Boolean(els.advancedModeToggle?.checked));
   if (els.simpleModeToggle && els.advancedModeToggle?.checked) els.simpleModeToggle.checked = false;
   if (els.simpleModeToggle && !els.advancedModeToggle?.checked) els.simpleModeToggle.checked = true;
+  if (els.emailAlertsToggle?.checked) refreshExecutiveEmailAlerts();
   renderToday();
 }
 

@@ -229,20 +229,30 @@ h3 {
 
 .today-panel,
 .partner-panel,
+.my-day-panel,
+.alerts-panel,
+.owner-panel,
 .settings-panel {
   display: grid;
   gap: 16px;
 }
 
 .today-grid,
-.settings-grid {
+.settings-grid,
+.alert-badge-grid,
+.owner-grid,
+.checklist-grid {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .today-card,
-.settings-grid article {
+.settings-grid article,
+.setting-toggle,
+.alert-badge-grid article,
+.owner-grid a,
+.checklist-grid label {
   background: #ffffff;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -251,32 +261,46 @@ h3 {
 }
 
 .today-card span,
-.settings-grid p {
+.settings-grid p,
+.setting-toggle span,
+.alert-badge-grid span {
   color: var(--muted);
   display: block;
   font-size: 13px;
   font-weight: 800;
 }
 
-.today-card strong {
+.today-card strong,
+.alert-badge-grid strong {
   display: block;
   font-size: clamp(28px, 5vw, 42px);
   margin-top: 8px;
+}
+
+.alert-badge-grid strong {
+  background: var(--danger);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-grid;
+  min-height: 42px;
+  min-width: 42px;
+  padding: 4px 10px;
+  place-items: center;
 }
 
 .today-card.urgent {
   border-left: 5px solid var(--danger);
 }
 
-.mode-switches,
-.partner-grid {
+.partner-grid,
+.owner-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.mode-switches label,
-.partner-grid a {
+.partner-grid a,
+.owner-grid a {
   align-items: center;
   background: var(--blue-soft);
   border: 1px solid #b8ddfb;
@@ -291,10 +315,34 @@ h3 {
   text-decoration: none;
 }
 
+.checklist-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.checklist-grid label,
+.setting-toggle {
+  align-items: center;
+  color: var(--text);
+  display: flex;
+  font-weight: 900;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.checklist-grid input,
+.setting-toggle input {
+  accent-color: var(--primary-blue);
+  min-height: 20px;
+  min-width: 20px;
+}
+
 body.partner-view .integration-strip,
 body.partner-view .command-center,
 body.partner-view .filters,
-body.partner-view .reports {
+body.partner-view .reports,
+body.partner-view .owner-panel,
+body.partner-view .settings-panel,
+body.partner-view .alerts-panel {
   display: none;
 }
 
@@ -1067,7 +1115,9 @@ form {
   .metric-grid,
   .report-grid,
   .today-grid,
-  .settings-grid {
+  .settings-grid,
+  .alert-badge-grid,
+  .checklist-grid {
     grid-template-columns: repeat(3, minmax(140px, 1fr));
   }
 
@@ -1128,6 +1178,8 @@ form {
   .report-grid,
   .today-grid,
   .settings-grid,
+  .alert-badge-grid,
+  .checklist-grid,
   .module-tools,
   .command-grid,
   .form-grid,
