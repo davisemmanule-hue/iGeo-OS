@@ -25,6 +25,7 @@
 
 html {
   overflow-x: hidden;
+  scroll-padding-top: 96px;
 }
 
 body {
@@ -32,6 +33,7 @@ body {
   color: var(--text);
   margin: 0;
   overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 button,
@@ -151,6 +153,10 @@ h3 {
   justify-content: flex-end;
   min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 .nav-tab {
@@ -182,7 +188,7 @@ h3 {
 .app-shell {
   display: grid;
   gap: 18px;
-  padding: 20px clamp(14px, 3vw, 30px) 34px;
+  padding: 14px clamp(12px, 3vw, 30px) 34px;
 }
 
 .dashboard-hero {
@@ -258,6 +264,7 @@ h3 {
   border-radius: 8px;
   min-width: 0;
   padding: 16px;
+  overflow-wrap: anywhere;
 }
 
 .today-card span,
@@ -334,6 +341,19 @@ h3 {
   accent-color: var(--primary-blue);
   min-height: 20px;
   min-width: 20px;
+}
+
+.app-footer {
+  align-items: center;
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 8px 14px;
+  padding: 14px clamp(12px, 3vw, 30px) calc(14px + env(safe-area-inset-bottom));
 }
 
 body.partner-view .integration-strip,
@@ -1143,13 +1163,63 @@ form {
 }
 
 @media (max-width: 760px) {
+  html {
+    scroll-padding-top: 12px;
+  }
+
   .top-nav {
     position: static;
+    gap: 10px;
+    padding: 10px 12px;
   }
 
   .brand-lockup {
+    gap: 8px;
     min-width: 0;
     width: 100%;
+  }
+
+  .brand-lockup strong {
+    font-size: 14px;
+  }
+
+  .brand-lockup small {
+    font-size: 11px;
+  }
+
+  .logo-frame {
+    flex: 0 0 52px;
+    height: 38px;
+    width: 52px;
+  }
+
+  .module-tabs {
+    gap: 6px;
+    justify-content: flex-start;
+    margin-inline: -12px;
+    padding: 0 12px 4px;
+    width: calc(100% + 24px);
+  }
+
+  .nav-tab {
+    border-color: var(--line);
+    min-height: 36px;
+    padding: 0 10px;
+  }
+
+  .app-shell {
+    gap: 12px;
+    padding: 10px 10px 24px;
+  }
+
+  .panel,
+  .today-card,
+  .settings-grid article,
+  .setting-toggle,
+  .alert-badge-grid article,
+  .owner-grid a,
+  .checklist-grid label {
+    border-radius: 8px;
   }
 
   .dashboard-hero,
@@ -1158,6 +1228,18 @@ form {
   .business-card {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  h1 {
+    font-size: 34px;
+  }
+
+  h2 {
+    font-size: 19px;
+  }
+
+  .command-header {
+    gap: 8px;
   }
 
   .integration-strip,
@@ -1187,6 +1269,57 @@ form {
     grid-template-columns: 1fr;
   }
 
+  .today-grid {
+    gap: 8px;
+  }
+
+  .today-card {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    min-height: 68px;
+    padding: 12px 14px;
+  }
+
+  .today-card span {
+    font-size: 14px;
+    max-width: 72%;
+  }
+
+  .today-card strong {
+    font-size: 30px;
+    margin-top: 0;
+  }
+
+  .alert-badge-grid article {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .partner-grid,
+  .owner-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .partner-grid a,
+  .owner-grid a {
+    justify-content: center;
+    min-height: 44px;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .header-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  body:not(.advanced-view) .header-actions .button.secondary {
+    display: none;
+  }
+
   .business-card-lines {
     text-align: left;
   }
@@ -1210,5 +1343,12 @@ form {
 
   .dialog-actions > div {
     flex-direction: column;
+  }
+
+  .app-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    font-size: 11px;
+    line-height: 1.35;
   }
 }

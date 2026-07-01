@@ -1,4 +1,4 @@
-const CACHE_NAME = "igeo-operations-v4";
+const CACHE_NAME = "igeo-operations-v21a6f2a-mobile1";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -41,6 +41,25 @@ self.addEventListener("fetch", (event) => {
 
   if (request.method !== "GET") return;
   if (url.origin !== self.location.origin) return;
+
+  const shouldUseNetworkFirst = request.mode === "navigate"
+    || [".html", ".css", ".js", ".json"].some((extension) => url.pathname.endsWith(extension))
+    || url.pathname === "/";
+
+  if (shouldUseNetworkFirst) {
+    event.respondWith(
+      fetch(request, { cache: "no-store" })
+        .then((response) => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request)),
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(request).then((cached) => {
