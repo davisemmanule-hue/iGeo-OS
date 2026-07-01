@@ -11,7 +11,7 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
-    if (url.pathname === "/worker-intake") {
+    if (url.pathname === "/worker-intake" || url.pathname === "/worker-intake/") {
       url.pathname = "/worker-intake.html";
     }
 

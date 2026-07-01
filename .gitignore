@@ -11,6 +11,8 @@ build/
 .codex/
 .pnpm-cache/
 .pnpm-home/
+.pnpm-store/
 .cache/
 .localappdata/
+.wrangler/
 netlify-deploy/
