@@ -338,7 +338,25 @@ h3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.checklist-grid label,
+.checklist-grid label {
+  align-items: center;
+  color: var(--text);
+  display: flex;
+  flex-direction: row;
+  font-weight: 900;
+  gap: 12px;
+  justify-content: center;
+  justify-self: center;
+  max-width: 220px;
+  min-height: 120px;
+  text-align: center;
+  text-orientation: mixed;
+  white-space: normal;
+  width: 100%;
+  word-break: normal;
+  writing-mode: horizontal-tb;
+}
+
 .setting-toggle {
   align-items: center;
   color: var(--text);
@@ -351,6 +369,11 @@ h3 {
 .checklist-grid input,
 .setting-toggle input {
   flex: 0 0 auto;
+}
+
+.checklist-grid input[type="checkbox"] {
+  height: 20px;
+  width: 20px;
 }
 
 .app-footer {
@@ -1284,12 +1307,15 @@ form {
   .today-grid,
   .settings-grid,
   .alert-badge-grid,
-  .checklist-grid,
   .module-tools,
   .command-grid,
   .form-grid,
   .check-grid {
     grid-template-columns: 1fr;
+  }
+
+  .checklist-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .today-grid {
@@ -1389,6 +1415,10 @@ form {
   .module-heading,
   .panel {
     padding: 14px;
+  }
+
+  .checklist-grid {
+    grid-template-columns: 1fr;
   }
 
   .partner-grid,
