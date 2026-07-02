@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   workers: "igeo_workers",
   quotes: "igeo_quotes",
   vendors: "igeo_vendor_registrations",
+  viewMode: "igeo_operator_view_mode",
 };
 
 const primeCrmIntegration = window.IGEO_INTEGRATIONS?.googleSheets?.primeCrm || {};
@@ -223,6 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindElements();
   applyBranding();
   hydrateControls();
+  loadViewMode();
   bindEvents();
   activateModule(getInitialModule());
   render();
@@ -465,7 +467,20 @@ function bindEvents() {
   if (els.advancedModeToggle) els.advancedModeToggle.addEventListener("change", applyViewMode);
 
   document.querySelectorAll("[data-module-tab]").forEach((tab) => {
-    tab.addEventListener("click", () => activateModule(tab.dataset.moduleTab));
+    tab.addEventListener("click", () => activateModule(tab.dataset.moduleTab, { scroll: true }));
+  });
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const targetId = link.getAttribute("href").slice(1);
+      if (!targetId) return;
+      event.preventDefault();
+      if (document.querySelector(`[data-module-page="${targetId}"]`)) {
+        activateModule(targetId, { scroll: true });
+        return;
+      }
+      scrollToSection(targetId);
+      history.replaceState(null, "", `#${targetId}`);
+    });
   });
   document.querySelectorAll("[data-report]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -552,11 +567,61 @@ async function refreshExecutiveEmailAlerts() {
   }
 }
 
-function applyViewMode() {
+function loadViewMode() {
+  const mode = readViewMode();
+  if (els.simpleModeToggle) els.simpleModeToggle.checked = mode.simpleMode;
+  if (els.advancedModeToggle) els.advancedModeToggle.checked = mode.advancedMode;
+  if (els.partnerViewToggle) els.partnerViewToggle.checked = mode.partnerView;
+  if (els.partnerNotificationsToggle) els.partnerNotificationsToggle.checked = mode.partnerNotifications;
+  if (els.emailAlertsToggle) els.emailAlertsToggle.checked = mode.emailAlerts;
+  applyViewMode();
+}
+
+function readViewMode() {
+  try {
+    return {
+      simpleMode: true,
+      advancedMode: false,
+      partnerView: false,
+      partnerNotifications: true,
+      emailAlerts: true,
+      ...JSON.parse(localStorage.getItem(STORAGE_KEYS.viewMode)),
+    };
+  } catch {
+    return {
+      simpleMode: true,
+      advancedMode: false,
+      partnerView: false,
+      partnerNotifications: true,
+      emailAlerts: true,
+    };
+  }
+}
+
+function applyViewMode(event) {
+  if (event?.target === els.advancedModeToggle && els.advancedModeToggle.checked && els.simpleModeToggle) {
+    els.simpleModeToggle.checked = false;
+  }
+  if (event?.target === els.simpleModeToggle && els.simpleModeToggle.checked && els.advancedModeToggle) {
+    els.advancedModeToggle.checked = false;
+  }
+  if (els.simpleModeToggle && els.advancedModeToggle && !els.simpleModeToggle.checked && !els.advancedModeToggle.checked) {
+    els.simpleModeToggle.checked = true;
+  }
+
   document.body.classList.toggle("partner-view", Boolean(els.partnerViewToggle?.checked));
   document.body.classList.toggle("advanced-view", Boolean(els.advancedModeToggle?.checked));
-  if (els.simpleModeToggle && els.advancedModeToggle?.checked) els.simpleModeToggle.checked = false;
-  if (els.simpleModeToggle && !els.advancedModeToggle?.checked) els.simpleModeToggle.checked = true;
+  try {
+    localStorage.setItem(STORAGE_KEYS.viewMode, JSON.stringify({
+      simpleMode: els.simpleModeToggle?.checked !== false,
+      advancedMode: Boolean(els.advancedModeToggle?.checked),
+      partnerView: Boolean(els.partnerViewToggle?.checked),
+      partnerNotifications: els.partnerNotificationsToggle?.checked !== false,
+      emailAlerts: els.emailAlertsToggle?.checked !== false,
+    }));
+  } catch {
+    // Local preference storage is non-critical.
+  }
   if (els.emailAlertsToggle?.checked) refreshExecutiveEmailAlerts();
   renderToday();
 }
@@ -1652,7 +1717,7 @@ async function quickShareBusinessCard() {
   await copyText(text, "Digital business card copied.");
 }
 
-function activateModule(moduleId) {
+function activateModule(moduleId, options = {}) {
   if (!document.querySelector(`[data-module-page="${moduleId}"]`)) moduleId = "prime-crm";
   document.querySelectorAll("[data-module-tab]").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.moduleTab === moduleId);
@@ -1661,6 +1726,14 @@ function activateModule(moduleId) {
     page.classList.toggle("active", page.dataset.modulePage === moduleId);
   });
   history.replaceState(null, "", `#${moduleId}`);
+  if (options.scroll) scrollToSection(moduleId);
+}
+
+function scrollToSection(sectionId) {
+  document.getElementById(sectionId)?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
 }
 
 function getInitialModule() {

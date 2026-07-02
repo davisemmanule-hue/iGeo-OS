@@ -43,6 +43,12 @@ textarea {
   font: inherit;
 }
 
+input[type="checkbox"] {
+  appearance: auto;
+  -webkit-appearance: auto;
+  margin: 0;
+}
+
 button {
   cursor: pointer;
 }
@@ -189,6 +195,12 @@ h3 {
   display: grid;
   gap: 18px;
   padding: 14px clamp(12px, 3vw, 30px) 34px;
+}
+
+.app-shell > section,
+.module-page,
+#settings {
+  scroll-margin-top: 104px;
 }
 
 .dashboard-hero {
@@ -338,9 +350,7 @@ h3 {
 
 .checklist-grid input,
 .setting-toggle input {
-  accent-color: var(--primary-blue);
-  min-height: 20px;
-  min-width: 20px;
+  flex: 0 0 auto;
 }
 
 .app-footer {
@@ -367,8 +377,15 @@ body.partner-view .alerts-panel {
 }
 
 body:not(.advanced-view) #forcePrimeSync,
-body:not(.advanced-view) .integration-note {
+body:not(.advanced-view) .integration-note,
+body:not(.advanced-view) .reports,
+body:not(.advanced-view) .metric-grid .metric:nth-child(n + 4),
+body:not(.advanced-view) button.secondary {
   display: none;
+}
+
+body.advanced-view button.secondary {
+  display: inline-flex;
 }
 
 .integration-status,
@@ -1162,7 +1179,7 @@ form {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   html {
     scroll-padding-top: 12px;
   }
@@ -1210,6 +1227,12 @@ form {
   .app-shell {
     gap: 12px;
     padding: 10px 10px 24px;
+  }
+
+  .app-shell > section,
+  .module-page,
+  #settings {
+    scroll-margin-top: 12px;
   }
 
   .panel,
@@ -1279,6 +1302,7 @@ form {
     justify-content: space-between;
     min-height: 68px;
     padding: 12px 14px;
+    width: 100%;
   }
 
   .today-card span {
@@ -1314,6 +1338,7 @@ form {
   .header-actions {
     display: grid;
     grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   body:not(.advanced-view) .header-actions .button.secondary {
@@ -1350,5 +1375,74 @@ form {
     flex-direction: column;
     font-size: 11px;
     line-height: 1.35;
+  }
+}
+
+@media (max-width: 430px) {
+  .today-card,
+  .alert-badge-grid article,
+  .checklist-grid label,
+  .setting-toggle {
+    padding: 11px 12px;
+  }
+
+  .module-heading,
+  .panel {
+    padding: 14px;
+  }
+
+  .partner-grid,
+  .owner-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  .brand-lockup strong {
+    font-size: 13px;
+  }
+
+  .nav-tab {
+    font-size: 12px;
+    min-height: 34px;
+    padding: 0 9px;
+  }
+
+  .today-card span,
+  .alert-badge-grid span {
+    font-size: 13px;
+  }
+
+  .today-card strong,
+  .alert-badge-grid strong {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-shell {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .top-nav {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .module-tabs {
+    margin-inline: -8px;
+    padding-inline: 8px;
+    width: calc(100% + 16px);
+  }
+
+  .today-card {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .today-card span {
+    max-width: 100%;
   }
 }
