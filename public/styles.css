@@ -64,7 +64,7 @@ h1 {
   font-size: clamp(30px, 4vw, 44px);
   line-height: 1.02;
   margin-bottom: 8px;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
 
 h2 {
@@ -276,7 +276,7 @@ h3 {
   border-radius: 8px;
   min-width: 0;
   padding: 16px;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
 
 .today-card span,
@@ -338,6 +338,10 @@ h3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.card,
+.setting-card,
+.checklist-card,
+.setting-toggle,
 .checklist-grid label {
   align-items: center;
   color: var(--text);
@@ -345,33 +349,47 @@ h3 {
   flex-direction: row;
   font-weight: 900;
   gap: 12px;
-  justify-content: center;
+  justify-content: flex-start;
   justify-self: center;
-  max-width: 220px;
+  min-height: 96px;
+  padding: 16px;
+  text-align: left;
+  width: 100%;
+}
+
+.checklist-grid label {
+  justify-content: center;
   min-height: 120px;
   text-align: center;
+}
+
+.card label,
+.setting-card label,
+.checklist-card label,
+.card span,
+.setting-card span,
+.checklist-card span,
+.setting-toggle,
+.setting-toggle span,
+.checklist-grid label {
+  display: inline-block;
+  min-width: 0;
+  max-width: none;
+  overflow-wrap: normal;
+  text-align: left;
   text-orientation: mixed;
   white-space: normal;
-  width: 100%;
   word-break: normal;
   writing-mode: horizontal-tb;
 }
 
-.setting-toggle {
-  align-items: center;
-  color: var(--text);
-  display: flex;
-  font-weight: 900;
-  gap: 12px;
-  justify-content: space-between;
+.checklist-grid label {
+  text-align: center;
 }
 
-.checklist-grid input,
-.setting-toggle input {
-  flex: 0 0 auto;
-}
-
-.checklist-grid input[type="checkbox"] {
+input[type="checkbox"] {
+  appearance: auto;
+  flex: 0 0 20px;
   height: 20px;
   width: 20px;
 }
@@ -389,25 +407,15 @@ h3 {
   padding: 14px clamp(12px, 3vw, 30px) calc(14px + env(safe-area-inset-bottom));
 }
 
-body.partner-view .integration-strip,
-body.partner-view .command-center,
-body.partner-view .filters,
-body.partner-view .reports,
-body.partner-view .owner-panel,
-body.partner-view .settings-panel,
-body.partner-view .alerts-panel {
+body.simple-mode #forcePrimeSync,
+body.simple-mode .integration-note,
+body.simple-mode .reports,
+body.simple-mode .metric-grid .metric:nth-child(n + 4),
+body.simple-mode button.secondary {
   display: none;
 }
 
-body:not(.advanced-view) #forcePrimeSync,
-body:not(.advanced-view) .integration-note,
-body:not(.advanced-view) .reports,
-body:not(.advanced-view) .metric-grid .metric:nth-child(n + 4),
-body:not(.advanced-view) button.secondary {
-  display: none;
-}
-
-body.advanced-view button.secondary {
+body.advanced-mode button.secondary {
   display: inline-flex;
 }
 
@@ -524,7 +532,7 @@ body.advanced-view button.secondary {
   color: var(--text);
   font-size: 14px;
   line-height: 1.45;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
 
 .command-item a {
@@ -1367,7 +1375,7 @@ form {
     gap: 8px;
   }
 
-  body:not(.advanced-view) .header-actions .button.secondary {
+  body.simple-mode .header-actions .button.secondary {
     display: none;
   }
 

@@ -609,8 +609,8 @@ function applyViewMode(event) {
     els.simpleModeToggle.checked = true;
   }
 
-  document.body.classList.toggle("partner-view", Boolean(els.partnerViewToggle?.checked));
-  document.body.classList.toggle("advanced-view", Boolean(els.advancedModeToggle?.checked));
+  document.body.classList.toggle("simple-mode", els.simpleModeToggle?.checked !== false);
+  document.body.classList.toggle("advanced-mode", Boolean(els.advancedModeToggle?.checked));
   try {
     localStorage.setItem(STORAGE_KEYS.viewMode, JSON.stringify({
       simpleMode: els.simpleModeToggle?.checked !== false,
