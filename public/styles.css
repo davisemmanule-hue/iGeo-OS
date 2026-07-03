@@ -410,8 +410,7 @@ input[type="checkbox"] {
 body.simple-mode #forcePrimeSync,
 body.simple-mode .integration-note,
 body.simple-mode .reports,
-body.simple-mode .metric-grid .metric:nth-child(n + 4),
-body.simple-mode button.secondary {
+body.simple-mode .metric-grid .metric:nth-child(n + 4) {
   display: none;
 }
 

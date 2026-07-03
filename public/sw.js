@@ -1,4 +1,4 @@
-const CACHE_NAME = "igeo-operations-v271a426-stable1";
+const CACHE_NAME = "igeo-operations-final-clean";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
