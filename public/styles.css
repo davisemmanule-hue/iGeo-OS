@@ -936,8 +936,49 @@ td strong {
 
 .row-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.row-actions .button {
+  min-width: 86px;
+}
+
+.capability-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.capability-card {
+  background: #fbfdff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.capability-card h3 {
+  color: var(--ink);
+  font-size: 18px;
+  margin: 10px 0 4px;
+}
+
+.capability-card p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.capability-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.capability-actions .button {
+  min-width: 128px;
 }
 
 .foundation-grid {
@@ -1185,6 +1226,7 @@ form {
   .today-grid,
   .settings-grid,
   .alert-badge-grid,
+  .capability-grid,
   .checklist-grid {
     grid-template-columns: repeat(3, minmax(140px, 1fr));
   }
@@ -1315,6 +1357,7 @@ form {
   .today-grid,
   .settings-grid,
   .alert-badge-grid,
+  .capability-grid,
   .module-tools,
   .command-grid,
   .form-grid,
@@ -1402,6 +1445,18 @@ form {
 
   .dialog-actions > div {
     flex-direction: column;
+  }
+
+  .row-actions,
+  .capability-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .row-actions .button,
+  .capability-actions .button {
+    min-width: 0;
+    width: 100%;
   }
 
   .app-footer {

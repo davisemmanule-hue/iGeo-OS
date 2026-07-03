@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   quotes: "igeo_quotes",
   vendors: "igeo_vendor_registrations",
   viewMode: "igeo_operator_view_mode",
+  capabilitySentCount: "igeo_capability_statements_sent_count",
 };
 
 const primeCrmIntegration = window.IGEO_INTEGRATIONS?.googleSheets?.primeCrm || {};
@@ -69,6 +70,16 @@ const commandCenter = {
   uei: "PQ6GHN6ZS287",
   coverage: ["Kentucky", "Michigan", "Nationwide Subcontract Support"],
 };
+const capabilityStatements = [
+  capabilityStatement("Master Capability Statement", "All iGeo services"),
+  capabilityStatement("Commercial Cleaning", "Commercial Cleaning"),
+  capabilityStatement("Administrative Support", "Administrative Support"),
+  capabilityStatement("AI Automation", "AI Automation"),
+  capabilityStatement("Home Health Support", "Home Health Support"),
+  capabilityStatement("Disability / ABA Support", "Disability / ABA Support"),
+  capabilityStatement("Workforce Support", "Workforce Support"),
+  capabilityStatement("Vendor Packet", "Vendor Packet"),
+];
 const SHEET_CACHE_TTL_MS = 60000;
 let executiveEmailCounts = { critical: 0, pending: 0, contracts: 0, payments: 0, applications: 0 };
 
@@ -216,6 +227,7 @@ capturePrimeRecoverySnapshot();
 let workers = loadCollection(STORAGE_KEYS.workers, []);
 let quotes = loadCollection(STORAGE_KEYS.quotes, []);
 let vendors = seedVendorRegistrations(loadCollection(STORAGE_KEYS.vendors, []));
+let capabilityStatementsSentCount = Number(loadCollection(STORAGE_KEYS.capabilitySentCount, 0)) || 0;
 let activeReport = "all";
 let toastTimer;
 const els = {};
@@ -335,6 +347,7 @@ function bindElements() {
     "exportVendorsExcel",
     "downloadCapability",
     "quickShare",
+    "capabilityLibrary",
   ].forEach((id) => {
     els[id] = document.getElementById(id);
   });
@@ -460,6 +473,9 @@ function bindEvents() {
   });
   if (els.downloadCapability) els.downloadCapability.addEventListener("click", downloadCapabilityStatement);
   if (els.quickShare) els.quickShare.addEventListener("click", quickShareBusinessCard);
+  if (els.capabilityLibrary) {
+    els.capabilityLibrary.addEventListener("click", handleCapabilityLibraryAction);
+  }
   if (els.partnerNotificationsToggle) els.partnerNotificationsToggle.addEventListener("change", applyViewMode);
   if (els.emailAlertsToggle) els.emailAlertsToggle.addEventListener("change", applyViewMode);
   if (els.simpleModeToggle) els.simpleModeToggle.addEventListener("change", applyViewMode);
@@ -489,8 +505,13 @@ function bindEvents() {
     });
   });
   els.contractorTable.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-edit]");
-    if (button) openPrimeDialog(records.find((record) => record.id === button.dataset.edit));
+    const editButton = event.target.closest("[data-edit]");
+    if (editButton) {
+      openPrimeDialog(records.find((record) => record.id === editButton.dataset.edit));
+      return;
+    }
+    const deleteButton = event.target.closest("[data-delete]");
+    if (deleteButton) deletePrimeRecordById(deleteButton.dataset.delete);
   });
 }
 
@@ -503,13 +524,15 @@ function render() {
   renderWorkers();
   renderQuotes();
   renderVendors();
+  renderCapabilityLibrary();
 }
 
 function renderMetrics() {
+  const capabilitySentTotal = getCapabilitySentTotal();
   els.metricTotal.textContent = records.length;
   els.metricOpportunities.textContent = records.filter(isActiveOpportunity).length;
   els.metricDueToday.textContent = records.filter((record) => record.nextFollowUpDate === isoToday).length;
-  els.metricCapability.textContent = records.filter((record) => record.capabilitySent).length;
+  els.metricCapability.textContent = capabilitySentTotal;
   els.metricMeetings.textContent = records.filter((record) => record.status === "Meeting Scheduled").length;
   els.metricWon.textContent = records.filter((record) => record.status === "Contract Awarded").length;
   els.metricWorkersAvailable.textContent = workers.filter((worker) => worker.status === "Available").length;
@@ -632,7 +655,7 @@ function setText(id, value) {
 
 function renderReports() {
   els.reportContacted.textContent = records.filter((record) => record.dateFirstContacted).length;
-  els.reportCapability.textContent = records.filter((record) => record.capabilitySent).length;
+  els.reportCapability.textContent = getCapabilitySentTotal();
   els.reportActive.textContent = records.filter(isActiveOpportunity).length;
   els.reportMeetings.textContent = records.filter((record) => record.status === "Meeting Scheduled").length;
   els.reportAwarded.textContent = records.filter((record) => record.status === "Contract Awarded").length;
@@ -686,8 +709,37 @@ function renderPrimeTable(rows) {
           <td><strong>${escapeHtml(record.opportunityName || "No opportunity")}</strong><small>${escapeHtml(record.solicitationNumber || "No solicitation")} - ${escapeHtml(record.estimatedValue || "No value")}</small></td>
           <td>${formatDate(record.lastContactDate)}</td>
           <td class="${dateClass(record.nextFollowUpDate)}">${formatDate(record.nextFollowUpDate)}</td>
-          <td><div class="row-actions"><button class="button secondary" type="button" data-edit="${record.id}">Edit</button></div></td>
+          <td>
+            <div class="row-actions">
+              <button class="button secondary" type="button" data-edit="${escapeHtml(record.id)}">Edit</button>
+              <button class="button danger" type="button" data-delete="${escapeHtml(record.id)}">Delete</button>
+            </div>
+          </td>
         </tr>
+      `,
+    )
+    .join("");
+}
+
+function renderCapabilityLibrary() {
+  if (!els.capabilityLibrary) return;
+  els.capabilityLibrary.innerHTML = capabilityStatements
+    .map(
+      (statement) => `
+        <article class="capability-card">
+          <div>
+            <span class="status-pill ${statement.status === "Ready" ? "success" : ""}">${escapeHtml(statement.status)}</span>
+            <h3>${escapeHtml(statement.title)}</h3>
+            <p>${escapeHtml(statement.service)}</p>
+          </div>
+          <div class="capability-actions">
+            <button class="button secondary" type="button" data-capability-action="open" data-capability-title="${escapeHtml(statement.title)}">Open</button>
+            <button class="button secondary" type="button" data-capability-action="copy" data-capability-title="${escapeHtml(statement.title)}">Copy Email Text</button>
+            <button class="button secondary" type="button" data-capability-action="download" data-capability-title="${escapeHtml(statement.title)}">${statement.pdfUrl ? "Download PDF" : "Needs PDF Link"}</button>
+            <button class="button primary" type="button" data-capability-action="email" data-capability-title="${escapeHtml(statement.title)}">Send by Email</button>
+            <button class="button secondary" type="button" data-capability-action="sent" data-capability-title="${escapeHtml(statement.title)}">Mark Sent</button>
+          </div>
+        </article>
       `,
     )
     .join("");
@@ -1007,10 +1059,15 @@ async function savePrimeRecord(event) {
 async function deleteCurrentRecord() {
   const id = value("recordId");
   if (!id) return;
+  await deletePrimeRecordById(id, { closeDialog: true });
+}
+
+async function deletePrimeRecordById(id, options = {}) {
+  if (!id || !confirm("Delete this prime contractor record?")) return;
   const archivedRecord = records.find((record) => record.id === id);
   records = records.filter((record) => record.id !== id);
   saveCollection(STORAGE_KEYS.primes, records);
-  closePrimeDialog();
+  if (options.closeDialog) closePrimeDialog();
   render();
   try {
     const result = await postPrimeCrmAction({ action: "archive", id });
@@ -1022,6 +1079,33 @@ async function deleteCurrentRecord() {
     queuePrimeOperation({ action: "archive", id, record: archivedRecord });
     showToast("Archived offline. Google Sheets sync will retry automatically.");
     console.error("Prime CRM archive queued:", error);
+  }
+}
+
+function handleCapabilityLibraryAction(event) {
+  const button = event.target.closest("[data-capability-action]");
+  if (!button) return;
+  const statement = capabilityStatements.find((item) => item.title === button.dataset.capabilityTitle);
+  if (!statement) return;
+  const action = button.dataset.capabilityAction;
+  if (action === "open") {
+    openCapabilityStatement(statement);
+    return;
+  }
+  if (action === "copy") {
+    copyText(statement.emailBody, "Email text copied.");
+    return;
+  }
+  if (action === "download") {
+    downloadCapabilityPdf(statement);
+    return;
+  }
+  if (action === "email") {
+    sendCapabilityEmail(statement);
+    return;
+  }
+  if (action === "sent") {
+    markCapabilityStatementSent();
   }
 }
 
@@ -1558,6 +1642,35 @@ function vendorSeed(companyName, portalType, registrationStatus) {
   };
 }
 
+function capabilityStatement(title, service, links = {}) {
+  const pdfUrl = links.pdfUrl || "";
+  const docUrl = links.docUrl || "";
+  const emailSubject = `iGeo Solutions LLC Capability Statement - ${title}`;
+  const emailBody = [
+    "Hello,",
+    "",
+    `I am sharing the iGeo Solutions LLC ${title} for your review.`,
+    "",
+    "iGeo Solutions LLC supports prime contractors and partner organizations with commercial cleaning, administrative support, AI automation, home health support, disability and ABA support, workforce support, and vendor packet readiness.",
+    "",
+    "Please let me know if there is a good opportunity to discuss subcontracting, vendor registration, or teaming support.",
+    "",
+    "Thank you,",
+    "iGeo Solutions LLC",
+    commandCenter.email,
+    commandCenter.phone,
+  ].join("\n");
+  return {
+    title,
+    service,
+    status: pdfUrl || docUrl ? "Ready" : "Needs PDF Link",
+    pdfUrl,
+    docUrl,
+    emailSubject,
+    emailBody,
+  };
+}
+
 function emptyPrimeRecord() {
   return { id: crypto.randomUUID(), status: "Prospect", services: [] };
 }
@@ -1650,6 +1763,40 @@ function download(filename, type, content) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function getCapabilitySentTotal() {
+  return records.filter((record) => record.capabilitySent).length + capabilityStatementsSentCount;
+}
+
+function openCapabilityStatement(statement) {
+  const target = statement.docUrl || statement.pdfUrl;
+  if (!target) {
+    showToast("Needs PDF Link.");
+    return;
+  }
+  window.open(target, "_blank", "noopener,noreferrer");
+}
+
+function downloadCapabilityPdf(statement) {
+  if (!statement.pdfUrl) {
+    showToast("Needs PDF Link.");
+    return;
+  }
+  window.open(statement.pdfUrl, "_blank", "noopener,noreferrer");
+}
+
+function sendCapabilityEmail(statement) {
+  const url = `mailto:?subject=${encodeURIComponent(statement.emailSubject)}&body=${encodeURIComponent(statement.emailBody)}`;
+  window.location.href = url;
+}
+
+function markCapabilityStatementSent() {
+  capabilityStatementsSentCount += 1;
+  saveCollection(STORAGE_KEYS.capabilitySentCount, capabilityStatementsSentCount);
+  renderMetrics();
+  renderReports();
+  showToast("Capability statement marked sent.");
 }
 
 async function copyText(text, message) {
