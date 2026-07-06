@@ -173,6 +173,7 @@
                 <tr>
                   <th>Opportunity</th>
                   <th>Service / NAICS</th>
+                  <th>Region</th>
                   <th>Score</th>
                   <th>Decision</th>
                   <th>Performance</th>
@@ -730,16 +731,21 @@
           <div class="form-grid">
             <label class="field required"><span>Opportunity Name</span><input id="acqOpportunityName" required /></label>
             <label class="field"><span>Source</span><input id="acqSource" placeholder="SAM.gov, agency portal, prime..." /></label>
+            <label class="field"><span>Source Link</span><input id="acqSourceLink" type="url" placeholder="https://..." /></label>
+            <label class="field"><span>Solicitation Type</span><select id="acqSolicitationType"></select></label>
             <label class="field"><span>Solicitation Number</span><input id="acqSolicitationNumber" /></label>
             <label class="field"><span>Buyer / Agency</span><input id="acqBuyer" /></label>
             <label class="field"><span>Service Type</span><select id="acqServiceType"></select></label>
             <label class="field"><span>NAICS</span><select id="acqNaics"></select></label>
+            <label class="field"><span>Priority Region</span><select id="acqPriorityRegion"></select></label>
+            <label class="field"><span>Urgent for iGeo</span><select id="acqUrgentForIgeo"><option>NO</option><option>YES</option></select></label>
             <label class="field"><span>Due Date</span><input id="acqDueDate" type="date" /></label>
             <label class="field"><span>Estimated Value</span><input id="acqEstimatedValue" placeholder="$0" /></label>
             <label class="field"><span>Performance Method</span><select id="acqPerformanceMethod"></select></label>
             <label class="field"><span>Decision Label</span><select id="acqDecisionLabel"></select></label>
             <label class="field"><span>Contact Name</span><input id="acqContactName" /></label>
             <label class="field"><span>Contact Email</span><input id="acqContactEmail" type="email" /></label>
+            <label class="field wide"><span>Urgency Reason</span><input id="acqUrgencyReason" /></label>
             <label class="field wide"><span>Notes</span><textarea id="acqNotes" rows="3"></textarea></label>
           </div>
         </div>

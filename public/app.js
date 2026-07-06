@@ -55,8 +55,24 @@ const services = [
 ];
 
 const acquisitionNaics = ["624190", "621610", "561110", "561720", "561612", "561210", "561990"];
+const solicitationTypes = ["RFQ", "RFP", "IFB", "Sources Sought", "Combined Synopsis/Solicitation", "Subcontract Lead", "Other"];
 const performanceMethods = ["Self-perform", "Subcontract", "Teaming partner", "Broker/referral", "Ignore"];
 const decisionLabels = ["Pursue Immediately", "Worth Reviewing", "Build Relationship", "Subcontractor Needed", "Ignore"];
+const priorityRegions = [
+  "None",
+  "Grand Rapids",
+  "Kalamazoo",
+  "Lansing",
+  "Holland",
+  "West Michigan",
+  "Detroit",
+  "Kent County",
+  "Ottawa County",
+  "Ingham County",
+  "Wayne County",
+  "Oakland County",
+  "Macomb County",
+];
 const opportunityScoreFields = [
   field("Official source verified", "officialSourceVerified"),
   field("Open opportunity", "openOpportunity"),
@@ -280,6 +296,8 @@ const sampleAcquisitionOpportunities = [
     id: crypto.randomUUID(),
     opportunityName: "County Janitorial and Floor Care Support",
     source: "Official procurement portal",
+    sourceLink: "https://sam.gov/search/?index=opp",
+    solicitationType: "RFQ",
     solicitationNumber: "ACQ-26-001",
     buyer: "County Facilities Department",
     contactName: "Procurement Office",
@@ -290,6 +308,9 @@ const sampleAcquisitionOpportunities = [
     estimatedValue: "$185,000",
     performanceMethod: "Self-perform",
     decisionLabel: "Pursue Immediately",
+    priorityRegion: "Kent County",
+    urgentForIgeo: "YES",
+    urgencyReason: "Kent County is a priority West Michigan growth market and this opportunity fits iGeo criteria.",
     notes: "Service-based opportunity under simplified acquisition threshold.",
     officialSourceVerified: true,
     openOpportunity: true,
@@ -309,6 +330,8 @@ const sampleAcquisitionOpportunities = [
     id: crypto.randomUUID(),
     opportunityName: "Facility Guard Services Subcontract Lead",
     source: "Prime contractor notice",
+    sourceLink: "https://www.bidnetdirect.com/mitn",
+    solicitationType: "Subcontract Lead",
     solicitationNumber: "TEAM-26-014",
     buyer: "Prime contractor",
     contactName: "Small business liaison",
@@ -319,6 +342,9 @@ const sampleAcquisitionOpportunities = [
     estimatedValue: "$420,000",
     performanceMethod: "Subcontract",
     decisionLabel: "Subcontractor Needed",
+    priorityRegion: "Detroit",
+    urgentForIgeo: "YES",
+    urgencyReason: "Detroit is a priority growth market and this security lead is subcontractor-supported.",
     notes: "Security work must stay subcontractor-supported unless licenses, insurance, trained personnel, and compliance documents are confirmed.",
     officialSourceVerified: true,
     openOpportunity: true,
@@ -533,6 +559,8 @@ function hydrateControls() {
   fillSelect(els.acquisitionServiceFilter, ["all", ...services], "All services");
   fillSelect(document.getElementById("acqServiceType"), services);
   fillSelect(document.getElementById("acqNaics"), acquisitionNaics);
+  fillSelect(document.getElementById("acqSolicitationType"), solicitationTypes);
+  fillSelect(document.getElementById("acqPriorityRegion"), priorityRegions);
   fillSelect(document.getElementById("acqPerformanceMethod"), performanceMethods);
   fillSelect(document.getElementById("acqDecisionLabel"), decisionLabels);
   els.servicesChecklist.innerHTML = services
@@ -637,7 +665,9 @@ function bindEvents() {
     els[id].addEventListener("input", renderAcquisitionOpportunities);
   });
   document.getElementById("acqServiceType").addEventListener("change", applyAcquisitionSecurityRule);
+  document.getElementById("acqPriorityRegion").addEventListener("change", updateAcquisitionUrgencyPreview);
   els.acquisitionScoreChecklist.addEventListener("change", applyAcquisitionSecurityRule);
+  els.acquisitionScoreChecklist.addEventListener("change", updateAcquisitionUrgencyPreview);
   els.acquisitionTable.addEventListener("click", (event) => {
     const editButton = event.target.closest("[data-edit-opportunity]");
     if (editButton) {
@@ -1058,8 +1088,9 @@ function renderAcquisitionOpportunities() {
           const securityClass = opportunity.securityLicensingRequired ? " urgent" : "";
           return `
             <tr>
-              <td><strong>${escapeHtml(opportunity.opportunityName)}</strong><small>${escapeHtml(opportunity.source || "No source")} - ${escapeHtml(opportunity.solicitationNumber || "No solicitation")}</small></td>
+              <td><strong>${escapeHtml(opportunity.opportunityName)}</strong><small>${renderSourceLine(opportunity)}</small></td>
               <td><span class="service-pill">${escapeHtml(opportunity.serviceType || "Not set")}</span><small>${escapeHtml(opportunity.naics || "No NAICS")} - ${escapeHtml(opportunity.estimatedValue || "No value")}</small></td>
+              <td><span class="status-pill ${opportunity.urgentForIgeo === "YES" ? "urgent" : ""}">${escapeHtml(opportunity.urgentForIgeo === "YES" ? "Urgent" : "Standard")}</span><small>${escapeHtml(opportunity.priorityRegion || "No priority region")}</small></td>
               <td><strong>${score.points}/${score.total}</strong><small>${escapeHtml(score.summary)}</small></td>
               <td><span class="status-pill ${opportunity.decisionLabel === "Pursue Immediately" ? "success" : ""}${securityClass}">${escapeHtml(opportunity.decisionLabel)}</span></td>
               <td>${escapeHtml(opportunity.performanceMethod || "Not set")}</td>
@@ -1075,7 +1106,15 @@ function renderAcquisitionOpportunities() {
           `;
         })
         .join("")
-    : `<tr><td class="empty-state" colspan="8">No acquisition opportunities match the current view.</td></tr>`;
+    : `<tr><td class="empty-state" colspan="9">No acquisition opportunities match the current view.</td></tr>`;
+}
+
+function renderSourceLine(opportunity) {
+  const sourceText = [opportunity.source || "No source", opportunity.solicitationType || "", opportunity.solicitationNumber || "No solicitation"]
+    .filter(Boolean)
+    .join(" - ");
+  if (!opportunity.sourceLink) return escapeHtml(sourceText);
+  return `<a href="${escapeHtml(opportunity.sourceLink)}" target="_blank" rel="noopener noreferrer">${escapeHtml(sourceText)}</a>`;
 }
 
 function renderAcquisitionMetrics() {
@@ -1162,6 +1201,8 @@ function getVisibleAcquisitionOpportunities() {
     const searchable = [
       opportunity.opportunityName,
       opportunity.source,
+      opportunity.sourceLink,
+      opportunity.solicitationType,
       opportunity.solicitationNumber,
       opportunity.buyer,
       opportunity.contactName,
@@ -1171,6 +1212,9 @@ function getVisibleAcquisitionOpportunities() {
       opportunity.estimatedValue,
       opportunity.performanceMethod,
       opportunity.decisionLabel,
+      opportunity.priorityRegion,
+      opportunity.urgentForIgeo,
+      opportunity.urgencyReason,
       opportunity.notes,
     ].join(" ").toLowerCase();
     if (query && !searchable.includes(query)) return false;
@@ -1390,21 +1434,27 @@ function openAcquisitionDialog(opportunity) {
   setFormValue("acquisitionId", current.id);
   setFormValue("acqOpportunityName", current.opportunityName || "");
   setFormValue("acqSource", current.source || "");
+  setFormValue("acqSourceLink", current.sourceLink || "");
+  setFormValue("acqSolicitationType", current.solicitationType || "RFQ");
   setFormValue("acqSolicitationNumber", current.solicitationNumber || "");
   setFormValue("acqBuyer", current.buyer || "");
   setFormValue("acqServiceType", current.serviceType || services[0]);
   setFormValue("acqNaics", current.naics || acquisitionNaics[0]);
+  setFormValue("acqPriorityRegion", current.priorityRegion || "None");
+  setFormValue("acqUrgentForIgeo", current.urgentForIgeo || "NO");
   setFormValue("acqDueDate", current.dueDate || "");
   setFormValue("acqEstimatedValue", current.estimatedValue || "");
   setFormValue("acqPerformanceMethod", current.performanceMethod || "Subcontract");
   setFormValue("acqDecisionLabel", current.decisionLabel || "Worth Reviewing");
   setFormValue("acqContactName", current.contactName || "");
   setFormValue("acqContactEmail", current.contactEmail || "");
+  setFormValue("acqUrgencyReason", current.urgencyReason || "");
   setFormValue("acqNotes", current.notes || "");
   document.querySelectorAll('input[name="acquisitionScore"]').forEach((input) => {
     input.checked = Boolean(current[input.value]);
   });
   applyAcquisitionSecurityRule();
+  updateAcquisitionUrgencyPreview();
   els.acquisitionDialog.showModal();
 }
 
@@ -1429,10 +1479,15 @@ function buildAcquisitionOpportunityFromForm() {
     id: value("acquisitionId") || crypto.randomUUID(),
     opportunityName: value("acqOpportunityName"),
     source: value("acqSource"),
+    sourceLink: value("acqSourceLink"),
+    solicitationType: value("acqSolicitationType"),
     solicitationNumber: value("acqSolicitationNumber"),
     buyer: value("acqBuyer"),
     serviceType: value("acqServiceType"),
     naics: value("acqNaics"),
+    priorityRegion: value("acqPriorityRegion"),
+    urgentForIgeo: value("acqUrgentForIgeo"),
+    urgencyReason: value("acqUrgencyReason"),
     dueDate: value("acqDueDate"),
     estimatedValue: value("acqEstimatedValue"),
     performanceMethod: value("acqPerformanceMethod"),
@@ -1444,7 +1499,7 @@ function buildAcquisitionOpportunityFromForm() {
   opportunityScoreFields.forEach((scoreField) => {
     opportunity[scoreField.value] = document.querySelector(`input[name="acquisitionScore"][value="${scoreField.value}"]`)?.checked || false;
   });
-  return applySecurityGuardrails(opportunity);
+  return applyUrgencyRule(applySecurityGuardrails(opportunity));
 }
 
 function applyAcquisitionSecurityRule() {
@@ -1455,9 +1510,13 @@ function applyAcquisitionSecurityRule() {
   if ((isSecurityService || securityFlag?.checked) && value("acqPerformanceMethod") === "Self-perform") {
     setFormValue("acqPerformanceMethod", "Subcontract");
   }
+  if (isSecurityService || securityFlag?.checked) {
+    setFormValue("acqDecisionLabel", "Subcontractor Needed");
+  }
   if (els.securityRuleNotice) {
     els.securityRuleNotice.classList.toggle("show", Boolean(isSecurityService || securityFlag?.checked));
   }
+  updateAcquisitionUrgencyPreview();
 }
 
 function applySecurityGuardrails(opportunity) {
@@ -1466,7 +1525,42 @@ function applySecurityGuardrails(opportunity) {
     ...opportunity,
     securityLicensingRequired: true,
     performanceMethod: opportunity.performanceMethod === "Self-perform" ? "Subcontract" : opportunity.performanceMethod,
-    decisionLabel: opportunity.decisionLabel === "Pursue Immediately" ? "Subcontractor Needed" : opportunity.decisionLabel,
+    decisionLabel: opportunity.decisionLabel === "Ignore" ? "Ignore" : "Subcontractor Needed",
+  };
+}
+
+function updateAcquisitionUrgencyPreview() {
+  const preview = applyUrgencyRule({
+    priorityRegion: value("acqPriorityRegion"),
+    decisionLabel: value("acqDecisionLabel"),
+    fitsIgeoServices: document.querySelector('input[name="acquisitionScore"][value="fitsIgeoServices"]')?.checked || false,
+    serviceBased: document.querySelector('input[name="acquisitionScore"][value="serviceBased"]')?.checked || false,
+    subcontractable: document.querySelector('input[name="acquisitionScore"][value="subcontractable"]')?.checked || false,
+    lowCapital: document.querySelector('input[name="acquisitionScore"][value="lowCapital"]')?.checked || false,
+    under250k: document.querySelector('input[name="acquisitionScore"][value="under250k"]')?.checked || false,
+  });
+  setFormValue("acqUrgentForIgeo", preview.urgentForIgeo || "NO");
+  setFormValue("acqUrgencyReason", preview.urgencyReason || "");
+}
+
+function applyUrgencyRule(opportunity) {
+  const region = opportunity.priorityRegion || "None";
+  const isPriorityRegion = priorityRegions.slice(1).includes(region);
+  const fitsCriteria = opportunity.decisionLabel !== "Ignore" && (
+    opportunity.fitsIgeoServices
+      || (opportunity.serviceBased && (opportunity.subcontractable || opportunity.lowCapital || opportunity.under250k))
+  );
+  if (!isPriorityRegion || !fitsCriteria) {
+    return {
+      ...opportunity,
+      urgentForIgeo: "NO",
+      urgencyReason: opportunity.urgencyReason && opportunity.urgentForIgeo === "YES" ? "" : opportunity.urgencyReason,
+    };
+  }
+  return {
+    ...opportunity,
+    urgentForIgeo: "YES",
+    urgencyReason: `${region} is a priority Michigan growth market for iGeo and this opportunity fits iGeo criteria.`,
   };
 }
 
@@ -1710,10 +1804,15 @@ function getExportConfig(dataset) {
       fields: [
         field("Opportunity Name", (r) => r.opportunityName),
         field("Source", (r) => r.source),
+        field("Source Link", (r) => r.sourceLink),
+        field("Solicitation Type", (r) => r.solicitationType),
         field("Solicitation Number", (r) => r.solicitationNumber),
         field("Buyer / Agency", (r) => r.buyer),
         field("Service Type", (r) => r.serviceType),
         field("NAICS", (r) => r.naics),
+        field("Priority Region", (r) => r.priorityRegion),
+        field("Urgent for iGeo", (r) => r.urgentForIgeo),
+        field("Urgency Reason", (r) => r.urgencyReason),
         field("Due Date", (r) => r.dueDate),
         field("Estimated Value", (r) => r.estimatedValue),
         field("Performance Method", (r) => r.performanceMethod),
@@ -2094,6 +2193,10 @@ function emptyAcquisitionOpportunity() {
     id: crypto.randomUUID(),
     serviceType: "Janitorial",
     naics: "561720",
+    solicitationType: "RFQ",
+    priorityRegion: "None",
+    urgentForIgeo: "NO",
+    urgencyReason: "",
     performanceMethod: "Subcontract",
     decisionLabel: "Worth Reviewing",
     openOpportunity: true,
