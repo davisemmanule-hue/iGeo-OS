@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   workers: "igeo_workers",
   quotes: "igeo_quotes",
   vendors: "igeo_vendor_registrations",
+  acquisitionOpportunities: "igeo_acquisition_opportunities",
   viewMode: "igeo_operator_view_mode",
   capabilitySentCount: "igeo_capability_statements_sent_count",
 };
@@ -25,14 +26,66 @@ const statuses = [
 ];
 
 const services = [
+  "Janitorial",
+  "Custodial",
+  "Floor Care",
+  "Porter Services",
   "Commercial Cleaning",
   "Administrative Support",
+  "Clerical Support",
   "Data Entry",
+  "Temporary Staffing",
+  "Records Management",
+  "Courier Services",
+  "Relocation Services",
+  "Debris Removal",
+  "Grounds Maintenance",
+  "Property Maintenance",
   "Documentation Support",
   "Business Process Support",
   "AI Automation",
+  "AI Automation Services",
   "Home Health Support",
   "ABA Therapy Support",
+  "Armed Security",
+  "Unarmed Security",
+  "Guard Services",
+  "Patrol Services",
+  "Facility Security Support",
+];
+
+const acquisitionNaics = ["624190", "621610", "561110", "561720", "561612", "561210", "561990"];
+const performanceMethods = ["Self-perform", "Subcontract", "Teaming partner", "Broker/referral", "Ignore"];
+const decisionLabels = ["Pursue Immediately", "Worth Reviewing", "Build Relationship", "Subcontractor Needed", "Ignore"];
+const opportunityScoreFields = [
+  field("Official source verified", "officialSourceVerified"),
+  field("Open opportunity", "openOpportunity"),
+  field("Deadline verified", "deadlineVerified"),
+  field("Under $250,000", "under250k"),
+  field("Service based", "serviceBased"),
+  field("Low capital", "lowCapital"),
+  field("Subcontractable", "subcontractable"),
+  field("Brokerable", "brokerable"),
+  field("No major equipment", "noMajorEquipment"),
+  field("Fits iGeo services", "fitsIgeoServices"),
+  field("Security licensing required", "securityLicensingRequired"),
+  field("Bonding required", "bondingRequired"),
+  field("Site visit required", "siteVisitRequired"),
+];
+const acquisitionModules = [
+  "Opportunity Dashboard",
+  "Bid Engine",
+  "Solicitation Analyzer",
+  "Opportunity Scoring Engine",
+  "Compliance Checklist Generator",
+  "Proposal Draft Generator",
+  "Pricing Worksheet",
+  "Subcontractor / Teaming Partner Tracker",
+  "Incumbent Intelligence",
+  "Procurement Contact Database",
+  "Daily Acquisition Intelligence Integration",
+  "Google Drive document storage",
+  "Export to PDF and Word",
 ];
 
 const workerServiceCategories = [
@@ -222,11 +275,73 @@ const sampleVendorRecords = [
   vendorSeed("KBS", "Submitted", "Submitted"),
 ];
 
+const sampleAcquisitionOpportunities = [
+  {
+    id: crypto.randomUUID(),
+    opportunityName: "County Janitorial and Floor Care Support",
+    source: "Official procurement portal",
+    solicitationNumber: "ACQ-26-001",
+    buyer: "County Facilities Department",
+    contactName: "Procurement Office",
+    contactEmail: "procurement@example.gov",
+    serviceType: "Janitorial",
+    naics: "561720",
+    dueDate: shiftDate(12),
+    estimatedValue: "$185,000",
+    performanceMethod: "Self-perform",
+    decisionLabel: "Pursue Immediately",
+    notes: "Service-based opportunity under simplified acquisition threshold.",
+    officialSourceVerified: true,
+    openOpportunity: true,
+    deadlineVerified: true,
+    under250k: true,
+    serviceBased: true,
+    lowCapital: true,
+    subcontractable: true,
+    brokerable: false,
+    noMajorEquipment: true,
+    fitsIgeoServices: true,
+    securityLicensingRequired: false,
+    bondingRequired: false,
+    siteVisitRequired: true,
+  },
+  {
+    id: crypto.randomUUID(),
+    opportunityName: "Facility Guard Services Subcontract Lead",
+    source: "Prime contractor notice",
+    solicitationNumber: "TEAM-26-014",
+    buyer: "Prime contractor",
+    contactName: "Small business liaison",
+    contactEmail: "sblo@example.com",
+    serviceType: "Guard Services",
+    naics: "561612",
+    dueDate: shiftDate(20),
+    estimatedValue: "$420,000",
+    performanceMethod: "Subcontract",
+    decisionLabel: "Subcontractor Needed",
+    notes: "Security work must stay subcontractor-supported unless licenses, insurance, trained personnel, and compliance documents are confirmed.",
+    officialSourceVerified: true,
+    openOpportunity: true,
+    deadlineVerified: true,
+    under250k: false,
+    serviceBased: true,
+    lowCapital: false,
+    subcontractable: true,
+    brokerable: true,
+    noMajorEquipment: true,
+    fitsIgeoServices: true,
+    securityLicensingRequired: true,
+    bondingRequired: false,
+    siteVisitRequired: false,
+  },
+];
+
 let records = loadPrimeRecords();
 capturePrimeRecoverySnapshot();
 let workers = loadCollection(STORAGE_KEYS.workers, []);
 let quotes = loadCollection(STORAGE_KEYS.quotes, []);
 let vendors = seedVendorRegistrations(loadCollection(STORAGE_KEYS.vendors, []));
+let acquisitionOpportunities = seedAcquisitionOpportunities(loadCollection(STORAGE_KEYS.acquisitionOpportunities, []));
 let capabilityStatementsSentCount = Number(loadCollection(STORAGE_KEYS.capabilitySentCount, 0)) || 0;
 let activeReport = "all";
 let toastTimer;
@@ -261,6 +376,7 @@ function bindElements() {
     "todayFollowUps",
     "todayWorkerApplications",
     "todayOpenOpportunities",
+    "todayBidEngineItems",
     "todayRegistrationsPending",
     "todayQuotesWaiting",
     "todayContractsActive",
@@ -345,6 +461,30 @@ function bindElements() {
     "vendorTable",
     "exportVendorsCsv",
     "exportVendorsExcel",
+    "addOpportunity",
+    "acquisitionDialog",
+    "acquisitionForm",
+    "acquisitionDialogTitle",
+    "closeAcquisitionDialog",
+    "cancelAcquisitionDialog",
+    "deleteOpportunity",
+    "acquisitionId",
+    "acquisitionSearch",
+    "acquisitionDecisionFilter",
+    "acquisitionPerformanceFilter",
+    "acquisitionNaicsFilter",
+    "acquisitionServiceFilter",
+    "acquisitionTable",
+    "acquisitionScoreChecklist",
+    "acquisitionModuleList",
+    "exportAcquisitionCsv",
+    "acqMetricTotal",
+    "acqMetricPursue",
+    "acqMetricSubcontractor",
+    "acqMetricDueSoon",
+    "acqMetricUnder250",
+    "acqMetricSecurity",
+    "securityRuleNotice",
     "downloadCapability",
     "quickShare",
     "capabilityLibrary",
@@ -387,12 +527,35 @@ function hydrateControls() {
   fillSelect(els.quoteStatus, quoteStatuses);
   fillSelect(els.vendorStatus, vendorStatuses);
   fillSelect(els.vendorStatusFilter, ["all", ...vendorStatuses], "All statuses");
+  fillSelect(els.acquisitionDecisionFilter, ["all", ...decisionLabels], "All decisions");
+  fillSelect(els.acquisitionPerformanceFilter, ["all", ...performanceMethods], "All methods");
+  fillSelect(els.acquisitionNaicsFilter, ["all", ...acquisitionNaics], "All NAICS");
+  fillSelect(els.acquisitionServiceFilter, ["all", ...services], "All services");
+  fillSelect(document.getElementById("acqServiceType"), services);
+  fillSelect(document.getElementById("acqNaics"), acquisitionNaics);
+  fillSelect(document.getElementById("acqPerformanceMethod"), performanceMethods);
+  fillSelect(document.getElementById("acqDecisionLabel"), decisionLabels);
   els.servicesChecklist.innerHTML = services
     .map(
       (service) => `
         <label class="check-field">
           <input type="checkbox" name="service" value="${escapeHtml(service)}" />
           <span>${escapeHtml(service)}</span>
+        </label>
+      `,
+    )
+    .join("");
+  hydrateAcquisitionScoreChecklist();
+}
+
+function hydrateAcquisitionScoreChecklist() {
+  if (!els.acquisitionScoreChecklist) return;
+  els.acquisitionScoreChecklist.innerHTML = opportunityScoreFields
+    .map(
+      (scoreField) => `
+        <label class="check-field">
+          <input type="checkbox" name="acquisitionScore" value="${escapeHtml(scoreField.value)}" />
+          <span>${escapeHtml(scoreField.label)}</span>
         </label>
       `,
     )
@@ -465,6 +628,27 @@ function bindEvents() {
   els.exportVendorsCsv.addEventListener("click", () => exportDataset("vendors", "csv"));
   if (els.exportVendorsExcel) els.exportVendorsExcel.addEventListener("click", () => exportDataset("vendors", "xls"));
 
+  els.addOpportunity.addEventListener("click", () => openAcquisitionDialog());
+  els.closeAcquisitionDialog.addEventListener("click", closeAcquisitionDialog);
+  els.cancelAcquisitionDialog.addEventListener("click", closeAcquisitionDialog);
+  els.deleteOpportunity.addEventListener("click", deleteCurrentOpportunity);
+  els.acquisitionForm.addEventListener("submit", saveAcquisitionOpportunity);
+  ["acquisitionSearch", "acquisitionDecisionFilter", "acquisitionPerformanceFilter", "acquisitionNaicsFilter", "acquisitionServiceFilter"].forEach((id) => {
+    els[id].addEventListener("input", renderAcquisitionOpportunities);
+  });
+  document.getElementById("acqServiceType").addEventListener("change", applyAcquisitionSecurityRule);
+  els.acquisitionScoreChecklist.addEventListener("change", applyAcquisitionSecurityRule);
+  els.acquisitionTable.addEventListener("click", (event) => {
+    const editButton = event.target.closest("[data-edit-opportunity]");
+    if (editButton) {
+      openAcquisitionDialog(acquisitionOpportunities.find((item) => item.id === editButton.dataset.editOpportunity));
+      return;
+    }
+    const deleteButton = event.target.closest("[data-delete-opportunity]");
+    if (deleteButton) deleteOpportunityById(deleteButton.dataset.deleteOpportunity);
+  });
+  els.exportAcquisitionCsv.addEventListener("click", () => exportDataset("acquisition", "csv"));
+
   document.querySelectorAll("[data-copy-target], [data-copy-value]").forEach((button) => {
     button.addEventListener("click", () => {
       const valueToCopy = button.dataset.copyValue || document.getElementById(button.dataset.copyTarget)?.textContent || "";
@@ -524,6 +708,8 @@ function render() {
   renderWorkers();
   renderQuotes();
   renderVendors();
+  renderAcquisitionOpportunities();
+  renderAcquisitionModules();
   renderCapabilityLibrary();
 }
 
@@ -545,7 +731,8 @@ function renderMetrics() {
 function renderToday() {
   const followUpsToday = records.filter((record) => record.nextFollowUpDate === isoToday).length;
   const workerApplications = workers.filter((worker) => ["New", "Contacted"].includes(worker.status)).length;
-  const openOpportunities = records.filter(isActiveOpportunity).length;
+  const bidEngineOpen = acquisitionOpportunities.filter((opportunity) => opportunity.openOpportunity && opportunity.decisionLabel !== "Ignore").length;
+  const openOpportunities = records.filter(isActiveOpportunity).length + bidEngineOpen;
   const registrationsPending = vendors.filter((vendor) =>
     ["Not Started", "In Progress", "Waiting Response", "Follow Up Needed"].includes(vendor.registrationStatus),
   ).length;
@@ -558,6 +745,7 @@ function renderToday() {
   setText("todayWorkerApplications", workerApplications);
   setText("todayFollowUps", followUpsToday);
   setText("todayOpenOpportunities", openOpportunities);
+  setText("todayBidEngineItems", acquisitionOpportunities.length);
   setText("todayRegistrationsPending", registrationsPending);
   setText("todayQuotesWaiting", quotesWaiting);
   setText("todayContractsActive", contractsActive);
@@ -853,6 +1041,54 @@ function renderVendors() {
     : `<tr><td class="empty-state" colspan="8">No vendor registrations match the current view.</td></tr>`;
 }
 
+function renderAcquisitionModules() {
+  if (!els.acquisitionModuleList) return;
+  els.acquisitionModuleList.innerHTML = acquisitionModules
+    .map((moduleName) => `<span>${escapeHtml(moduleName)}</span>`)
+    .join("");
+}
+
+function renderAcquisitionOpportunities() {
+  const rows = getVisibleAcquisitionOpportunities();
+  renderAcquisitionMetrics();
+  els.acquisitionTable.innerHTML = rows.length
+    ? rows
+        .map((opportunity) => {
+          const score = calculateOpportunityScore(opportunity);
+          const securityClass = opportunity.securityLicensingRequired ? " urgent" : "";
+          return `
+            <tr>
+              <td><strong>${escapeHtml(opportunity.opportunityName)}</strong><small>${escapeHtml(opportunity.source || "No source")} - ${escapeHtml(opportunity.solicitationNumber || "No solicitation")}</small></td>
+              <td><span class="service-pill">${escapeHtml(opportunity.serviceType || "Not set")}</span><small>${escapeHtml(opportunity.naics || "No NAICS")} - ${escapeHtml(opportunity.estimatedValue || "No value")}</small></td>
+              <td><strong>${score.points}/${score.total}</strong><small>${escapeHtml(score.summary)}</small></td>
+              <td><span class="status-pill ${opportunity.decisionLabel === "Pursue Immediately" ? "success" : ""}${securityClass}">${escapeHtml(opportunity.decisionLabel)}</span></td>
+              <td>${escapeHtml(opportunity.performanceMethod || "Not set")}</td>
+              <td class="${dateClass(opportunity.dueDate)}">${formatDate(opportunity.dueDate)}</td>
+              <td><strong>${escapeHtml(opportunity.buyer || "No buyer")}</strong><small>${escapeHtml(opportunity.contactName || "No contact")}<br />${escapeHtml(opportunity.contactEmail || "No email")}</small></td>
+              <td>
+                <div class="row-actions">
+                  <button class="button secondary" type="button" data-edit-opportunity="${escapeHtml(opportunity.id)}">Edit</button>
+                  <button class="button danger" type="button" data-delete-opportunity="${escapeHtml(opportunity.id)}">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        })
+        .join("")
+    : `<tr><td class="empty-state" colspan="8">No acquisition opportunities match the current view.</td></tr>`;
+}
+
+function renderAcquisitionMetrics() {
+  setText("acqMetricTotal", acquisitionOpportunities.length);
+  setText("acqMetricPursue", acquisitionOpportunities.filter((item) => item.decisionLabel === "Pursue Immediately").length);
+  setText("acqMetricSubcontractor", acquisitionOpportunities.filter((item) =>
+    item.decisionLabel === "Subcontractor Needed" || item.performanceMethod === "Subcontract",
+  ).length);
+  setText("acqMetricDueSoon", acquisitionOpportunities.filter((item) => isWithinDays(item.dueDate, 14)).length);
+  setText("acqMetricUnder250", acquisitionOpportunities.filter((item) => item.under250k).length);
+  setText("acqMetricSecurity", acquisitionOpportunities.filter((item) => item.securityLicensingRequired).length);
+}
+
 function getVisiblePrimeRecords() {
   const query = els.searchInput.value.trim().toLowerCase();
   let rows = records.filter((record) => {
@@ -918,6 +1154,44 @@ function getVisibleVendors() {
     if (els.vendorStatusFilter.value !== "all" && vendor.registrationStatus !== els.vendorStatusFilter.value) return false;
     return true;
   });
+}
+
+function getVisibleAcquisitionOpportunities() {
+  const query = els.acquisitionSearch.value.trim().toLowerCase();
+  return acquisitionOpportunities.filter((opportunity) => {
+    const searchable = [
+      opportunity.opportunityName,
+      opportunity.source,
+      opportunity.solicitationNumber,
+      opportunity.buyer,
+      opportunity.contactName,
+      opportunity.contactEmail,
+      opportunity.serviceType,
+      opportunity.naics,
+      opportunity.estimatedValue,
+      opportunity.performanceMethod,
+      opportunity.decisionLabel,
+      opportunity.notes,
+    ].join(" ").toLowerCase();
+    if (query && !searchable.includes(query)) return false;
+    if (els.acquisitionDecisionFilter.value !== "all" && opportunity.decisionLabel !== els.acquisitionDecisionFilter.value) return false;
+    if (els.acquisitionPerformanceFilter.value !== "all" && opportunity.performanceMethod !== els.acquisitionPerformanceFilter.value) return false;
+    if (els.acquisitionNaicsFilter.value !== "all" && opportunity.naics !== els.acquisitionNaicsFilter.value) return false;
+    if (els.acquisitionServiceFilter.value !== "all" && opportunity.serviceType !== els.acquisitionServiceFilter.value) return false;
+    return true;
+  }).sort((a, b) => compareDates(a.dueDate, b.dueDate));
+}
+
+function calculateOpportunityScore(opportunity) {
+  const positiveFields = opportunityScoreFields.filter((scoreField) => !["securityLicensingRequired", "bondingRequired", "siteVisitRequired"].includes(scoreField.value));
+  const positivePoints = positiveFields.filter((scoreField) => Boolean(opportunity[scoreField.value])).length;
+  const cautionCount = ["securityLicensingRequired", "bondingRequired", "siteVisitRequired"].filter((key) => opportunity[key]).length;
+  const points = Math.max(0, positivePoints - cautionCount);
+  return {
+    points,
+    total: positiveFields.length,
+    summary: cautionCount ? `${cautionCount} caution flag${cautionCount === 1 ? "" : "s"}` : "No caution flags",
+  };
 }
 
 function resetPrimeFilters() {
@@ -1107,6 +1381,110 @@ function handleCapabilityLibraryAction(event) {
   if (action === "sent") {
     markCapabilityStatementSent();
   }
+}
+
+function openAcquisitionDialog(opportunity) {
+  const current = opportunity || emptyAcquisitionOpportunity();
+  els.acquisitionDialogTitle.textContent = opportunity ? "Edit Opportunity" : "Add Opportunity";
+  els.deleteOpportunity.style.visibility = opportunity ? "visible" : "hidden";
+  setFormValue("acquisitionId", current.id);
+  setFormValue("acqOpportunityName", current.opportunityName || "");
+  setFormValue("acqSource", current.source || "");
+  setFormValue("acqSolicitationNumber", current.solicitationNumber || "");
+  setFormValue("acqBuyer", current.buyer || "");
+  setFormValue("acqServiceType", current.serviceType || services[0]);
+  setFormValue("acqNaics", current.naics || acquisitionNaics[0]);
+  setFormValue("acqDueDate", current.dueDate || "");
+  setFormValue("acqEstimatedValue", current.estimatedValue || "");
+  setFormValue("acqPerformanceMethod", current.performanceMethod || "Subcontract");
+  setFormValue("acqDecisionLabel", current.decisionLabel || "Worth Reviewing");
+  setFormValue("acqContactName", current.contactName || "");
+  setFormValue("acqContactEmail", current.contactEmail || "");
+  setFormValue("acqNotes", current.notes || "");
+  document.querySelectorAll('input[name="acquisitionScore"]').forEach((input) => {
+    input.checked = Boolean(current[input.value]);
+  });
+  applyAcquisitionSecurityRule();
+  els.acquisitionDialog.showModal();
+}
+
+function closeAcquisitionDialog() {
+  closeModal(els.acquisitionDialog, els.acquisitionForm);
+}
+
+function saveAcquisitionOpportunity(event) {
+  event.preventDefault();
+  const opportunity = buildAcquisitionOpportunityFromForm();
+  const index = acquisitionOpportunities.findIndex((item) => item.id === opportunity.id);
+  if (index >= 0) acquisitionOpportunities[index] = opportunity;
+  else acquisitionOpportunities.unshift(opportunity);
+  saveCollection(STORAGE_KEYS.acquisitionOpportunities, acquisitionOpportunities);
+  closeAcquisitionDialog();
+  render();
+  showToast("Opportunity saved.");
+}
+
+function buildAcquisitionOpportunityFromForm() {
+  const opportunity = {
+    id: value("acquisitionId") || crypto.randomUUID(),
+    opportunityName: value("acqOpportunityName"),
+    source: value("acqSource"),
+    solicitationNumber: value("acqSolicitationNumber"),
+    buyer: value("acqBuyer"),
+    serviceType: value("acqServiceType"),
+    naics: value("acqNaics"),
+    dueDate: value("acqDueDate"),
+    estimatedValue: value("acqEstimatedValue"),
+    performanceMethod: value("acqPerformanceMethod"),
+    decisionLabel: value("acqDecisionLabel"),
+    contactName: value("acqContactName"),
+    contactEmail: value("acqContactEmail"),
+    notes: value("acqNotes"),
+  };
+  opportunityScoreFields.forEach((scoreField) => {
+    opportunity[scoreField.value] = document.querySelector(`input[name="acquisitionScore"][value="${scoreField.value}"]`)?.checked || false;
+  });
+  return applySecurityGuardrails(opportunity);
+}
+
+function applyAcquisitionSecurityRule() {
+  const serviceType = value("acqServiceType");
+  const securityFlag = document.querySelector('input[name="acquisitionScore"][value="securityLicensingRequired"]');
+  const isSecurityService = isSecurityOpportunity({ serviceType });
+  if (isSecurityService && securityFlag) securityFlag.checked = true;
+  if ((isSecurityService || securityFlag?.checked) && value("acqPerformanceMethod") === "Self-perform") {
+    setFormValue("acqPerformanceMethod", "Subcontract");
+  }
+  if (els.securityRuleNotice) {
+    els.securityRuleNotice.classList.toggle("show", Boolean(isSecurityService || securityFlag?.checked));
+  }
+}
+
+function applySecurityGuardrails(opportunity) {
+  if (!isSecurityOpportunity(opportunity) && !opportunity.securityLicensingRequired) return opportunity;
+  return {
+    ...opportunity,
+    securityLicensingRequired: true,
+    performanceMethod: opportunity.performanceMethod === "Self-perform" ? "Subcontract" : opportunity.performanceMethod,
+    decisionLabel: opportunity.decisionLabel === "Pursue Immediately" ? "Subcontractor Needed" : opportunity.decisionLabel,
+  };
+}
+
+function isSecurityOpportunity(opportunity) {
+  return /security|guard|patrol/i.test(opportunity.serviceType || "");
+}
+
+function deleteCurrentOpportunity() {
+  deleteOpportunityById(value("acquisitionId"), { closeDialog: true });
+}
+
+function deleteOpportunityById(id, options = {}) {
+  if (!id || !confirm("Delete this acquisition opportunity?")) return;
+  acquisitionOpportunities = acquisitionOpportunities.filter((item) => item.id !== id);
+  saveCollection(STORAGE_KEYS.acquisitionOpportunities, acquisitionOpportunities);
+  if (options.closeDialog) closeAcquisitionDialog();
+  render();
+  showToast("Opportunity deleted.");
 }
 
 function saveWorker(event) {
@@ -1326,6 +1704,29 @@ function getExportConfig(dataset) {
         field("Notes", (r) => r.notes),
       ],
     },
+    acquisition: {
+      filename: "igeo-acquisition-opportunities",
+      rows: getVisibleAcquisitionOpportunities,
+      fields: [
+        field("Opportunity Name", (r) => r.opportunityName),
+        field("Source", (r) => r.source),
+        field("Solicitation Number", (r) => r.solicitationNumber),
+        field("Buyer / Agency", (r) => r.buyer),
+        field("Service Type", (r) => r.serviceType),
+        field("NAICS", (r) => r.naics),
+        field("Due Date", (r) => r.dueDate),
+        field("Estimated Value", (r) => r.estimatedValue),
+        field("Performance Method", (r) => r.performanceMethod),
+        field("Decision Label", (r) => r.decisionLabel),
+        field("Score", (r) => `${calculateOpportunityScore(r).points}/${calculateOpportunityScore(r).total}`),
+        field("Security Licensing Required", (r) => (r.securityLicensingRequired ? "Yes" : "No")),
+        field("Subcontractable", (r) => (r.subcontractable ? "Yes" : "No")),
+        field("Brokerable", (r) => (r.brokerable ? "Yes" : "No")),
+        field("Contact Name", (r) => r.contactName),
+        field("Contact Email", (r) => r.contactEmail),
+        field("Notes", (r) => r.notes),
+      ],
+    },
   };
   return configs[dataset];
 }
@@ -1341,6 +1742,19 @@ function loadPrimeRecords() {
   const recordsToUse = legacy || samplePrimeRecords;
   saveCollection(STORAGE_KEYS.primes, recordsToUse);
   return recordsToUse;
+}
+
+function seedAcquisitionOpportunities(existing) {
+  const current = Array.isArray(existing) ? [...existing] : [];
+  let changed = false;
+  sampleAcquisitionOpportunities.forEach((sample) => {
+    if (!current.some((opportunity) => opportunity.solicitationNumber === sample.solicitationNumber)) {
+      current.push(sample);
+      changed = true;
+    }
+  });
+  if (changed) saveCollection(STORAGE_KEYS.acquisitionOpportunities, current);
+  return current;
 }
 
 async function initializePrimeCrmData() {
@@ -1673,6 +2087,20 @@ function capabilityStatement(title, service, links = {}) {
 
 function emptyPrimeRecord() {
   return { id: crypto.randomUUID(), status: "Prospect", services: [] };
+}
+
+function emptyAcquisitionOpportunity() {
+  return {
+    id: crypto.randomUUID(),
+    serviceType: "Janitorial",
+    naics: "561720",
+    performanceMethod: "Subcontract",
+    decisionLabel: "Worth Reviewing",
+    openOpportunity: true,
+    serviceBased: true,
+    lowCapital: true,
+    subcontractable: true,
+  };
 }
 
 function value(id) {

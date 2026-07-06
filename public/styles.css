@@ -923,6 +923,48 @@ td strong {
   color: #256f29;
 }
 
+.status-pill.urgent {
+  background: #fff5f4;
+  color: var(--danger);
+}
+
+.acquisition-command {
+  display: grid;
+  gap: 14px;
+}
+
+.acquisition-module-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.acquisition-module-list span {
+  background: #fbfdff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--secondary-blue);
+  font-size: 12px;
+  font-weight: 900;
+  padding: 8px 10px;
+}
+
+.security-rule {
+  background: #fff5f4;
+  border: 1px solid #f3bbb5;
+  border-radius: 8px;
+  color: var(--danger);
+  display: none;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.45;
+  padding: 12px 14px;
+}
+
+.security-rule.show {
+  display: block;
+}
+
 .date-warning {
   color: var(--warning);
   font-weight: 900;

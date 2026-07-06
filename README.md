@@ -7,6 +7,7 @@ Single operational dashboard for iGeo Solutions LLC.
 - Today
 - My Day
 - Alerts
+- Acquisition OS / Bid Engine
 - Prime Contractor CRM
 - Workforce
 - Worker Intake

@@ -32,6 +32,7 @@
 
       <nav class="module-tabs" aria-label="Operations modules">
         <a class="nav-tab nav-link active" href="#today">Today</a>
+        <button class="nav-tab" type="button" data-module-tab="acquisition-os">Acquisition</button>
         <button class="nav-tab" type="button" data-module-tab="prime-crm">Contacts</button>
         <button class="nav-tab" type="button" data-module-tab="quote-generator">Quotes</button>
         <button class="nav-tab" type="button" data-module-tab="workforce-management">Applications</button>
@@ -54,6 +55,7 @@
           <article class="today-card"><span>Follow Ups Due</span><strong id="todayFollowUps">0</strong></article>
           <article class="today-card"><span>Worker Applications</span><strong id="todayWorkerApplications">0</strong></article>
           <article class="today-card"><span>Open Opportunities</span><strong id="todayOpenOpportunities">0</strong></article>
+          <article class="today-card"><span>Bid Engine Items</span><strong id="todayBidEngineItems">0</strong></article>
           <article class="today-card"><span>Registrations Pending</span><strong id="todayRegistrationsPending">0</strong></article>
           <article class="today-card"><span>Quotes Waiting</span><strong id="todayQuotesWaiting">0</strong></article>
           <article class="today-card"><span>Contracts Active</span><strong id="todayContractsActive">0</strong></article>
@@ -106,7 +108,7 @@
           <a href="#my-day">Tasks</a>
           <a href="#workforce-management">Applications</a>
           <a href="#prime-crm">Contacts</a>
-          <a href="#prime-crm">Opportunities</a>
+          <a href="#acquisition-os">Opportunities</a>
           <a href="#vendor-registration">Registrations</a>
           <a href="#capability-statements">Capability Statements</a>
         </div>
@@ -125,6 +127,64 @@
           <a href="#settings">Email Notifications</a>
           <a href="#settings">Automation Status</a>
         </div>
+      </section>
+
+      <section id="acquisition-os" class="module-page" data-module-page="acquisition-os">
+        <div class="module-heading">
+          <div>
+            <p class="eyebrow">Acquisition OS</p>
+            <h2>Bid Engine</h2>
+          </div>
+          <div class="header-actions">
+            <button id="exportAcquisitionCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
+            <button id="addOpportunity" class="button primary" type="button">Opportunity</button>
+          </div>
+        </div>
+
+        <section class="metric-grid" aria-label="Acquisition dashboard metrics">
+          <article class="metric"><span>Tracked Opportunities</span><strong id="acqMetricTotal">0</strong></article>
+          <article class="metric success"><span>Pursue Immediately</span><strong id="acqMetricPursue">0</strong></article>
+          <article class="metric"><span>Subcontractor Needed</span><strong id="acqMetricSubcontractor">0</strong></article>
+          <article class="metric"><span>Due Within 14 Days</span><strong id="acqMetricDueSoon">0</strong></article>
+          <article class="metric"><span>Under $250K</span><strong id="acqMetricUnder250">0</strong></article>
+          <article class="metric urgent"><span>Security Review</span><strong id="acqMetricSecurity">0</strong></article>
+        </section>
+
+        <section class="panel acquisition-command" aria-label="Acquisition OS modules">
+          <div class="panel-heading">
+            <h2>Unified Acquisition Workspace</h2>
+            <span class="count-pill">Core module</span>
+          </div>
+          <div id="acquisitionModuleList" class="acquisition-module-list"></div>
+        </section>
+
+        <section class="panel module-tools">
+          <label class="field"><span>Search Opportunities</span><input id="acquisitionSearch" type="search" placeholder="Buyer, solicitation, service..." /></label>
+          <label class="field"><span>Decision</span><select id="acquisitionDecisionFilter"></select></label>
+          <label class="field"><span>Performance Method</span><select id="acquisitionPerformanceFilter"></select></label>
+          <label class="field"><span>NAICS</span><select id="acquisitionNaicsFilter"></select></label>
+          <label class="field"><span>Service</span><select id="acquisitionServiceFilter"></select></label>
+        </section>
+
+        <section class="panel table-panel" aria-label="Acquisition opportunities">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Opportunity</th>
+                  <th>Service / NAICS</th>
+                  <th>Score</th>
+                  <th>Decision</th>
+                  <th>Performance</th>
+                  <th>Deadline</th>
+                  <th>Contact</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="acquisitionTable"></tbody>
+            </table>
+          </div>
+        </section>
       </section>
 
       <section id="prime-crm" class="module-page active" data-module-page="prime-crm">
@@ -648,6 +708,56 @@
           <div>
             <button id="cancelVendorDialog" class="button secondary" type="button">Cancel</button>
             <button class="button primary" type="submit">Save Registration</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="acquisitionDialog">
+      <form id="acquisitionForm" method="dialog">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">Acquisition OS</p>
+            <h2 id="acquisitionDialogTitle">Add Opportunity</h2>
+          </div>
+          <button id="closeAcquisitionDialog" class="icon-button" type="button" aria-label="Close">X</button>
+        </div>
+
+        <input id="acquisitionId" type="hidden" />
+
+        <div class="form-section">
+          <h3>Opportunity</h3>
+          <div class="form-grid">
+            <label class="field required"><span>Opportunity Name</span><input id="acqOpportunityName" required /></label>
+            <label class="field"><span>Source</span><input id="acqSource" placeholder="SAM.gov, agency portal, prime..." /></label>
+            <label class="field"><span>Solicitation Number</span><input id="acqSolicitationNumber" /></label>
+            <label class="field"><span>Buyer / Agency</span><input id="acqBuyer" /></label>
+            <label class="field"><span>Service Type</span><select id="acqServiceType"></select></label>
+            <label class="field"><span>NAICS</span><select id="acqNaics"></select></label>
+            <label class="field"><span>Due Date</span><input id="acqDueDate" type="date" /></label>
+            <label class="field"><span>Estimated Value</span><input id="acqEstimatedValue" placeholder="$0" /></label>
+            <label class="field"><span>Performance Method</span><select id="acqPerformanceMethod"></select></label>
+            <label class="field"><span>Decision Label</span><select id="acqDecisionLabel"></select></label>
+            <label class="field"><span>Contact Name</span><input id="acqContactName" /></label>
+            <label class="field"><span>Contact Email</span><input id="acqContactEmail" type="email" /></label>
+            <label class="field wide"><span>Notes</span><textarea id="acqNotes" rows="3"></textarea></label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Score Fields</h3>
+          <div id="acquisitionScoreChecklist" class="check-grid"></div>
+        </div>
+
+        <div id="securityRuleNotice" class="security-rule">
+          Security opportunities stay subcontractor-supported unless licenses, insurance, trained personnel, and compliance documents are confirmed.
+        </div>
+
+        <div class="dialog-actions">
+          <button id="deleteOpportunity" class="button danger" type="button">Delete</button>
+          <div>
+            <button id="cancelAcquisitionDialog" class="button secondary" type="button">Cancel</button>
+            <button class="button primary" type="submit">Save Opportunity</button>
           </div>
         </div>
       </form>
