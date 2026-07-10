@@ -199,6 +199,10 @@ h3 {
   z-index: 40;
 }
 
+.global-search-results[hidden] {
+  display: none;
+}
+
 .global-search-result {
   align-items: start;
   background: transparent;
@@ -338,6 +342,31 @@ h3 {
 .settings-panel {
   display: grid;
   gap: 16px;
+}
+
+.collapsible-panel-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  display: flex;
+  font-size: 22px;
+  font-weight: 900;
+  justify-content: space-between;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.collapsible-panel-arrow {
+  color: var(--primary-blue);
+  flex: 0 0 auto;
+  font-size: 16px;
+  margin-left: 16px;
+}
+
+.collapsible-panel-content[hidden] {
+  display: none;
 }
 
 .today-grid,
@@ -1462,8 +1491,19 @@ form {
 
   .top-nav {
     position: static;
-    gap: 10px;
+    gap: 0;
     padding: 10px 12px;
+  }
+
+  .global-search {
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  .global-search-box,
+  .global-search input {
+    max-width: 100%;
+    min-width: 0;
   }
 
   .brand-lockup {
@@ -1489,9 +1529,14 @@ form {
   .module-tabs {
     gap: 6px;
     justify-content: flex-start;
-    margin-inline: -12px;
+    margin: 12px -12px 0;
     padding: 0 12px 4px;
     width: calc(100% + 24px);
+  }
+
+  .collapsible-panel-toggle {
+    font-size: 19px;
+    min-height: 28px;
   }
 
   .nav-tab {

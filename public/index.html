@@ -71,19 +71,19 @@
       </section>
 
       <section id="my-day" class="my-day-panel panel" aria-label="My Day">
-        <div class="command-header">
-          <div>
-            <p class="eyebrow">MY DAY</p>
-            <h2>Checklist</h2>
+        <button id="myDayPanelToggle" class="collapsible-panel-toggle" type="button" aria-expanded="false" aria-controls="myDayPanelContent">
+          <span>My Day Checklist</span>
+          <span class="collapsible-panel-arrow" aria-hidden="true">&#9660;</span>
+        </button>
+        <div id="myDayPanelContent" class="collapsible-panel-content" hidden>
+          <div class="checklist-grid">
+            <label><input type="checkbox" /> Check important emails</label>
+            <label><input type="checkbox" /> Follow up with primes</label>
+            <label><input type="checkbox" /> Review worker applications</label>
+            <label><input type="checkbox" /> Submit registrations</label>
+            <label><input type="checkbox" /> Send capability statements</label>
+            <label><input type="checkbox" /> Review opportunities</label>
           </div>
-        </div>
-        <div class="checklist-grid">
-          <label><input type="checkbox" /> Check important emails</label>
-          <label><input type="checkbox" /> Follow up with primes</label>
-          <label><input type="checkbox" /> Review worker applications</label>
-          <label><input type="checkbox" /> Submit registrations</label>
-          <label><input type="checkbox" /> Send capability statements</label>
-          <label><input type="checkbox" /> Review opportunities</label>
         </div>
       </section>
 
@@ -500,22 +500,22 @@
       </section>
 
       <section id="settings" class="settings-panel panel" aria-label="Settings">
-        <div class="command-header">
-          <div>
-            <p class="eyebrow">Settings</p>
-            <h2>Operator Settings</h2>
+        <button id="settingsPanelToggle" class="collapsible-panel-toggle" type="button" aria-expanded="false" aria-controls="settingsPanelContent">
+          <span>Operator Settings</span>
+          <span class="collapsible-panel-arrow" aria-hidden="true">&#9660;</span>
+        </button>
+        <div id="settingsPanelContent" class="collapsible-panel-content" hidden>
+          <div class="settings-grid">
+            <label class="setting-toggle"><span>Partner Notifications</span><input id="partnerNotificationsToggle" type="checkbox" checked /></label>
+            <label class="setting-toggle"><span>Email Alerts</span><input id="emailAlertsToggle" type="checkbox" checked /></label>
+            <label class="setting-toggle"><span>Simple Mode</span><input id="simpleModeToggle" type="checkbox" checked /></label>
+            <label class="setting-toggle"><span>Advanced Mode</span><input id="advancedModeToggle" type="checkbox" /></label>
+            <label class="setting-toggle"><span>Partner View</span><input id="partnerViewToggle" type="checkbox" /></label>
+            <article class="settings-status">
+              <h3>Automation Status</h3>
+              <strong id="settingsAutomationStatus">Monitoring</strong>
+            </article>
           </div>
-        </div>
-        <div class="settings-grid">
-          <label class="setting-toggle"><span>Partner Notifications</span><input id="partnerNotificationsToggle" type="checkbox" checked /></label>
-          <label class="setting-toggle"><span>Email Alerts</span><input id="emailAlertsToggle" type="checkbox" checked /></label>
-          <label class="setting-toggle"><span>Simple Mode</span><input id="simpleModeToggle" type="checkbox" checked /></label>
-          <label class="setting-toggle"><span>Advanced Mode</span><input id="advancedModeToggle" type="checkbox" /></label>
-          <label class="setting-toggle"><span>Partner View</span><input id="partnerViewToggle" type="checkbox" /></label>
-          <article class="settings-status">
-            <h3>Automation Status</h3>
-            <strong id="settingsAutomationStatus">Monitoring</strong>
-          </article>
         </div>
       </section>
     </main>

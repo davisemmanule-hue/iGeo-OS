@@ -506,6 +506,10 @@ function bindElements() {
     "partnerViewToggle",
     "advancedModeToggle",
     "settingsAutomationStatus",
+    "myDayPanelToggle",
+    "myDayPanelContent",
+    "settingsPanelToggle",
+    "settingsPanelContent",
     "searchInput",
     "statusFilter",
     "serviceFilter",
@@ -693,6 +697,9 @@ function fillSelect(select, options, allLabel) {
 }
 
 function bindEvents() {
+  bindCollapsiblePanel(els.myDayPanelToggle, els.myDayPanelContent);
+  bindCollapsiblePanel(els.settingsPanelToggle, els.settingsPanelContent);
+
   if (els.globalSearchInput && els.globalSearchResults) {
     document.querySelector(".global-search")?.addEventListener("submit", (event) => event.preventDefault());
     els.globalSearchInput.addEventListener("input", renderGlobalSearchSuggestions);
@@ -847,6 +854,20 @@ function render() {
   renderAcquisitionModules();
   renderCapabilityLibrary();
   renderGlobalSearchSuggestions();
+}
+
+function bindCollapsiblePanel(toggle, content) {
+  if (!toggle || !content) return;
+  toggle.setAttribute("aria-expanded", "false");
+  content.hidden = true;
+  const arrow = toggle.querySelector(".collapsible-panel-arrow");
+  if (arrow) arrow.textContent = "\u25bc";
+  toggle.addEventListener("click", () => {
+    const isOpen = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!isOpen));
+    content.hidden = isOpen;
+    if (arrow) arrow.textContent = isOpen ? "\u25bc" : "\u25b2";
+  });
 }
 
 function renderMetrics() {
