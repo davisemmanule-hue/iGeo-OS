@@ -933,20 +933,93 @@ td strong {
   gap: 14px;
 }
 
-.acquisition-module-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.acquisition-workspace {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 270px minmax(0, 1fr);
 }
 
-.acquisition-module-list span {
-  background: #fbfdff;
-  border: 1px solid var(--line);
+.acquisition-sidebar {
+  background: #172532;
   border-radius: 8px;
-  color: var(--secondary-blue);
+  color: #eef4f6;
+  padding: 18px 14px;
+  position: sticky;
+  top: 88px;
+}
+
+.acquisition-brand {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 42px 1fr;
+  margin-bottom: 18px;
+}
+
+.acquisition-brand strong,
+.acquisition-brand span {
+  display: block;
+}
+
+.acquisition-brand strong {
+  color: #ffffff;
+  font-size: 15px;
+}
+
+.acquisition-brand span {
+  color: #9fb6c5;
   font-size: 12px;
-  font-weight: 900;
-  padding: 8px 10px;
+  font-weight: 800;
+  margin-top: 3px;
+}
+
+.acquisition-mark {
+  align-items: center;
+  background: #f7f2e8;
+  border-radius: 8px;
+  color: #172532;
+  display: flex;
+  font-weight: 950;
+  height: 42px;
+  justify-content: center;
+}
+
+.acquisition-module-list {
+  display: grid;
+  gap: 5px;
+}
+
+.acquisition-module-list button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #dce8eb;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 24px 1fr;
+  min-height: 38px;
+  padding: 8px 9px;
+  text-align: left;
+  width: 100%;
+}
+
+.acquisition-module-list button.active {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.acquisition-module-icon {
+  font-size: 16px;
+  text-align: center;
+}
+
+.acquisition-content {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
 }
 
 .security-rule {
@@ -1288,6 +1361,10 @@ form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .acquisition-workspace {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+
   .command-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1406,6 +1483,18 @@ form {
     grid-template-columns: 1fr;
   }
 
+  .acquisition-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .acquisition-sidebar {
+    position: static;
+  }
+
+  .acquisition-module-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .checklist-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1459,8 +1548,49 @@ form {
     gap: 8px;
   }
 
+  #acquisition-os .module-heading {
+    min-width: 0;
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  #acquisition-os .module-heading > div {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  #acquisition-os .acquisition-action-bar {
+    align-self: stretch;
+    box-sizing: border-box;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+    margin-inline: 0;
+    max-width: 100%;
+    min-width: 0;
+    overflow: visible;
+    padding: 0;
+    width: 100%;
+  }
+
+  #acquisition-os .acquisition-action-bar .button {
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+    min-height: 44px;
+    overflow-wrap: anywhere;
+    text-align: center;
+    white-space: normal;
+    width: 100%;
+  }
+
   body.simple-mode .header-actions .button.secondary {
     display: none;
+  }
+
+  body.simple-mode #acquisition-os .acquisition-action-bar .button.secondary {
+    display: inline-flex;
   }
 
   .business-card-lines {
@@ -1526,7 +1656,8 @@ form {
   }
 
   .partner-grid,
-  .owner-grid {
+  .owner-grid,
+  .acquisition-module-list {
     grid-template-columns: 1fr;
   }
 }

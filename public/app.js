@@ -15,6 +15,10 @@ const STORAGE_KEYS = {
 
 const primeCrmIntegration = window.IGEO_INTEGRATIONS?.googleSheets?.primeCrm || {};
 
+if ("scrollRestoration" in history) {
+  history.scrollRestoration = "manual";
+}
+
 const statuses = [
   "Prospect",
   "Contacted",
@@ -104,6 +108,31 @@ const acquisitionModules = [
   "Google Drive document storage",
   "Export to PDF and Word",
 ];
+const acquisitionModuleIcons = {
+  "Opportunity Dashboard": "▦",
+  "Bid Engine": "◆",
+  "Solicitation Analyzer": "⌕",
+  "Opportunity Scoring Engine": "◉",
+  "Compliance Checklist Generator": "☑",
+  "Proposal Draft Generator": "✎",
+  "Pricing Worksheet": "$",
+  "Subcontractor / Teaming Partner Tracker": "◈",
+  "Incumbent Intelligence": "◎",
+  "Procurement Contact Database": "☎",
+  "Daily Acquisition Intelligence Integration": "◆",
+  "Google Drive document storage": "▣",
+  "Export to PDF and Word": "⇩",
+};
+const acquisitionModuleLabels = {
+  "Opportunity Scoring Engine": "Opportunity Scoring",
+  "Compliance Checklist Generator": "Compliance Checklist",
+  "Proposal Draft Generator": "Proposal Draft",
+  "Subcontractor / Teaming Partner Tracker": "Teaming Tracker",
+  "Procurement Contact Database": "Procurement Contacts",
+  "Daily Acquisition Intelligence Integration": "Daily Intelligence",
+  "Google Drive document storage": "Google Drive Storage",
+  "Export to PDF and Word": "Export Word/PDF",
+};
 const acquisitionModuleTargets = {
   "Opportunity Dashboard": "acquisition-module-opportunity-dashboard",
   "Bid Engine": "acquisition-module-bid-engine",
@@ -426,13 +455,16 @@ let toastTimer;
 const els = {};
 
 document.addEventListener("DOMContentLoaded", () => {
+  const initialModule = getInitialModule();
+  const shouldResetScroll = !window.location.hash;
   bindElements();
   applyBranding();
   hydrateControls();
   loadViewMode();
   bindEvents();
-  activateModule(getInitialModule());
+  activateModule(initialModule, { preserveHash: true });
   render();
+  if (shouldResetScroll) resetInitialScrollPosition();
   initializePrimeCrmData();
   syncWorkersFromGoogleSheet();
   refreshExecutiveEmailAlerts();
@@ -1131,7 +1163,16 @@ function renderVendors() {
 function renderAcquisitionModules() {
   if (!els.acquisitionModuleList) return;
   els.acquisitionModuleList.innerHTML = acquisitionModules
-    .map((moduleName) => `<button type="button" data-acquisition-module="${escapeHtml(moduleName)}">${escapeHtml(moduleName)}</button>`)
+    .map((moduleName, index) => {
+      const label = acquisitionModuleLabels[moduleName] || moduleName;
+      const icon = acquisitionModuleIcons[moduleName] || "•";
+      return `
+        <button class="${index === 0 ? "active" : ""}" type="button" data-acquisition-module="${escapeHtml(moduleName)}" title="${escapeHtml(moduleName)}">
+          <span class="acquisition-module-icon">${escapeHtml(icon)}</span>
+          <span>${escapeHtml(label)}</span>
+        </button>
+      `;
+    })
     .join("");
 }
 
@@ -2560,7 +2601,7 @@ function activateModule(moduleId, options = {}) {
   document.querySelectorAll("[data-module-page]").forEach((page) => {
     page.classList.toggle("active", page.dataset.modulePage === moduleId);
   });
-  history.replaceState(null, "", `#${moduleId}`);
+  if (!options.preserveHash) history.replaceState(null, "", `#${moduleId}`);
   if (options.scroll) scrollToSection(moduleId);
 }
 
@@ -2568,6 +2609,13 @@ function scrollToSection(sectionId) {
   document.getElementById(sectionId)?.scrollIntoView({
     behavior: "smooth",
     block: "start",
+  });
+}
+
+function resetInitialScrollPosition() {
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }), 0);
   });
 }
 
