@@ -455,6 +455,7 @@ let toastTimer;
 const els = {};
 
 document.addEventListener("DOMContentLoaded", () => {
+  const initialHash = window.location.hash ? window.location.hash.slice(1) : "";
   const initialModule = getInitialModule();
   const shouldResetScroll = !window.location.hash;
   bindElements();
@@ -463,6 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadViewMode();
   bindEvents();
   activateModule(initialModule, { preserveHash: true });
+  setActiveNavigation(initialHash || "today");
   render();
   if (shouldResetScroll) resetInitialScrollPosition();
   initializePrimeCrmData();
@@ -482,6 +484,8 @@ function bindElements() {
     "metricWorkersAvailable",
     "metricQuotesSent",
     "metricVendorSubmitted",
+    "globalSearchInput",
+    "globalSearchResults",
     "todayUrgentEmails",
     "todayFollowUps",
     "todayWorkerApplications",
@@ -689,6 +693,17 @@ function fillSelect(select, options, allLabel) {
 }
 
 function bindEvents() {
+  if (els.globalSearchInput && els.globalSearchResults) {
+    document.querySelector(".global-search")?.addEventListener("submit", (event) => event.preventDefault());
+    els.globalSearchInput.addEventListener("input", renderGlobalSearchSuggestions);
+    els.globalSearchInput.addEventListener("focus", renderGlobalSearchSuggestions);
+    els.globalSearchInput.addEventListener("keydown", handleGlobalSearchKeydown);
+    els.globalSearchResults.addEventListener("click", handleGlobalSearchSelection);
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".global-search")) closeGlobalSearch();
+    });
+    window.addEventListener("hashchange", () => setActiveNavigation(window.location.hash.slice(1) || "today"));
+  }
   ["searchInput", "statusFilter", "serviceFilter", "followFilter", "sortSelect"].forEach((id) => {
     els[id].addEventListener("input", () => {
       activeReport = "all";
@@ -797,6 +812,7 @@ function bindEvents() {
         activateModule(targetId, { scroll: true });
         return;
       }
+      setActiveNavigation(targetId);
       scrollToSection(targetId);
       history.replaceState(null, "", `#${targetId}`);
     });
@@ -830,6 +846,7 @@ function render() {
   renderAcquisitionOpportunities();
   renderAcquisitionModules();
   renderCapabilityLibrary();
+  renderGlobalSearchSuggestions();
 }
 
 function renderMetrics() {
@@ -2593,16 +2610,292 @@ async function quickShareBusinessCard() {
   await copyText(text, "Digital business card copied.");
 }
 
+function renderGlobalSearchSuggestions() {
+  if (!els.globalSearchInput || !els.globalSearchResults) return;
+  const query = els.globalSearchInput.value.trim();
+  if (query.length < 2) {
+    closeGlobalSearch();
+    return;
+  }
+  const matches = getGlobalSearchMatches(query);
+  els.globalSearchResults.innerHTML = matches.length
+    ? matches
+        .map(
+          (item, index) => `
+            <button class="global-search-result ${index === 0 ? "active" : ""}" type="button" role="option" data-search-id="${escapeHtml(item.id)}">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span>${escapeHtml(item.type)} - ${escapeHtml(item.detail)}</span>
+            </button>
+          `,
+        )
+        .join("")
+    : `<div class="global-search-result" role="option"><strong>No matches</strong><span>Try a company, agency, NAICS, buyer, opportunity, or module name.</span></div>`;
+  els.globalSearchResults.hidden = false;
+  els.globalSearchInput.setAttribute("aria-expanded", "true");
+}
+
+function handleGlobalSearchKeydown(event) {
+  if (!els.globalSearchResults || els.globalSearchResults.hidden) return;
+  const options = [...els.globalSearchResults.querySelectorAll("[data-search-id]")];
+  if (!options.length) return;
+  const activeIndex = Math.max(0, options.findIndex((option) => option.classList.contains("active")));
+  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    event.preventDefault();
+    const nextIndex = event.key === "ArrowDown"
+      ? Math.min(options.length - 1, activeIndex + 1)
+      : Math.max(0, activeIndex - 1);
+    options.forEach((option, index) => option.classList.toggle("active", index === nextIndex));
+    options[nextIndex].scrollIntoView({ block: "nearest" });
+  }
+  if (event.key === "Enter") {
+    event.preventDefault();
+    openGlobalSearchResult(options[activeIndex].dataset.searchId);
+  }
+  if (event.key === "Escape") closeGlobalSearch();
+}
+
+function handleGlobalSearchSelection(event) {
+  const button = event.target.closest("[data-search-id]");
+  if (!button) return;
+  openGlobalSearchResult(button.dataset.searchId);
+}
+
+function closeGlobalSearch() {
+  if (!els.globalSearchInput || !els.globalSearchResults) return;
+  els.globalSearchResults.hidden = true;
+  els.globalSearchResults.innerHTML = "";
+  els.globalSearchInput.setAttribute("aria-expanded", "false");
+}
+
+function getGlobalSearchMatches(query) {
+  return buildGlobalSearchIndex()
+    .map((item) => ({ ...item, score: scoreSearchItem(query, item.searchText) }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
+    .slice(0, 10);
+}
+
+function buildGlobalSearchIndex() {
+  const index = [];
+  const addItem = (item) => {
+    const searchText = [item.title, item.type, item.detail, item.keywords].flat().filter(Boolean).join(" ");
+    index.push({ ...item, searchText });
+  };
+
+  [
+    ["page:today", "Today", "Page", "Operator dashboard, alerts, follow ups, bid engine items", "today operator dashboard alerts follow ups urgent emails"],
+    ["page:acquisition-os", "Acquisition OS", "Page", "Opportunities, Bid Engine, NAICS, agencies, buyers, solicitations", "opportunities bid engine acquisition contracts agencies buyers naics"],
+    ["page:prime-crm", "Contacts", "Page", "Prime contractor CRM and opportunity contacts", "contacts prime contractors buyers agencies sblo capability statements"],
+    ["page:quote-generator", "Quotes", "Page", "Quote generator and pricing records", "quotes pricing estimate bid"],
+    ["page:workforce-management", "Applications", "Page", "Worker applications and workforce records", "applications workers workforce staffing"],
+    ["page:vendor-registration", "Registrations", "Page", "Vendor registration tracker", "registrations vendor portals sam gov"],
+    ["page:capability-statements", "Capability Statements", "Page", "Capability library and send tracking", "capability statements pdf email services"],
+    ["page:settings", "Settings", "Page", "Owner mode, partner notifications, automation status", "settings owner partner notifications automation"],
+  ].forEach(([id, title, type, detail, keywords]) => addItem({ id, title, type, detail, keywords }));
+
+  records.forEach((record) => {
+    addItem({
+      id: `prime:${record.id}`,
+      title: record.companyName || fullName(record),
+      type: "Contact",
+      detail: [fullName(record), record.opportunityName, record.solicitationNumber, record.naics, record.status].filter(Boolean).join(" - "),
+      keywords: [
+        record.website,
+        record.industry,
+        record.headquarters,
+        record.serviceAreas,
+        record.email,
+        record.sbloName,
+        record.sbloEmail,
+        record.contractType,
+        record.estimatedValue,
+        ...(record.services || []),
+        record.communicationNotes,
+        record.opportunityNotes,
+      ],
+    });
+  });
+
+  acquisitionOpportunities.forEach((opportunity) => {
+    addItem({
+      id: `acquisition:${opportunity.id}`,
+      title: opportunity.opportunityName || opportunity.buyer || "Acquisition Opportunity",
+      type: "Opportunity",
+      detail: [opportunity.buyer, opportunity.solicitationNumber, opportunity.naics, opportunity.decisionLabel].filter(Boolean).join(" - "),
+      keywords: [
+        opportunity.source,
+        opportunity.sourceLink,
+        opportunity.solicitationType,
+        opportunity.serviceType,
+        opportunity.priorityRegion,
+        opportunity.performanceMethod,
+        opportunity.contactName,
+        opportunity.contactEmail,
+        opportunity.estimatedValue,
+        opportunity.urgencyReason,
+        opportunity.notes,
+      ],
+    });
+  });
+
+  quotes.forEach((quote) => {
+    addItem({
+      id: `quote:${quote.id}`,
+      title: quote.clientName || quote.opportunityName || "Quote",
+      type: "Quote",
+      detail: [quote.opportunityName, quote.serviceType, quote.location, quote.quoteStatus].filter(Boolean).join(" - "),
+      keywords: [quote.notes, quote.finalQuoteAmount, quote.estimatedHours, quote.workersNeeded],
+    });
+  });
+
+  workers.forEach((worker) => {
+    addItem({
+      id: `worker:${worker.id}`,
+      title: worker.workerName || "Worker Application",
+      type: "Application",
+      detail: [worker.workerType, worker.serviceCategory, worker.city, worker.state, worker.status].filter(Boolean).join(" - "),
+      keywords: [worker.email, worker.phone, worker.availability, worker.notes, worker.insurance, worker.backgroundCheck],
+    });
+  });
+
+  vendors.forEach((vendor) => {
+    addItem({
+      id: `vendor:${vendor.id}`,
+      title: vendor.companyName || "Vendor Registration",
+      type: "Registration",
+      detail: [vendor.portalType, vendor.registrationStatus, vendor.contactName, vendor.followUpDate].filter(Boolean).join(" - "),
+      keywords: [vendor.website, vendor.loginEmail, vendor.username, vendor.contactEmail, vendor.capabilityStatementSent, vendor.notes],
+    });
+  });
+
+  capabilityStatements.forEach((statement) => {
+    addItem({
+      id: `capability:${statement.title}`,
+      title: statement.title,
+      type: "Capability Statement",
+      detail: [statement.service, statement.status].filter(Boolean).join(" - "),
+      keywords: [statement.pdfUrl, statement.docUrl, statement.emailSubject, statement.emailBody],
+    });
+  });
+
+  [...services, ...acquisitionNaics, ...solicitationTypes, ...performanceMethods, ...decisionLabels, ...priorityRegions].forEach((keyword) => {
+    addItem({
+      id: `keyword:${keyword}`,
+      title: keyword,
+      type: acquisitionNaics.includes(keyword) ? "NAICS" : "Index",
+      detail: acquisitionNaics.includes(keyword) ? "Acquisition OS classification" : "Indexed iGeo OS term",
+      keywords: "opportunity contact quote application registration capability settings",
+    });
+  });
+
+  return index;
+}
+
+function scoreSearchItem(query, text) {
+  const normalizedQuery = normalizeSearchText(query);
+  const normalizedText = normalizeSearchText(text);
+  if (!normalizedQuery || !normalizedText) return 0;
+  if (normalizedText === normalizedQuery) return 200;
+  if (normalizedText.includes(normalizedQuery)) return 140 - Math.min(normalizedText.indexOf(normalizedQuery), 40);
+  const tokens = normalizedQuery.split(" ").filter(Boolean);
+  if (tokens.length && tokens.every((token) => normalizedText.includes(token))) return 95 + tokens.length;
+  if (tokens.some((token) => token.length > 1 && normalizedText.includes(token))) return 45;
+  return isSubsequence(normalizedQuery.replace(/\s+/g, ""), normalizedText.replace(/\s+/g, "")) ? 25 : 0;
+}
+
+function normalizeSearchText(value) {
+  return String(value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function isSubsequence(needle, haystack) {
+  if (needle.length < 3 || needle.length > 5) return false;
+  let index = 0;
+  for (const char of haystack) {
+    if (char === needle[index]) index += 1;
+    if (index === needle.length) return true;
+  }
+  return false;
+}
+
+function openGlobalSearchResult(id) {
+  const item = buildGlobalSearchIndex().find((entry) => entry.id === id);
+  if (!item) return;
+  closeGlobalSearch();
+  els.globalSearchInput.value = "";
+  const [type, rawId] = id.split(/:(.*)/);
+  if (type === "page") {
+    navigateToPage(rawId);
+    return;
+  }
+  if (type === "prime") {
+    activateModule("prime-crm", { scroll: true });
+    openPrimeDialog(records.find((record) => record.id === rawId));
+    return;
+  }
+  if (type === "acquisition") {
+    activateModule("acquisition-os", { scroll: true });
+    openAcquisitionDialog(acquisitionOpportunities.find((opportunity) => opportunity.id === rawId));
+    return;
+  }
+  if (type === "quote") {
+    activateModule("quote-generator", { scroll: true });
+    els.quoteSearch.value = item.title;
+    renderQuotes();
+    return;
+  }
+  if (type === "worker") {
+    activateModule("workforce-management", { scroll: true });
+    els.workerSearch.value = item.title;
+    renderWorkers();
+    return;
+  }
+  if (type === "vendor") {
+    activateModule("vendor-registration", { scroll: true });
+    els.vendorSearch.value = item.title;
+    renderVendors();
+    return;
+  }
+  if (type === "capability") {
+    activateModule("capability-statements", { scroll: true });
+    return;
+  }
+  if (type === "keyword") {
+    activateModule(acquisitionNaics.includes(rawId) ? "acquisition-os" : "prime-crm", { scroll: true });
+    if (acquisitionNaics.includes(rawId)) {
+      els.acquisitionNaicsFilter.value = rawId;
+      renderAcquisitionOpportunities();
+    } else {
+      els.searchInput.value = rawId;
+      render();
+    }
+  }
+}
+
+function navigateToPage(pageId) {
+  if (document.querySelector(`[data-module-page="${pageId}"]`)) {
+    activateModule(pageId, { scroll: true });
+    return;
+  }
+  setActiveNavigation(pageId);
+  scrollToSection(pageId);
+  history.replaceState(null, "", `#${pageId}`);
+}
+
 function activateModule(moduleId, options = {}) {
   if (!document.querySelector(`[data-module-page="${moduleId}"]`)) moduleId = "prime-crm";
-  document.querySelectorAll("[data-module-tab]").forEach((tab) => {
-    tab.classList.toggle("active", tab.dataset.moduleTab === moduleId);
-  });
+  setActiveNavigation(moduleId);
   document.querySelectorAll("[data-module-page]").forEach((page) => {
     page.classList.toggle("active", page.dataset.modulePage === moduleId);
   });
   if (!options.preserveHash) history.replaceState(null, "", `#${moduleId}`);
   if (options.scroll) scrollToSection(moduleId);
+}
+
+function setActiveNavigation(activeId) {
+  document.querySelectorAll(".module-tabs .nav-tab").forEach((tab) => {
+    const tabId = tab.dataset.moduleTab || (tab.getAttribute("href") || "").replace("#", "");
+    tab.classList.toggle("active", tabId === activeId);
+  });
 }
 
 function scrollToSection(sectionId) {

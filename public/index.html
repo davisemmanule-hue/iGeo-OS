@@ -30,6 +30,14 @@
         </span>
       </a>
 
+      <form class="global-search" role="search" autocomplete="off">
+        <label class="global-search-label" for="globalSearchInput">Search iGeo OS</label>
+        <div class="global-search-box">
+          <input id="globalSearchInput" type="search" placeholder="Search opportunities, contacts, quotes, applications, registrations, NAICS, agencies..." aria-controls="globalSearchResults" aria-expanded="false" />
+          <div id="globalSearchResults" class="global-search-results" role="listbox" hidden></div>
+        </div>
+      </form>
+
       <nav class="module-tabs" aria-label="Operations modules">
         <a class="nav-tab nav-link active" href="#today">Today</a>
         <button class="nav-tab" type="button" data-module-tab="acquisition-os">Acquisition OS</button>
