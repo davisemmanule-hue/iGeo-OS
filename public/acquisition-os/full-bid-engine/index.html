@@ -572,8 +572,11 @@
         <div class="actions">
           <button id="newOpp" class="primary" title="Create opportunity">＋ New</button>
           <button id="saveData" title="Save workspace">💾 Save</button>
+          <button id="refreshData" title="Refresh opportunity data">Refresh Opportunity Data</button>
           <button id="exportWord" title="Download Word-compatible brief">▣ Word</button>
           <button id="exportPdf" title="Print or save PDF">⎙ PDF</button>
+          <span class="chip" id="syncStatus">Offline Backup</span>
+          <span class="sub" id="lastSynced">Last Synced: Never</span>
         </div>
       </div>
 
@@ -607,7 +610,10 @@
   </div>
   <div class="toast" id="toast">Saved</div>
 
+  <script src="/acquisition-sync.js?v=canonical-sync"></script>
   <script>
+    const acquisitionSync = window.IGEO_ACQUISITION_SYNC;
+    let lastSyncedAt = "";
     const preferredServices = [
       "Janitorial","Custodial","Floor Care","Porter Services","Commercial Cleaning",
       "Administrative Support","Clerical Support","Data Entry","Temporary Staffing",
@@ -767,7 +773,18 @@
     function load() {
       try {
         const saved = localStorage.getItem("igeo-acquisition-os");
-        return normalizeState(saved ? JSON.parse(saved) : structuredClone(seed));
+        const fullState = saved ? JSON.parse(saved) : structuredClone(seed);
+        if (!acquisitionSync) return normalizeState(fullState);
+        const canonical = acquisitionSync.migrateFromExistingStores().filter(record => !record.archivedAt);
+        if (!canonical.length) return normalizeState(fullState);
+        const opportunities = canonical.map(acquisitionSync.fullFromCanonical);
+        return normalizeState({
+          ...fullState,
+          activeId: opportunities.some(record => record.id === fullState.activeId) ? fullState.activeId : opportunities[0]?.id || "",
+          opportunities,
+          contacts: mergeRows(fullState.contacts || [], canonical.flatMap(record => record.procurementContacts || []), ["agency","name","role","email"]),
+          partners: mergeRows(fullState.partners || [], canonical.flatMap(record => record.partnerRequirements || []), ["name","services","contact"]),
+        });
       } catch {
         return normalizeState(structuredClone(seed));
       }
@@ -787,8 +804,81 @@
     }
 
     function save(show = true) {
+      setSyncStatus("Unsaved Changes");
+      persistCanonicalFromFullState({ syncCloud: true });
       localStorage.setItem("igeo-acquisition-os", JSON.stringify(state));
       if (show) toast("Saved");
+    }
+
+    function mergeRows(existing, incoming, keys) {
+      const rows = [...existing];
+      incoming.forEach(item => {
+        const key = keys.map(k => String(item[k] || "").toLowerCase()).join("|");
+        if (!key.replace(/\|/g, "")) return;
+        if (!rows.some(row => keys.map(k => String(row[k] || "").toLowerCase()).join("|") === key)) rows.push(item);
+      });
+      return rows;
+    }
+
+    function persistCanonicalFromFullState(options = {}) {
+      if (!acquisitionSync) {
+        setSyncStatus("Offline Backup");
+        return;
+      }
+      const canonical = state.opportunities.map(opp => acquisitionSync.canonicalFromFull({ ...opp, updatedAt: new Date().toISOString() }, state));
+      const merged = acquisitionSync.saveCanonicalLocal(acquisitionSync.mergeCanonicalCollections(acquisitionSync.loadCanonicalLocal(), canonical));
+      writeQuickBackupFromCanonical(merged);
+      if (options.syncCloud) syncCanonicalToCloud(merged);
+    }
+
+    function writeQuickBackupFromCanonical(records) {
+      if (!acquisitionSync) return;
+      const quickRecords = records.filter(record => !record.archivedAt).map(acquisitionSync.quickFromCanonical);
+      localStorage.setItem(acquisitionSync.QUICK_KEY, JSON.stringify(quickRecords));
+    }
+
+    async function refreshCanonicalFromCloud() {
+      if (!acquisitionSync) {
+        setSyncStatus("Offline Backup");
+        return;
+      }
+      setSyncStatus("Unsaved Changes");
+      try {
+        const remote = await acquisitionSync.pullRemote();
+        const merged = acquisitionSync.saveCanonicalLocal(acquisitionSync.mergeCanonicalCollections(acquisitionSync.loadCanonicalLocal(), remote));
+        writeQuickBackupFromCanonical(merged);
+        const active = merged.filter(record => !record.archivedAt);
+        state.opportunities = active.map(acquisitionSync.fullFromCanonical);
+        state.activeId = state.opportunities.some(record => record.id === state.activeId) ? state.activeId : state.opportunities[0]?.id || "";
+        localStorage.setItem("igeo-acquisition-os", JSON.stringify(state));
+        lastSyncedAt = new Date().toISOString();
+        setSyncStatus("Synced");
+        render();
+        toast("Opportunity data refreshed");
+      } catch (error) {
+        setSyncStatus("Offline Backup");
+        toast("Cloud sync unavailable. Offline backup loaded.");
+        console.warn("Full Bid Engine refresh failed:", error);
+      }
+    }
+
+    async function syncCanonicalToCloud(records) {
+      try {
+        const synced = await acquisitionSync.syncWithCloud(records);
+        writeQuickBackupFromCanonical(synced);
+        lastSyncedAt = new Date().toISOString();
+        setSyncStatus("Synced");
+      } catch (error) {
+        setSyncStatus("Sync Failed");
+        console.warn("Full Bid Engine cloud sync failed:", error);
+      }
+    }
+
+    function setSyncStatus(status) {
+      const statusEl = document.getElementById("syncStatus");
+      const lastEl = document.getElementById("lastSynced");
+      if (statusEl) statusEl.textContent = status;
+      if (lastEl) lastEl.textContent = `Last Synced: ${lastSyncedAt ? lastSyncedAt.replace("T", " ").slice(0, 19) : "Never"}`;
     }
 
     function toast(message) {
@@ -1383,6 +1473,7 @@
       const id = `opp-${Date.now()}`;
       state.opportunities.unshift({
         id,
+        opportunityId: id,
         title: "New Opportunity",
         agency: "",
         source: "",
@@ -1414,11 +1505,13 @@
     };
 
     document.getElementById("saveData").onclick = () => save(true);
+    document.getElementById("refreshData").onclick = refreshCanonicalFromCloud;
     document.getElementById("exportWord").onclick = exportWord;
     document.getElementById("exportPdf").onclick = exportPdf;
     document.getElementById("search").oninput = renderOppList;
     document.getElementById("filterDecision").onchange = renderOppList;
 
+    setSyncStatus("Offline Backup");
     render();
   </script>
 </body>

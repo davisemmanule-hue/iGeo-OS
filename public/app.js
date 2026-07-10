@@ -9,11 +9,13 @@ const STORAGE_KEYS = {
   vendors: "igeo_vendor_registrations",
   acquisitionOpportunities: "igeo_acquisition_opportunities",
   fullBidEngine: "igeo-acquisition-os",
+  canonicalAcquisitionOpportunities: "igeo_canonical_acquisition_opportunities",
   viewMode: "igeo_operator_view_mode",
   capabilitySentCount: "igeo_capability_statements_sent_count",
 };
 
 const primeCrmIntegration = window.IGEO_INTEGRATIONS?.googleSheets?.primeCrm || {};
+const acquisitionSync = window.IGEO_ACQUISITION_SYNC;
 
 const statuses = [
   "Prospect",
@@ -419,10 +421,12 @@ let workers = loadCollection(STORAGE_KEYS.workers, []);
 let quotes = loadCollection(STORAGE_KEYS.quotes, []);
 let vendors = seedVendorRegistrations(loadCollection(STORAGE_KEYS.vendors, []));
 let acquisitionOpportunities = seedAcquisitionOpportunities(loadCollection(STORAGE_KEYS.acquisitionOpportunities, []));
-syncFullBidEngineFromQuickEntries(acquisitionOpportunities);
+let canonicalAcquisitionOpportunities = [];
+initializeCanonicalAcquisitionStore();
 let capabilityStatementsSentCount = Number(loadCollection(STORAGE_KEYS.capabilitySentCount, 0)) || 0;
 let activeReport = "all";
 let toastTimer;
+let acquisitionLastSyncedAt = "";
 const els = {};
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -434,9 +438,18 @@ document.addEventListener("DOMContentLoaded", () => {
   activateModule(getInitialModule());
   render();
   initializePrimeCrmData();
+  refreshCanonicalOpportunityData({ silent: true });
   syncWorkersFromGoogleSheet();
   refreshExecutiveEmailAlerts();
   registerServiceWorker();
+});
+
+window.addEventListener("storage", (event) => {
+  if (!acquisitionSync || event.key !== acquisitionSync.CANONICAL_KEY) return;
+  canonicalAcquisitionOpportunities = acquisitionSync.loadCanonicalLocal();
+  applyCanonicalAcquisitionRecords(canonicalAcquisitionOpportunities);
+  render();
+  setAcquisitionSyncStatus("Synced");
 });
 
 function bindElements() {
@@ -559,6 +572,9 @@ function bindElements() {
     "acquisitionPlaceholderName",
     "acquisitionPlaceholderPurpose",
     "acquisitionPlaceholderNextAction",
+    "acquisitionSyncStatus",
+    "acquisitionLastSynced",
+    "refreshAcquisitionData",
     "exportAcquisitionCsv",
     "acqMetricTotal",
     "acqMetricPursue",
@@ -735,6 +751,7 @@ function bindEvents() {
   });
   els.exportAcquisitionCsv.addEventListener("click", () => exportDataset("acquisition", "csv"));
   els.acquisitionModuleList.addEventListener("click", handleAcquisitionModuleClick);
+  els.refreshAcquisitionData.addEventListener("click", () => refreshCanonicalOpportunityData());
 
   document.querySelectorAll("[data-copy-target], [data-copy-value]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1553,20 +1570,23 @@ function closeAcquisitionDialog() {
 
 function saveAcquisitionOpportunity(event) {
   event.preventDefault();
+  setAcquisitionSyncStatus("Unsaved Changes");
   const opportunity = buildAcquisitionOpportunityFromForm();
   const index = acquisitionOpportunities.findIndex((item) => item.id === opportunity.id);
   if (index >= 0) acquisitionOpportunities[index] = opportunity;
   else acquisitionOpportunities.unshift(opportunity);
-  saveCollection(STORAGE_KEYS.acquisitionOpportunities, acquisitionOpportunities);
-  syncFullBidEngineFromQuickEntries(acquisitionOpportunities);
+  upsertCanonicalFromQuickOpportunity(opportunity);
+  persistCanonicalAcquisitionState({ syncCloud: true });
   closeAcquisitionDialog();
   render();
   showToast("Opportunity saved.");
 }
 
 function buildAcquisitionOpportunityFromForm() {
+  const id = value("acquisitionId") || crypto.randomUUID();
   const opportunity = {
-    id: value("acquisitionId") || crypto.randomUUID(),
+    id,
+    opportunityId: id,
     opportunityName: value("acqOpportunityName"),
     source: value("acqSource"),
     sourceLink: value("acqSourceLink"),
@@ -1664,9 +1684,13 @@ function deleteCurrentOpportunity() {
 
 function deleteOpportunityById(id, options = {}) {
   if (!id || !confirm("Delete this acquisition opportunity?")) return;
+  setAcquisitionSyncStatus("Unsaved Changes");
+  const timestamp = new Date().toISOString();
+  canonicalAcquisitionOpportunities = canonicalAcquisitionOpportunities.map((record) =>
+    record.opportunityId === id ? { ...record, archivedAt: timestamp, updatedAt: timestamp } : record
+  );
   acquisitionOpportunities = acquisitionOpportunities.filter((item) => item.id !== id);
-  saveCollection(STORAGE_KEYS.acquisitionOpportunities, acquisitionOpportunities);
-  syncFullBidEngineFromQuickEntries(acquisitionOpportunities);
+  persistCanonicalAcquisitionState({ syncCloud: true });
   if (options.closeDialog) closeAcquisitionDialog();
   render();
   showToast("Opportunity deleted.");
@@ -1947,70 +1971,112 @@ function seedAcquisitionOpportunities(existing) {
   return current;
 }
 
-function syncFullBidEngineFromQuickEntries(opportunities) {
-  const quickEntries = Array.isArray(opportunities) ? opportunities : [];
-  const fullState = loadFullBidEngineState();
-  const fullOpportunities = Array.isArray(fullState.opportunities) ? [...fullState.opportunities] : [];
-  const quickIds = new Set(quickEntries.map((opportunity) => opportunity.id));
-  const retained = fullOpportunities.filter((opportunity) => !opportunity.syncedFromQuickEntry || quickIds.has(opportunity.id));
-  quickEntries.forEach((opportunity) => {
-    const mapped = mapQuickEntryToFullBidEngineOpportunity(opportunity);
-    const index = retained.findIndex((item) => item.id === mapped.id);
-    if (index >= 0) retained[index] = { ...retained[index], ...mapped };
-    else retained.unshift(mapped);
+function initializeCanonicalAcquisitionStore() {
+  if (!acquisitionSync) {
+    setTimeout(() => setAcquisitionSyncStatus("Offline Backup"), 0);
+    return acquisitionOpportunities;
+  }
+  const migrated = acquisitionSync.migrateFromExistingStores();
+  canonicalAcquisitionOpportunities = migrated;
+  applyCanonicalAcquisitionRecords(migrated);
+  setTimeout(() => setAcquisitionSyncStatus("Offline Backup"), 0);
+  return migrated;
+}
+
+function upsertCanonicalFromQuickOpportunity(opportunity) {
+  if (!acquisitionSync) return;
+  const canonical = acquisitionSync.canonicalFromQuick({ ...opportunity, updatedAt: new Date().toISOString() });
+  canonicalAcquisitionOpportunities = acquisitionSync.mergeCanonicalCollections(canonicalAcquisitionOpportunities, [canonical]);
+  applyCanonicalAcquisitionRecords(canonicalAcquisitionOpportunities);
+}
+
+function applyCanonicalAcquisitionRecords(records) {
+  if (!acquisitionSync) return;
+  canonicalAcquisitionOpportunities = acquisitionSync.saveCanonicalLocal(records);
+  acquisitionOpportunities = canonicalAcquisitionOpportunities
+    .filter((record) => !record.archivedAt)
+    .map(acquisitionSync.quickFromCanonical);
+  saveCollection(STORAGE_KEYS.acquisitionOpportunities, acquisitionOpportunities);
+  writeFullBidEngineFromCanonical(canonicalAcquisitionOpportunities);
+}
+
+function writeFullBidEngineFromCanonical(records) {
+  if (!acquisitionSync) return;
+  const existing = loadCollection(STORAGE_KEYS.fullBidEngine, {});
+  const activeRecords = records.filter((record) => !record.archivedAt);
+  const fullOpportunities = activeRecords.map(acquisitionSync.fullFromCanonical);
+  const contacts = activeRecords.flatMap((record) => record.procurementContacts || []);
+  const partners = activeRecords.flatMap((record) => record.partnerRequirements || []);
+  saveCollection(STORAGE_KEYS.fullBidEngine, {
+    activeModule: existing.activeModule || "dashboard",
+    activeId: fullOpportunities.some((record) => record.id === existing.activeId) ? existing.activeId : fullOpportunities[0]?.id || "",
+    contacts: contacts.length ? contacts : existing.contacts || [],
+    partners: partners.length ? partners : existing.partners || [],
+    intel: existing.intel || [],
+    opportunities: fullOpportunities,
   });
-  fullState.opportunities = retained;
-  if (!fullState.activeId && retained[0]) fullState.activeId = retained[0].id;
-  saveCollection(STORAGE_KEYS.fullBidEngine, fullState);
 }
 
-function loadFullBidEngineState() {
-  return {
-    activeModule: "dashboard",
-    activeId: "",
-    partners: [],
-    contacts: [],
-    intel: [],
-    ...loadCollection(STORAGE_KEYS.fullBidEngine, {}),
-  };
+function persistCanonicalAcquisitionState(options = {}) {
+  if (!acquisitionSync) {
+    saveCollection(STORAGE_KEYS.acquisitionOpportunities, acquisitionOpportunities);
+    setAcquisitionSyncStatus("Offline Backup");
+    return;
+  }
+  applyCanonicalAcquisitionRecords(canonicalAcquisitionOpportunities);
+  setAcquisitionSyncStatus("Offline Backup");
+  if (options.syncCloud) syncCanonicalOpportunityData({ silent: true });
 }
 
-function mapQuickEntryToFullBidEngineOpportunity(opportunity) {
-  const score = Object.fromEntries(
-    opportunityScoreFields.map((scoreField) => [scoreField.label, Boolean(opportunity[scoreField.value])])
-  );
-  return {
-    id: opportunity.id,
-    title: opportunity.opportunityName || "Untitled opportunity",
-    agency: opportunity.buyer || "",
-    source: [opportunity.source, opportunity.solicitationNumber].filter(Boolean).join(" "),
-    sourceUrl: opportunity.sourceLink || "",
-    deadline: opportunity.dueDate || "",
-    status: opportunity.openOpportunity === false ? "Closed" : "Open",
-    naics: opportunity.naics || "",
-    service: opportunity.serviceType || "",
-    estimatedValue: parseMoneyValue(opportunity.estimatedValue),
-    performanceMethod: opportunity.performanceMethod || "Subcontract",
-    stage: opportunity.decisionLabel || "Quick Entry",
-    driveFolder: "",
-    solicitation: opportunity.notes || "",
-    instructions: "",
-    requirements: "",
-    missingRequirements: "",
-    nextAction: opportunity.urgencyReason || "",
-    incumbent: "",
-    contactId: [opportunity.contactName, opportunity.contactEmail].filter(Boolean).join(" / "),
-    notes: opportunity.notes || "",
-    score,
-    checklist: [],
-    pricing: [],
-    syncedFromQuickEntry: true,
-  };
+async function refreshCanonicalOpportunityData(options = {}) {
+  if (!acquisitionSync) {
+    setAcquisitionSyncStatus("Offline Backup");
+    return;
+  }
+  setAcquisitionSyncStatus("Unsaved Changes");
+  try {
+    const remote = await acquisitionSync.pullRemote();
+    const merged = acquisitionSync.saveCanonicalLocal(
+      acquisitionSync.mergeCanonicalCollections(canonicalAcquisitionOpportunities, remote)
+    );
+    applyCanonicalAcquisitionRecords(merged);
+    acquisitionLastSyncedAt = new Date().toISOString();
+    setAcquisitionSyncStatus("Synced");
+    render();
+    if (!options.silent) showToast("Opportunity data refreshed.");
+  } catch (error) {
+    setAcquisitionSyncStatus("Offline Backup");
+    if (!options.silent) showToast("Cloud sync unavailable. Using offline backup.");
+    console.warn("Acquisition opportunity refresh failed:", error);
+  }
 }
 
-function parseMoneyValue(valueToParse) {
-  const parsed = Number(String(valueToParse || "").replace(/[^0-9.-]/g, ""));
-  return Number.isFinite(parsed) ? parsed : 0;
+async function syncCanonicalOpportunityData(options = {}) {
+  if (!acquisitionSync) {
+    setAcquisitionSyncStatus("Offline Backup");
+    return;
+  }
+  try {
+    const synced = await acquisitionSync.syncWithCloud(canonicalAcquisitionOpportunities);
+    applyCanonicalAcquisitionRecords(synced);
+    acquisitionLastSyncedAt = new Date().toISOString();
+    setAcquisitionSyncStatus("Synced");
+    render();
+  } catch (error) {
+    setAcquisitionSyncStatus("Sync Failed");
+    if (!options.silent) showToast("Sync failed. Offline backup saved.");
+    console.warn("Acquisition opportunity sync failed:", error);
+  }
+}
+
+function setAcquisitionSyncStatus(status) {
+  if (!els.acquisitionSyncStatus) return;
+  els.acquisitionSyncStatus.textContent = status;
+  els.acquisitionSyncStatus.classList.toggle("success", status === "Synced");
+  els.acquisitionSyncStatus.classList.toggle("urgent", status === "Sync Failed");
+  if (els.acquisitionLastSynced) {
+    els.acquisitionLastSynced.textContent = acquisitionLastSyncedAt ? acquisitionLastSyncedAt.replace("T", " ").slice(0, 19) : "Never";
+  }
 }
 
 async function initializePrimeCrmData() {

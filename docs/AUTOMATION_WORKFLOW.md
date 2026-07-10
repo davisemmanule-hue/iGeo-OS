@@ -7,7 +7,7 @@ The system has several small automations, but it is not yet a fully automated ac
 - Prime CRM save/sync/offline queue to Google Sheets.
 - Worker Intake submission to Google Sheets with readback verification.
 - Acquisition Quick Entry security and urgency rules.
-- Quick Entry one-way mirroring into Full Bid Engine storage.
+- Acquisition canonical opportunity sync between Quick Entry and Full Bid Engine, with Cloudflare KV as the intended source of truth and localStorage as offline backup.
 - Full Bid Engine scoring, checklist generation, proposal draft generation, Word export, and print/PDF flow.
 
 The largest incomplete automation is end-to-end opportunity intake through proposal package generation and cloud storage.
@@ -110,31 +110,41 @@ Limitations:
 
 - Requires selected Priority Region; there is no geocoding or automatic location extraction.
 
-### Quick Entry to Full Bid Engine Bridge
+### Canonical Acquisition Opportunity Sync
 
 Trigger:
 
 - Main app load.
 - Quick Entry save.
 - Quick Entry delete.
+- Full Bid Engine load.
+- Full Bid Engine save/edit.
+- Refresh Opportunity Data button.
 
 Files:
 
 - `public/app.js`
+- `public/acquisition-sync.js`
+- `public/acquisition-os/full-bid-engine/index.html`
+- `worker.js`
 
 Behavior:
 
-- Reads `igeo_acquisition_opportunities`.
-- Maps Quick Entry fields to Full Bid Engine opportunity fields.
-- Writes mapped records into `igeo-acquisition-os`.
-- Preserves non-quick-entry Full Bid Engine opportunities.
-- Removes mirrored Full Bid Engine records when their Quick Entry source is deleted.
+- Migrates existing Quick Entry records and Full Bid Engine records into one canonical schema.
+- Assigns and preserves a permanent `opportunityId`.
+- Maps canonical records into Quick Entry fields and Full Bid Engine fields.
+- Writes Quick Entry edits and Full Bid Engine edits back to the same canonical record.
+- Prevents duplicates by merging on `opportunityId` and normalized `solicitationNumber`.
+- Uses newest `updatedAt` as the conflict rule.
+- Shows sync state as `Synced`, `Unsaved Changes`, `Sync Failed`, or `Offline Backup`.
+- Shows Last Synced after a successful cloud pull or push.
+- Attempts cloud sync through `/api/acquisition-opportunities` when the `ACQUISITION_OPPORTUNITIES` KV binding exists.
 
 Limitations:
 
-- One-way only.
-- Browser-local only.
-- Full Bid Engine edits do not write back.
+- Cross-device sharing requires the Cloudflare KV namespace binding to exist in production.
+- CRM, Quotes, Vendors, Workforce, and Drive are intentionally not connected to the canonical opportunity record yet.
+- LocalStorage remains the fallback if the API is unavailable.
 
 ## Full Bid Engine Automations
 

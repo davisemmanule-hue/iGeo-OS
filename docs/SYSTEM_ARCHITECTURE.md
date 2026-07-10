@@ -17,6 +17,7 @@ The system has one main dashboard route plus supporting public routes:
 - `/acquisition-os/full-bid-engine/`: full standalone Bid Engine interface copied into the active repo and exposed as a dedicated public route.
 - `/worker-intake`: public Worker Intake form.
 - `/worker-intake.html`: production redirects to `/worker-intake`.
+- `/api/acquisition-opportunities`: Cloudflare Worker API for canonical Acquisition opportunities when the `ACQUISITION_OPPORTUNITIES` KV namespace is bound.
 - `/api/executive-email-alerts`: Cloudflare Worker API for Gmail executive alerts.
 
 Historical standalone modules exist under `archive/`. They are reference-only and are not active production entry points.
@@ -36,6 +37,11 @@ Main app:
 Full Bid Engine:
 
 - `public/acquisition-os/full-bid-engine/index.html`: self-contained Full Bid Engine with embedded CSS and JavaScript.
+
+Acquisition sync:
+
+- `public/acquisition-sync.js`: canonical Acquisition opportunity schema, Quick Entry mapper, Full Bid Engine mapper, local migration, duplicate prevention, and cloud sync helper.
+- `worker.js`: `/api/acquisition-opportunities` route for the canonical Cloudflare KV-backed opportunity store.
 
 Worker Intake:
 
@@ -117,14 +123,15 @@ Files controlling it:
 - `public/app.js`: acquisition arrays, scoring flags, urgency rules, security guardrails, CSV export, full-engine bridge.
 - `public/styles.css`: module and table styling.
 
-Data source: browser localStorage key `igeo_acquisition_opportunities`.
+Data source: canonical Acquisition opportunity records. Cloud source is `/api/acquisition-opportunities` backed by Cloudflare KV binding `ACQUISITION_OPPORTUNITIES`; offline backup is browser localStorage key `igeo_canonical_acquisition_opportunities`.
 
 Google Sheet or Apps Script endpoint used: none for Quick Entry.
 
 localStorage usage:
 
-- Primary: `igeo_acquisition_opportunities`.
-- Bridge target: `igeo-acquisition-os`.
+- Canonical offline backup: `igeo_canonical_acquisition_opportunities`.
+- Quick Entry compatibility view: `igeo_acquisition_opportunities`.
+- Full Bid Engine compatibility view: `igeo-acquisition-os`.
 
 Buttons and functions:
 
@@ -146,7 +153,7 @@ Outputs generated:
 - Metrics for total, pursue immediately, subcontractor needed, due soon, under $250k, and security review.
 - Decision labels and score summary.
 - CSV export.
-- One-way mirrored Full Bid Engine opportunity records.
+- Canonical opportunity records mirrored into the Full Bid Engine compatibility store.
 
 Connections:
 
@@ -164,7 +171,7 @@ Automated actions:
 
 Known limitations:
 
-- Quick Entry and Full Bid Engine do not have two-way synchronization. Quick Entry writes into Full Bid Engine storage; Full Bid Engine changes do not write back to Quick Entry.
+- Quick Entry and Full Bid Engine share canonical opportunity records by `opportunityId`; records are also deduplicated by `solicitationNumber`.
 - Quick Entry does not generate Word/PDF proposal documents.
 - Quick Entry does not store attachments or Google Drive links.
 
@@ -184,13 +191,14 @@ Files controlling it:
 
 - `public/acquisition-os/full-bid-engine/index.html`: self-contained HTML/CSS/JS.
 
-Data source: browser localStorage key `igeo-acquisition-os`.
+Data source: canonical Acquisition opportunity records plus Full Bid Engine workspace state.
 
 Google Sheet or Apps Script endpoint used: none.
 
 localStorage usage:
 
-- `igeo-acquisition-os`: stores Full Bid Engine state, active module, active opportunity, opportunities, partners, contacts, and intel.
+- `igeo_canonical_acquisition_opportunities`: canonical offline backup.
+- `igeo-acquisition-os`: stores Full Bid Engine compatibility state, active module, active opportunity, opportunities, partners, contacts, and intel.
 
 Buttons and functions:
 
@@ -220,8 +228,8 @@ Outputs generated:
 
 Connections:
 
-- Receives one-way quick-entry records from `public/app.js`.
-- Does not write back to Quick Entry.
+- Receives canonical records from Quick Entry.
+- Writes Full Bid Engine edits back into the canonical record and Quick Entry compatibility store.
 - Does not connect to Google Sheets or Google Drive directly.
 
 Manual actions: create/edit records, paste solicitation text, score, check compliance tasks, build pricing, add partners/contacts/intel, export Word/PDF.
@@ -240,7 +248,7 @@ Known limitations:
 - Word export is Word-compatible HTML saved as `.doc`, not a generated `.docx`.
 - PDF export uses browser print, not a server-generated PDF file.
 - Google Drive document storage is a manual field/workspace, not an active Drive API integration.
-- Quick Entry sync is one-way only.
+- Cross-device sync depends on the `/api/acquisition-opportunities` route and the `ACQUISITION_OPPORTUNITIES` Cloudflare KV binding. Without that binding, local two-way sync still works in the same browser and localStorage remains the offline backup.
 
 Mobile behavior: the Full Bid Engine has responsive CSS that collapses sidebar/layout/tabs into a single-column flow.
 
@@ -700,12 +708,12 @@ Production observations:
 
 The live system is a unified browser-based operations console. The operator starts on Today, reviews counts, then opens Contacts, Acquisition OS, Quotes, Applications, Registrations, Capability Statements, or Settings.
 
-Most modules are localStorage-first. Prime CRM and Worker Intake are the two active Google Sheets paths. Acquisition OS Quick Entry and Full Bid Engine are currently connected only by a one-way localStorage bridge from Quick Entry into Full Bid Engine. Proposal work happens inside Full Bid Engine and is manually exported by Word/PDF buttons.
+Most modules are localStorage-first. Prime CRM and Worker Intake are the two active Google Sheets paths. Acquisition OS now has a canonical opportunity sync layer shared by Quick Entry and the Full Bid Engine. The intended cloud source of truth is the Cloudflare `/api/acquisition-opportunities` route backed by the `ACQUISITION_OPPORTUNITIES` KV namespace, with localStorage as offline backup. Proposal work happens inside Full Bid Engine and is manually exported by Word/PDF buttons.
 
 ## Key Architecture Gaps
 
 - No shared server database.
-- No two-way Acquisition Quick Entry and Full Bid Engine sync.
+- Acquisition cloud sync requires the `ACQUISITION_OPPORTUNITIES` Cloudflare KV binding before it can be treated as the production source of truth across devices.
 - No Google Sheets sync for Acquisition, Quotes, Vendors, or manual Workforce records.
 - No active Google Drive integration.
 - Gmail Executive Alerts API exists but fails in production during audit.

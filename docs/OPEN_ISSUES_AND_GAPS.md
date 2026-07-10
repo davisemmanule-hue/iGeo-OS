@@ -32,8 +32,9 @@ Status: incomplete.
 
 Current stores:
 
-- Quick Entry: `igeo_acquisition_opportunities`.
-- Full Bid Engine: `igeo-acquisition-os`.
+- Canonical Acquisition store: `igeo_canonical_acquisition_opportunities`.
+- Quick Entry compatibility view: `igeo_acquisition_opportunities`.
+- Full Bid Engine compatibility view: `igeo-acquisition-os`.
 - Prime CRM opportunity fields: inside each CRM record.
 - Quote Generator opportunity name: inside quote records.
 
@@ -41,29 +42,33 @@ Impact:
 
 - Opportunity details can drift.
 - Duplicate entry is required.
-- Proposal, quote, CRM, and partner work are not tied to one canonical opportunity ID.
+- Acquisition Quick Entry and Full Bid Engine work now share one canonical `opportunityId`.
+- Proposal, quote, CRM, and partner work outside Acquisition are not yet tied to the canonical opportunity ID.
 
 Needed next action:
 
 - Define a canonical opportunity model and sync Quick Entry and Full Bid Engine both directions.
 
-### 3. Quick Entry and Full Bid Engine Sync Is One-Way Only
+### 3. Acquisition Cloud Source Requires KV Binding
 
-Status: partial.
+Status: implemented in code, configuration-dependent in production.
 
 What works:
 
-- Quick Entry records are mirrored into Full Bid Engine storage.
+- Quick Entry and Full Bid Engine now share canonical records by `opportunityId`.
+- Existing Quick Entry and Full Bid Engine records migrate into the canonical schema on load.
+- Duplicates are prevented by `opportunityId` and normalized `solicitationNumber`.
+- Local two-way sync works through localStorage compatibility stores and storage events.
+- The UI exposes `Synced`, `Unsaved Changes`, `Sync Failed`, `Offline Backup`, and Last Synced states.
 
 What does not work:
 
-- Full Bid Engine edits do not update Quick Entry.
-- Full Bid Engine seed/native records do not appear in Quick Entry.
-- Sync is local-browser only.
+- Production cross-device sync requires a Cloudflare KV namespace bound as `ACQUISITION_OPPORTUNITIES`.
+- If that binding is missing, the API returns a configuration error and the browser keeps using offline localStorage backup.
 
 Impact:
 
-- User may edit a record in Full Bid Engine and later see stale data in Quick Entry.
+- Laptop and iPhone will only show the same Acquisition opportunity data after the Cloudflare KV binding is active and both devices refresh/sync.
 
 ### 4. Proposal Automation Is Local and Manual
 
@@ -177,8 +182,7 @@ Active:
 
 Inactive:
 
-- Acquisition Quick Entry.
-- Full Bid Engine.
+- Acquisition Quick Entry and Full Bid Engine do not use Google Sheets; they use the canonical Cloudflare API/KV path when configured.
 - Quote Generator.
 - Vendor Registration Tracker.
 - Manual Workforce records.
@@ -245,20 +249,20 @@ Mitigation:
 
 ### Acquisition Quick Entry
 
-- No cloud sync.
+- Cloud sync path exists through `/api/acquisition-opportunities`, but production requires the `ACQUISITION_OPPORTUNITIES` KV binding.
 - No attachment handling.
 - No PDF upload.
 - No live solicitation import.
-- No two-way Full Bid Engine sync.
+- CRM, Quotes, Vendors, Workforce, and Drive are not connected to canonical opportunity records.
 
 ### Full Bid Engine
 
 - Self-contained single HTML file.
-- No cloud sync.
+- Cloud sync path exists through `/api/acquisition-opportunities`, but production requires the `ACQUISITION_OPPORTUNITIES` KV binding.
 - No external file storage.
 - No true DOCX export.
 - PDF is print-based.
-- No browser-to-main-dashboard update path.
+- Browser-to-main-dashboard update path exists through canonical localStorage and storage events.
 
 ### Prime CRM
 
@@ -298,8 +302,9 @@ Mitigation:
 
 | Connection | Current State |
 | --- | --- |
-| Quick Entry -> Full Bid Engine | One-way localStorage mirror works |
-| Full Bid Engine -> Quick Entry | Missing |
+| Quick Entry -> Full Bid Engine | Implemented through canonical opportunity sync |
+| Full Bid Engine -> Quick Entry | Implemented through canonical opportunity sync |
+| Acquisition cloud source of truth | API implemented; requires `ACQUISITION_OPPORTUNITIES` KV binding |
 | Acquisition -> Prime CRM | Missing |
 | Full Bid Engine Pricing -> Quote Generator | Missing |
 | Full Bid Engine Partners -> Workforce/CRM | Missing |
@@ -311,28 +316,24 @@ Mitigation:
 
 ## Recommended Single Next Automation
 
-Implement a canonical opportunity sync layer for Acquisition OS.
+Bind and validate the canonical Acquisition opportunity cloud store in Cloudflare.
 
 Why this first:
 
-- Acquisition OS is the permanent core.
-- Every downstream workflow depends on opportunity data.
-- It reduces duplicate entry immediately.
-- It enables future Google Sheets, Drive, proposal, pricing, CRM, and partner automation.
+- Acquisition OS is now built around one canonical opportunity record.
+- The code path is in place, but production cross-device sync depends on the KV namespace binding.
+- It is the smallest next step before connecting CRM, Quotes, Vendors, Drive, or proposal package automation.
 
 Minimum scope:
 
-- No redesign.
-- No new dashboard.
-- Keep current Quick Entry and Full Bid Engine UI.
-- Add a canonical local opportunity store.
-- Sync Quick Entry and Full Bid Engine both directions.
-- Preserve current exports.
-- Add `updatedAt` timestamps and conflict rules.
+- Create or reuse a Cloudflare KV namespace.
+- Bind it to the Worker as `ACQUISITION_OPPORTUNITIES`.
+- Deploy the Worker.
+- Confirm `/api/acquisition-opportunities` returns `ok: true`.
+- Test one Quick Entry record from laptop to iPhone and one Full Bid Engine edit from iPhone to laptop.
 
 Later extension:
 
-- Sync canonical opportunity store to Google Sheets.
 - Link CRM opportunity fields to canonical opportunities.
 - Link Quote Generator records to canonical opportunities.
 - Store proposal exports in Google Drive.

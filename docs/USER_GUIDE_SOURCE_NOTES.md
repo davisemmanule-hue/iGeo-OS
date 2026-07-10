@@ -49,6 +49,7 @@ Primary buttons:
 
 - `Return to Operator Dashboard`: returns to Today.
 - `Open Full Bid Engine`: opens the full bid workspace in a new tab.
+- `Refresh Opportunity Data`: refreshes canonical opportunity records from the shared source when available.
 - `CSV Export`: downloads visible opportunity records.
 - `Opportunity`: opens the quick-entry form.
 
@@ -72,11 +73,14 @@ What happens automatically:
 
 - Security work is treated as subcontractor-supported unless requirements are confirmed.
 - Priority Michigan regions can mark the opportunity urgent.
-- Saved Quick Entry records are mirrored into the Full Bid Engine local workspace.
+- Saved Quick Entry records are written to the canonical opportunity record and appear in the Full Bid Engine.
+- The sync status shows `Synced`, `Unsaved Changes`, `Sync Failed`, or `Offline Backup`.
+- Last Synced updates after a successful shared-source refresh or save.
 
 Guide warning:
 
-- Full Bid Engine edits do not flow back into Quick Entry.
+- Full Bid Engine opportunity edits flow back into Quick Entry through the canonical opportunity record.
+- Cross-device sharing depends on the Cloudflare Acquisition opportunity API being connected to the production KV store; otherwise the browser uses its local offline backup.
 
 ## Full Bid Engine Guide Notes
 
@@ -96,6 +100,7 @@ Top buttons:
 
 - `New`: create a new Full Bid Engine opportunity.
 - `Save`: save the Full Bid Engine workspace.
+- `Refresh Opportunity Data`: refresh canonical opportunity records from the shared source when available.
 - `Word`: export the active opportunity proposal as a Word-compatible `.doc`.
 - `PDF`: open the browser print/save-as-PDF flow.
 
@@ -144,6 +149,7 @@ Proposal automation note:
 - Word export is a `.doc` file generated from HTML.
 - PDF export uses browser print/save-to-PDF.
 - The user must manually review and complete missing solicitation details.
+- Proposal, pricing, partner, incumbent, and procurement contact fields are retained inside the canonical Acquisition record where the Full Bid Engine provides those values.
 
 ## Prime Contractor CRM Guide Notes
 

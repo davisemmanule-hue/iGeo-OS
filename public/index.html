@@ -138,9 +138,14 @@
           <div class="header-actions">
             <a class="button secondary" href="#today">Return to Operator Dashboard</a>
             <a class="button secondary" href="/acquisition-os/full-bid-engine/" target="_blank" rel="noopener noreferrer">Open Full Bid Engine</a>
+            <button id="refreshAcquisitionData" class="button secondary" type="button">Refresh Opportunity Data</button>
             <button id="exportAcquisitionCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
             <button id="addOpportunity" class="button primary" type="button">Opportunity</button>
           </div>
+        </div>
+        <div class="sync-strip" aria-live="polite">
+          <span id="acquisitionSyncStatus" class="status-pill">Offline Backup</span>
+          <span>Last Synced: <strong id="acquisitionLastSynced">Never</strong></span>
         </div>
 
         <section id="acquisition-module-opportunity-dashboard" class="metric-grid" aria-label="Acquisition dashboard metrics">
@@ -783,6 +788,7 @@
     <script src="branding-settings.js"></script>
     <script src="integration-config.js?v=final-clean"></script>
     <script src="worker-intake-config.js?v=final-clean"></script>
+    <script src="acquisition-sync.js?v=canonical-sync"></script>
     <script src="app.js?v=final-clean"></script>
   </body>
 </html>

@@ -4,11 +4,12 @@
 
 The system is browser-first and localStorage-first. The active cloud sync points are:
 
+- Acquisition OS canonical opportunities through the Cloudflare Worker route `/api/acquisition-opportunities` when the `ACQUISITION_OPPORTUNITIES` KV namespace is bound.
 - Prime Contractor CRM to Google Sheets through Apps Script.
 - Worker Intake to Google Sheets through Apps Script.
 - Gmail Executive Alerts through a Cloudflare Worker API and Gmail API, but the live endpoint returned HTTP 500 during audit.
 
-There is no shared server database for all modules.
+There is no shared server database for all modules. Acquisition opportunities now have their own canonical source path, separate from CRM, Quotes, Vendors, Workforce, and Drive.
 
 ## localStorage Keys
 
@@ -22,6 +23,7 @@ There is no shared server database for all modules.
 | `igeo_workers` | Workforce | Manual/local worker records and imported intake rows |
 | `igeo_quotes` | Quote Generator | Quote records |
 | `igeo_vendor_registrations` | Vendor Registration | Vendor registration records |
+| `igeo_canonical_acquisition_opportunities` | Acquisition OS | Canonical offline backup for shared Quick Entry and Full Bid Engine opportunities |
 | `igeo_acquisition_opportunities` | Acquisition OS Quick Entry | Quick-entry opportunity records |
 | `igeo-acquisition-os` | Full Bid Engine | Full Bid Engine workspace state |
 | `igeo_operator_view_mode` | Settings | View and notification preferences |
@@ -60,7 +62,9 @@ Gap:
 
 Source:
 
-- localStorage `igeo_acquisition_opportunities`.
+- Canonical localStorage backup `igeo_canonical_acquisition_opportunities`.
+- Cloudflare Worker route `/api/acquisition-opportunities` when `ACQUISITION_OPPORTUNITIES` KV is configured.
+- Compatibility view `igeo_acquisition_opportunities`.
 - Seed records from `sampleAcquisitionOpportunities` if no matching records exist.
 
 Input:
@@ -76,8 +80,10 @@ Processing:
 
 Storage:
 
-- Saves to `igeo_acquisition_opportunities`.
-- Calls `syncFullBidEngineFromQuickEntries()` to mirror mapped records into `igeo-acquisition-os`.
+- Saves to canonical records through `public/acquisition-sync.js`.
+- Writes Quick Entry compatibility records to `igeo_acquisition_opportunities`.
+- Writes Full Bid Engine compatibility records to `igeo-acquisition-os`.
+- Attempts cloud sync to `/api/acquisition-opportunities`; localStorage remains the offline backup if cloud sync fails.
 
 Output:
 
@@ -87,17 +93,20 @@ Output:
 
 Synchronization status:
 
-- Quick Entry to Full Bid Engine: yes, one-way, same browser/localStorage.
-- Full Bid Engine to Quick Entry: no.
-- Cloud sync: no.
+- Quick Entry to Full Bid Engine: yes, through canonical `opportunityId`.
+- Full Bid Engine to Quick Entry: yes, through canonical `opportunityId` and localStorage storage events.
+- Duplicate prevention: merge by permanent `opportunityId` and by normalized `solicitationNumber`; newest `updatedAt` wins.
+- Cloud sync: available through Cloudflare KV when `ACQUISITION_OPPORTUNITIES` is bound; otherwise the UI shows offline/sync-failed status and keeps local backup.
 
 ## Full Bid Engine Data Flow
 
 Source:
 
-- localStorage `igeo-acquisition-os`.
+- Canonical localStorage backup `igeo_canonical_acquisition_opportunities`.
+- Cloudflare Worker route `/api/acquisition-opportunities` when `ACQUISITION_OPPORTUNITIES` KV is configured.
+- Full Bid Engine compatibility state `igeo-acquisition-os`.
 - Seed state embedded in `public/acquisition-os/full-bid-engine/index.html`.
-- One-way mapped records from Quick Entry.
+- Canonical records created by Quick Entry.
 
 Input:
 
@@ -115,7 +124,10 @@ Processing:
 
 Storage:
 
-- `save()` writes all Full Bid Engine state to `igeo-acquisition-os`.
+- `save()` writes Full Bid Engine state to `igeo-acquisition-os`.
+- Full opportunity edits are mapped back into canonical records through `public/acquisition-sync.js`.
+- Canonical records are written back to Quick Entry compatibility storage.
+- Cloud sync is attempted through `/api/acquisition-opportunities`.
 
 Output:
 
@@ -136,8 +148,8 @@ Output:
 
 Synchronization status:
 
-- Receives quick-entry records.
-- Does not write back to Quick Entry.
+- Receives Quick Entry records through the canonical store.
+- Writes opportunity edits back to Quick Entry through the canonical store.
 - Does not sync to Google Sheets.
 - Does not sync to Google Drive.
 

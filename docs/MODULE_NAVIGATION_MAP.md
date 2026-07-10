@@ -7,6 +7,7 @@
 | `https://igeosolutionsllc.com/` | HTTP 200 | Main iGeo Operator Dashboard |
 | `https://igeosolutionsllc.com/index.html` | HTTP 307 to `/` | Main dashboard redirect |
 | `https://igeosolutionsllc.com/acquisition-os/full-bid-engine/` | HTTP 200 | Full Bid Engine |
+| `https://igeosolutionsllc.com/api/acquisition-opportunities` | HTTP 200 when KV is bound, HTTP 503 when not configured | Canonical Acquisition opportunity API |
 | `https://igeosolutionsllc.com/worker-intake.html` | HTTP 307 to `/worker-intake` | Worker Intake redirect |
 | `https://igeosolutionsllc.com/worker-intake` | HTTP 200 | Worker Intake |
 | `https://igeosolutionsllc.com/api/executive-email-alerts` | HTTP 500 | Gmail Executive Alerts API, not operational during audit |
@@ -109,8 +110,11 @@ Primary controls:
 
 - `Return to Operator Dashboard`: returns to `#today`.
 - `Open Full Bid Engine`: opens `/acquisition-os/full-bid-engine/` in a new browser tab.
+- `Refresh Opportunity Data`: pulls canonical Acquisition records from the shared API when available.
 - `CSV Export`: exports visible Quick Entry opportunities.
 - `Opportunity`: opens the Quick Entry opportunity dialog.
+- Sync status pill: shows `Synced`, `Unsaved Changes`, `Sync Failed`, or `Offline Backup`.
+- Last Synced: shows the latest successful canonical sync timestamp.
 
 Quick Entry dialog:
 
@@ -154,8 +158,11 @@ Top buttons:
 
 - `New`: create opportunity.
 - `Save`: save local workspace.
+- `Refresh Opportunity Data`: pulls canonical Acquisition records from the shared API when available.
 - `Word`: download Word-compatible `.doc`.
 - `PDF`: switch to proposal and open browser print.
+- Sync status pill: shows `Synced`, `Unsaved Changes`, `Sync Failed`, or `Offline Backup`.
+- Last Synced: shows the latest successful canonical sync timestamp.
 
 Pipeline controls:
 

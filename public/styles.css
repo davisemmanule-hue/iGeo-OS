@@ -628,6 +628,16 @@ body.advanced-mode button.secondary {
   justify-content: flex-end;
 }
 
+.sync-strip {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  gap: 10px;
+  margin: -4px 0 14px;
+}
+
 .button,
 .icon-button {
   align-items: center;
@@ -939,7 +949,7 @@ td strong {
   gap: 8px;
 }
 
-.acquisition-module-list span {
+.acquisition-module-list button {
   background: #fbfdff;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -947,6 +957,21 @@ td strong {
   font-size: 12px;
   font-weight: 900;
   padding: 8px 10px;
+  text-align: left;
+}
+
+.acquisition-module-list button.active {
+  background: var(--blue-soft);
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+}
+
+.acquisition-placeholder {
+  gap: 10px;
+}
+
+.acquisition-placeholder[hidden] {
+  display: none;
 }
 
 .security-rule {
