@@ -1,4 +1,4 @@
-﻿export default {
+export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
@@ -6,10 +6,7 @@
       return handleExecutiveEmailAlerts(request, env);
     }
 
-
-    if (url.pathname === "/api/acquisition-opportunities") {
-      return handleAcquisitionOpportunities(request, env);
-    }    if (url.hostname === "www.igeosolutionsllc.com") {
+    if (url.hostname === "www.igeosolutionsllc.com") {
       url.hostname = "igeosolutionsllc.com";
       return Response.redirect(url.toString(), 301);
     }
@@ -34,109 +31,6 @@
   },
 };
 
-const ACQUISITION_KV_KEY = "canonical-opportunities";
-
-async function handleAcquisitionOpportunities(request, env) {
-  if (request.method === "OPTIONS") return cors(json({ ok: true }));
-  if (!env.ACQUISITION_OPPORTUNITIES) {
-    return cors(json({
-      ok: false,
-      error: "Acquisition opportunity cloud store is not configured. Bind ACQUISITION_OPPORTUNITIES to a Cloudflare KV namespace.",
-      opportunities: [],
-    }, 503));
-  }
-  if (request.method === "GET") {
-    const opportunities = await readAcquisitionOpportunities(env);
-    return cors(json({ ok: true, source: "cloudflare-kv", opportunities }));
-  }
-  if (request.method === "PUT" || request.method === "POST") {
-    let payload;
-    try {
-      payload = await request.json();
-    } catch {
-      return cors(json({ ok: false, error: "Invalid JSON body." }, 400));
-    }
-    const incoming = Array.isArray(payload.opportunities) ? payload.opportunities : [];
-    const existing = await readAcquisitionOpportunities(env);
-    const opportunities = mergeAcquisitionOpportunities(existing, incoming);
-    await env.ACQUISITION_OPPORTUNITIES.put(ACQUISITION_KV_KEY, JSON.stringify(opportunities));
-    return cors(json({ ok: true, source: "cloudflare-kv", opportunities, savedAt: new Date().toISOString() }));
-  }
-  return cors(json({ ok: false, error: "Method not allowed." }, 405));
-}
-
-async function readAcquisitionOpportunities(env) {
-  const stored = await env.ACQUISITION_OPPORTUNITIES.get(ACQUISITION_KV_KEY, "json");
-  return Array.isArray(stored) ? stored.map(normalizeAcquisitionOpportunity) : [];
-}
-
-function mergeAcquisitionOpportunities(...collections) {
-  const byId = new Map();
-  const solicitationToId = new Map();
-  collections.flat().filter(Boolean).map(normalizeAcquisitionOpportunity).forEach((record) => {
-    const solicitationKey = String(record.solicitationNumber || "").trim().toLowerCase();
-    const targetId = solicitationKey && solicitationToId.has(solicitationKey)
-      ? solicitationToId.get(solicitationKey)
-      : record.opportunityId;
-    const existing = byId.get(targetId);
-    byId.set(targetId, pickNewerOpportunity(existing, { ...record, opportunityId: targetId }));
-    if (solicitationKey) solicitationToId.set(solicitationKey, targetId);
-  });
-  return [...byId.values()].sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
-}
-
-function pickNewerOpportunity(a, b) {
-  if (!a) return b;
-  if (!b) return a;
-  return String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")) >= 0 ? { ...a, ...b } : { ...b, ...a };
-}
-
-function normalizeAcquisitionOpportunity(record = {}) {
-  const timestamp = record.updatedAt || new Date().toISOString();
-  return {
-    opportunityId: record.opportunityId || crypto.randomUUID(),
-    opportunityName: record.opportunityName || "",
-    source: record.source || "",
-    sourceLink: record.sourceLink || "",
-    solicitationType: record.solicitationType || "",
-    solicitationNumber: record.solicitationNumber || "",
-    buyerAgency: record.buyerAgency || "",
-    serviceType: record.serviceType || "",
-    naics: record.naics || "",
-    priorityRegion: record.priorityRegion || "None",
-    urgentForIgeo: record.urgentForIgeo || "NO",
-    urgencyReason: record.urgencyReason || "",
-    dueDate: record.dueDate || "",
-    estimatedValue: record.estimatedValue || "",
-    performanceMethod: record.performanceMethod || "Subcontract",
-    decisionLabel: record.decisionLabel || "",
-    contactName: record.contactName || "",
-    contactEmail: record.contactEmail || "",
-    status: record.status || "Open",
-    stage: record.stage || "",
-    score: record.score || {},
-    riskFlags: record.riskFlags || {},
-    operatingNotes: record.operatingNotes || "",
-    solicitationAnalysis: record.solicitationAnalysis || {},
-    complianceChecklist: Array.isArray(record.complianceChecklist) ? record.complianceChecklist : [],
-    proposalDraft: record.proposalDraft || "",
-    pricingData: Array.isArray(record.pricingData) ? record.pricingData : [],
-    partnerRequirements: Array.isArray(record.partnerRequirements) ? record.partnerRequirements : [],
-    incumbentIntelligence: record.incumbentIntelligence || "",
-    procurementContacts: Array.isArray(record.procurementContacts) ? record.procurementContacts : [],
-    createdAt: record.createdAt || timestamp,
-    updatedAt: timestamp,
-    archivedAt: record.archivedAt || "",
-  };
-}
-
-function cors(response) {
-  const headers = new Headers(response.headers);
-  headers.set("access-control-allow-origin", "*");
-  headers.set("access-control-allow-methods", "GET,POST,PUT,OPTIONS");
-  headers.set("access-control-allow-headers", "content-type,accept");
-  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
-}
 const IMPORTANT_LABEL = "iGeo Important";
 const OWNER_EMAIL = "admin@igeosolutionsllc.com";
 const HIGH_PRIORITY_TERMS = [
