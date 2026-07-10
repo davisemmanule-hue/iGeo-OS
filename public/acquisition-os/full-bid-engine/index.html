@@ -1,0 +1,1425 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iGeo Acquisition OS</title>
+  <style>
+    :root {
+      --ink: #19212a;
+      --muted: #69717c;
+      --line: #d8dde2;
+      --panel: #ffffff;
+      --soft: #f4f6f8;
+      --navy: #1f3a52;
+      --green: #2d6a4f;
+      --teal: #207a82;
+      --gold: #b7791f;
+      --red: #a33a32;
+      --blue: #315f95;
+      --shadow: 0 12px 28px rgba(25, 33, 42, .11);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: linear-gradient(180deg, #eef2f4 0, #fafafa 42%, #f3f5f6 100%);
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      min-height: 36px;
+      border-radius: 6px;
+      padding: 8px 11px;
+      cursor: pointer;
+    }
+
+    button:hover { border-color: #aeb8c2; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      background: #172532;
+      color: #eef4f6;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .mark {
+      height: 42px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 28% 30%, #ffffff 0 11%, transparent 12%),
+        linear-gradient(135deg, #2d6a4f, #207a82 58%, #b7791f);
+      font-weight: 800;
+      letter-spacing: 0;
+      color: white;
+    }
+
+    .brand strong { display: block; font-size: 15px; }
+    .brand span { color: #aebdcc; font-size: 12px; }
+
+    .nav {
+      display: grid;
+      gap: 5px;
+    }
+
+    .nav button {
+      width: 100%;
+      text-align: left;
+      color: #dce8eb;
+      background: transparent;
+      border-color: transparent;
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav button.active {
+      background: rgba(255,255,255,.11);
+      border-color: rgba(255,255,255,.12);
+      color: white;
+    }
+
+    .nav .ico {
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 22px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .primary {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    .danger {
+      color: var(--red);
+      border-color: #dfb6b2;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .metrics {
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      box-shadow: 0 8px 18px rgba(25,33,42,.05);
+      min-height: 84px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 25px;
+      line-height: 1;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 390px) minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      margin-top: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 132px;
+      gap: 8px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      background: white;
+      color: var(--ink);
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    .opps {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      max-height: calc(100vh - 250px);
+      overflow: auto;
+    }
+
+    .opp {
+      text-align: left;
+      border-radius: 8px;
+      padding: 11px;
+      display: grid;
+      gap: 7px;
+      background: #fbfcfd;
+      border: 1px solid var(--line);
+      min-height: 94px;
+    }
+
+    .opp.active {
+      border-color: var(--teal);
+      box-shadow: inset 3px 0 0 var(--teal);
+      background: #f3fbfb;
+    }
+
+    .opp strong {
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .opp small {
+      color: var(--muted);
+      display: block;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #24313a;
+      background: #e9edf1;
+      border: 1px solid #dce1e6;
+      white-space: nowrap;
+    }
+
+    .chip.green { background: #e2f0e8; border-color: #c0dccd; color: #23523e; }
+    .chip.gold { background: #fff2d9; border-color: #ebd19a; color: #725015; }
+    .chip.red { background: #f7e3e1; border-color: #e2b5b1; color: #853028; }
+    .chip.blue { background: #e4eef9; border-color: #c4d6ec; color: #254d7c; }
+    .chip.teal { background: #def1f2; border-color: #b9dfe2; color: #165d63; }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 10px 10px 0;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tabs button {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      white-space: nowrap;
+      min-height: 34px;
+      background: #f6f8f9;
+    }
+
+    .tabs button.active {
+      background: white;
+      border-bottom-color: white;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: span 3; }
+
+    label {
+      display: grid;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    label input, label select, label textarea {
+      font-weight: 400;
+      color: var(--ink);
+    }
+
+    .score-wrap {
+      display: grid;
+      grid-template-columns: minmax(250px, 1fr) 250px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .checks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 8px;
+    }
+
+    .check {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      align-items: center;
+      background: #fbfcfd;
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .check input {
+      width: 17px;
+      height: 17px;
+      padding: 0;
+    }
+
+    .score-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfd;
+      display: grid;
+      gap: 12px;
+    }
+
+    .decision-list {
+      margin: 0;
+      padding-left: 18px;
+      color: #39434d;
+      line-height: 1.45;
+    }
+
+    .intake-box {
+      border: 1px solid #c8d6df;
+      background: #f7fafb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .print-cover {
+      border-bottom: 2px solid #1f3a52;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+    }
+
+    .score-number {
+      font-size: 46px;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--green);
+    }
+
+    .bar {
+      height: 10px;
+      background: #e5e9ed;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold), var(--green));
+      width: 0%;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 7px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      background: #f7f9fa;
+    }
+
+    td input, td select {
+      min-width: 100px;
+      padding: 7px;
+    }
+
+    .doc {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      line-height: 1.5;
+      min-height: 380px;
+    }
+
+    .doc h2 { margin-top: 0; }
+    .doc h3 { margin-bottom: 6px; }
+    .doc p, .doc li { color: #2d353d; }
+
+    .empty {
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .module-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .module {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      background: white;
+      min-height: 112px;
+    }
+
+    .module b { display: block; margin-bottom: 7px; }
+    .module span { display: block; color: var(--muted); font-size: 13px; line-height: 1.4; }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #172532;
+      color: white;
+      padding: 11px 13px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: .18s ease;
+      z-index: 10;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+      .nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .layout, .score-wrap, .split { grid-template-columns: 1fr; }
+      .metrics, .module-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .main { padding: 14px; }
+      .topbar, .toolbar, .form-grid, .checks, .metrics, .module-list { grid-template-columns: 1fr; }
+      .span-2, .span-3 { grid-column: span 1; }
+      .actions { justify-content: stretch; }
+      .actions button { flex: 1 1 140px; }
+    }
+
+    @media print {
+      body { background: white; }
+      .sidebar, .topbar, .panel-head, .tabs, .opps, .toast, .no-print, .metrics { display: none !important; }
+      .app, .layout { display: block; }
+      .main { padding: 0; }
+      .panel { border: 0; box-shadow: none; }
+      .content { padding: 0; }
+      .doc { border: 0; padding: 0; max-width: 7.2in; margin: 0 auto; font-size: 11.5pt; }
+      .doc h2 { font-size: 20pt; }
+      .doc h3 { break-after: avoid; margin-top: 18px; }
+      .doc table { break-inside: avoid; }
+      a { color: black; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark">iG</div>
+        <div><strong>iGeo Acquisition OS</strong><span>Unified bid operations</span></div>
+      </div>
+      <nav class="nav" id="nav"></nav>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 id="pageTitle">Bid Engine</h1>
+          <div class="sub" id="pageSub">Find, score, organize, and respond from one opportunity record.</div>
+        </div>
+        <div class="actions">
+          <button id="newOpp" class="primary" title="Create opportunity">＋ New</button>
+          <button id="saveData" title="Save workspace">💾 Save</button>
+          <button id="exportWord" title="Download Word-compatible brief">▣ Word</button>
+          <button id="exportPdf" title="Print or save PDF">⎙ PDF</button>
+        </div>
+      </div>
+
+      <section class="grid metrics" id="metrics"></section>
+
+      <section class="layout">
+        <aside class="panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Opportunity Pipeline</h2>
+            <div class="toolbar">
+              <input id="search" type="search" placeholder="Search title, agency, NAICS, service">
+              <select id="filterDecision">
+                <option value="">All decisions</option>
+                <option>Pursue Immediately</option>
+                <option>Worth Reviewing</option>
+                <option>Build Relationship</option>
+                <option>Subcontractor Needed</option>
+                <option>Ignore</option>
+              </select>
+            </div>
+          </div>
+          <div class="opps" id="oppList"></div>
+        </aside>
+
+        <section class="panel">
+          <div class="tabs" id="tabs"></div>
+          <div class="content" id="content"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast">Saved</div>
+
+  <script>
+    const preferredServices = [
+      "Janitorial","Custodial","Floor Care","Porter Services","Commercial Cleaning",
+      "Administrative Support","Clerical Support","Data Entry","Temporary Staffing",
+      "Records Management","Courier Services","Relocation Services","Debris Removal",
+      "Grounds Maintenance","Property Maintenance","Home Health Support","AI Automation Services",
+      "Armed Security","Unarmed Security","Guard Services","Patrol Services","Facility Security Support"
+    ];
+    const trackedNaics = ["624190","621610","561110","561720","561612","561210","561990"];
+    const performanceMethods = ["Self-perform","Subcontract","Teaming partner","Broker/referral","Ignore"];
+    const scoreFields = [
+      "Official source verified","Open opportunity","Deadline verified","Under $250,000","Service based",
+      "Low capital","Subcontractable","Brokerable","No major equipment","Fits iGeo services",
+      "Security licensing required","Bonding required","Site visit required"
+    ];
+    const favorable = new Set([
+      "Official source verified","Open opportunity","Deadline verified","Under $250,000","Service based",
+      "Low capital","Subcontractable","Brokerable","No major equipment","Fits iGeo services"
+    ]);
+    const riskFields = new Set(["Security licensing required","Bonding required","Site visit required"]);
+    const modules = [
+      ["dashboard","▦","Opportunity Dashboard","Pipeline, status, deadline, source, and decision view."],
+      ["bid","⚙","Bid Engine","Core record, performance method, score, and pursuit decision."],
+      ["analyzer","⌕","Solicitation Analyzer","Scope, instructions, documents, and extracted requirements."],
+      ["scoring","◉","Opportunity Scoring Engine","Fit, risk, subcontractability, brokerability, and urgency."],
+      ["compliance","☑","Compliance Checklist Generator","Submission tasks, registrations, insurance, bonding, and licenses."],
+      ["proposal","✎","Proposal Draft Generator","Generated cover, approach, staffing, and past-performance sections."],
+      ["pricing","$","Pricing Worksheet","Labor, supplies, partner margin, overhead, and profit."],
+      ["partners","◈","Subcontractor / Teaming Partner Tracker","Partner fit, services, license status, and next action."],
+      ["incumbent","◇","Incumbent Intelligence","Current vendor, contract clues, contacts, and relationship plan."],
+      ["contacts","☎","Procurement Contact Database","Buyer, CO, specialist, and outreach history."],
+      ["intel","◆","Daily Acquisition Intelligence Integration","Daily source scan notes and opportunities to import."],
+      ["drive","▣","Google Drive Document Storage","Folder, solicitation files, drafts, pricing, and final response links."]
+    ];
+
+    const seed = {
+      activeModule: "bid",
+      activeId: "opp-janitorial-1",
+      partners: [
+        { name: "CleanPro Facilities", services: "Janitorial, floor care", licenses: "Active local business license", contact: "ops@cleanpro.example", status: "Ready" },
+        { name: "ShieldLine Security", services: "Unarmed security, patrol", licenses: "Security license and COI pending review", contact: "partners@shieldline.example", status: "Verify" }
+      ],
+      contacts: [
+        { agency: "City Facilities Department", name: "M. Carter", role: "Procurement Specialist", email: "mcarter@example.gov", phone: "(555) 014-2210", notes: "Ask about site visit attendance list." },
+        { agency: "County Health Services", name: "R. Singh", role: "Contracting Officer", email: "rsingh@example.gov", phone: "(555) 019-8840", notes: "Interested in staffing vendors." }
+      ],
+      intel: [
+        { date: today(), source: "SAM.gov watchlist", summary: "Janitorial and facility support keywords checked.", action: "Import matching notices after source verification." },
+        { date: today(), source: "Local procurement portals", summary: "Courier, records, and property maintenance searches pending.", action: "Assign daily review owner." }
+      ],
+      opportunities: [
+        {
+          id: "opp-janitorial-1",
+          title: "Municipal Building Janitorial Services",
+          agency: "City Facilities Department",
+          source: "Official city procurement portal",
+          sourceUrl: "https://example.gov/procurement",
+          deadline: addDays(18),
+          status: "Open",
+          naics: "561720",
+          service: "Janitorial",
+          estimatedValue: 185000,
+          performanceMethod: "Self-perform",
+          stage: "Drafting",
+          driveFolder: "Google Drive / iGeo / Bids / Municipal Building Janitorial",
+          solicitation: "Nightly cleaning for municipal offices, restrooms, public counters, floor care, consumables coordination, quality control logs, and monthly reporting.",
+          instructions: "Confirm site visit, submit pricing sheet, past performance, cleaning plan, insurance certificates, and signed addenda.",
+          requirements: "COI, W-9, business license, references, staffing plan, safety plan, quality control plan",
+          missingRequirements: "Site visit confirmation and signed addenda status.",
+          nextAction: "Confirm site visit requirement and draft service approach.",
+          incumbent: "Unknown. Request prior award tabulation and current contract end date.",
+          contactId: "City Facilities Department",
+          notes: "Strong service fit. Keep pricing lean and emphasize responsiveness.",
+          score: checked(["Official source verified","Open opportunity","Deadline verified","Under $250,000","Service based","Low capital","Subcontractable","No major equipment","Fits iGeo services","Site visit required"]),
+          checklist: [],
+          pricing: [
+            { item: "Labor", qty: 1450, unit: 21.5, type: "Direct" },
+            { item: "Supplies", qty: 12, unit: 420, type: "Direct" },
+            { item: "Overhead", qty: 1, unit: 14500, type: "Overhead" },
+            { item: "Profit", qty: 1, unit: 18000, type: "Profit" }
+          ]
+        },
+        {
+          id: "opp-security-1",
+          title: "Library Unarmed Security Desk Coverage",
+          agency: "County Library System",
+          source: "Bid board lead, needs official verification",
+          sourceUrl: "",
+          deadline: addDays(10),
+          status: "Review",
+          naics: "561612",
+          service: "Unarmed Security",
+          estimatedValue: 220000,
+          performanceMethod: "Subcontract",
+          stage: "Partner search",
+          driveFolder: "Google Drive / iGeo / Partner-Led / Library Security",
+          solicitation: "Unarmed desk coverage, public entry monitoring, incident reporting, patrol walks, and coordination with library management.",
+          instructions: "Verify official source, confirm security licensing, insurance limits, guard training requirements, and subcontracting permission.",
+          requirements: "Security license, trained guards, COI, background checks, incident reporting procedure, partner agreement",
+          missingRequirements: "Verified security license, COI limits, trained guard roster, and partner agreement.",
+          nextAction: "Contact licensed security partner and confirm subcontracting permission.",
+          incumbent: "Likely local security vendor. Search award history and attendee lists.",
+          contactId: "County Library System",
+          notes: "Treat as subcontractor-supported unless iGeo confirms licenses, insurance, trained personnel, and compliance documents.",
+          score: checked(["Open opportunity","Deadline verified","Under $250,000","Service based","Low capital","Subcontractable","Brokerable","Security licensing required"]),
+          checklist: [],
+          pricing: [
+            { item: "Subcontractor labor", qty: 1600, unit: 31, type: "Partner" },
+            { item: "iGeo management fee", qty: 1, unit: 12400, type: "Fee" },
+            { item: "Profit", qty: 1, unit: 9300, type: "Profit" }
+          ]
+        },
+        {
+          id: "opp-sam-success-lake",
+          title: "Success Lake - Office Janitorial Services",
+          agency: "DEPT OF THE ARMY - W075 ENDIST SACRAMENTO",
+          source: "SAM.gov Notice ID W9123826QA017",
+          sourceUrl: "https://sam.gov/workspace/contract/opp/5bc214b843454beba735286649cc084f/view",
+          deadline: "2026-07-14",
+          status: "Open",
+          naics: "561720",
+          service: "Janitorial",
+          estimatedValue: 0,
+          performanceMethod: "Self-perform",
+          stage: "Intake",
+          driveFolder: "Google Drive / iGeo / Bids / Success Lake Office Janitorial",
+          solicitation: "Live SAM.gov solicitation for office janitorial services. Product Service Code S201 - Housekeeping, Custodial Janitorial. Total Small Business Set-Aside. Attachments include Solicitation.pdf, PWS.KO Approved.pdf, Wage Determination 2015-5657.pdf, and Q&A PDF.",
+          instructions: "Questions were due 10 days before quote due date. Offers due July 14, 2026 at 11:00 AM PDT. Review solicitation, PWS, wage determination, Q&A, and submission instructions.",
+          requirements: "Solicitation.pdf, PWS.KO Approved.pdf, Wage Determination 2015-5657.pdf, Q&A PDF, email submission instructions, pricing, service approach, labor compliance review",
+          missingRequirements: "Estimated value, place of performance details, exact submission method, required representations/certifications, insurance requirements, site visit status, and final pricing inputs.",
+          nextAction: "Download SAM.gov attachments and confirm submission instructions before pricing.",
+          incumbent: "Unknown. Check prior USACE Sacramento janitorial awards for Success Lake.",
+          contactId: "W075 ENDIST SACRAMENTO",
+          notes: "Tested live on SAM.gov July 6, 2026. Questions cutoff has passed, so review Q&A before deciding.",
+          score: checked(["Official source verified","Open opportunity","Deadline verified","Service based","Low capital","Subcontractable","No major equipment","Fits iGeo services"]),
+          checklist: [],
+          pricing: []
+        }
+      ]
+    };
+
+    let state = load();
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function addDays(days) {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function checked(names) {
+      return Object.fromEntries(scoreFields.map(field => [field, names.includes(field)]));
+    }
+
+    function load() {
+      try {
+        const saved = localStorage.getItem("igeo-acquisition-os");
+        return normalizeState(saved ? JSON.parse(saved) : structuredClone(seed));
+      } catch {
+        return normalizeState(structuredClone(seed));
+      }
+    }
+
+    function normalizeState(data) {
+      data.opportunities = (data.opportunities || []).map(o => ({
+        missingRequirements: "",
+        nextAction: "",
+        checklist: [],
+        pricing: [],
+        score: checked([]),
+        ...o,
+        score: { ...checked([]), ...(o.score || {}) }
+      }));
+      return data;
+    }
+
+    function save(show = true) {
+      localStorage.setItem("igeo-acquisition-os", JSON.stringify(state));
+      if (show) toast("Saved");
+    }
+
+    function toast(message) {
+      const el = document.getElementById("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 1500);
+    }
+
+    function currentOpp() {
+      return state.opportunities.find(o => o.id === state.activeId) || state.opportunities[0];
+    }
+
+    function scoreOpp(opp) {
+      let total = 0;
+      scoreFields.forEach(field => {
+        if (!opp.score[field]) return;
+        total += favorable.has(field) ? 10 : -8;
+      });
+      if (opp.performanceMethod === "Ignore") total -= 50;
+      if (opp.status === "Closed") total -= 35;
+      if (opp.service.includes("Security") || opp.service.includes("Guard") || opp.service.includes("Patrol")) {
+        if (opp.performanceMethod === "Self-perform" && opp.score["Security licensing required"]) total -= 18;
+        if (["Subcontract","Teaming partner","Broker/referral"].includes(opp.performanceMethod)) total += 10;
+      }
+      return Math.max(0, Math.min(100, total));
+    }
+
+    function decisionFor(opp) {
+      const score = scoreOpp(opp);
+      const security = opp.service.includes("Security") || opp.service.includes("Guard") || opp.service.includes("Patrol");
+      if (opp.performanceMethod === "Ignore" || score < 35 || opp.status === "Closed") return "Ignore";
+      if (security && opp.score["Security licensing required"] && opp.performanceMethod === "Self-perform") return "Subcontractor Needed";
+      if (security && ["Subcontract","Teaming partner","Broker/referral"].includes(opp.performanceMethod)) return "Subcontractor Needed";
+      if (score >= 75) return "Pursue Immediately";
+      if (score >= 55) return "Worth Reviewing";
+      return "Build Relationship";
+    }
+
+    function decisionReasons(opp) {
+      const reasons = [];
+      const score = scoreOpp(opp);
+      const decision = decisionFor(opp);
+      if (opp.score["Official source verified"]) reasons.push("Official source is verified.");
+      if (opp.score["Open opportunity"] && opp.score["Deadline verified"]) reasons.push(`Open opportunity with verified deadline: ${opp.deadline}.`);
+      if (opp.naics === "561720" || opp.service.includes("Janitorial") || opp.service.includes("Custodial")) reasons.push("Service fit is strong for iGeo's preferred cleaning/custodial work.");
+      if (["Subcontract","Teaming partner","Broker/referral"].includes(opp.performanceMethod)) reasons.push(`Can remain trackable because the method is ${opp.performanceMethod}.`);
+      if (opp.score["Security licensing required"]) reasons.push("Security licensing is flagged, so license, insurance, trained personnel, and compliance documents must be verified.");
+      if (opp.missingRequirements) reasons.push("Missing requirements should be cleared before final pursuit or submission.");
+      if (decision === "Pursue Immediately") reasons.push(`Score is ${score}, so this is ready for active bid work.`);
+      if (decision === "Worth Reviewing") reasons.push(`Score is ${score}; review missing items before committing.`);
+      if (decision === "Subcontractor Needed") reasons.push("Decision is partner-supported until required capability documents are confirmed.");
+      if (decision === "Build Relationship") reasons.push("Useful relationship target even if immediate bid readiness is limited.");
+      if (decision === "Ignore") reasons.push("Low score, closed status, or ignored method makes this a no-bid candidate.");
+      return reasons.slice(0, 5);
+    }
+
+    function daysLeft(dateValue) {
+      const d = new Date(dateValue + "T12:00:00");
+      return Math.ceil((d - new Date()) / 86400000);
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+    }
+
+    function decisionClass(label) {
+      return label === "Pursue Immediately" ? "green" :
+        label === "Worth Reviewing" ? "blue" :
+        label === "Subcontractor Needed" ? "gold" :
+        label === "Ignore" ? "red" : "teal";
+    }
+
+    function render() {
+      renderNav();
+      renderMetrics();
+      renderOppList();
+      renderTabs();
+      renderContent();
+      const active = modules.find(m => m[0] === state.activeModule);
+      document.getElementById("pageTitle").textContent = active ? active[2] : "Bid Engine";
+      document.getElementById("pageSub").textContent = active ? active[3] : "";
+    }
+
+    function renderNav() {
+      document.getElementById("nav").innerHTML = modules.map(m => `
+        <button class="${state.activeModule === m[0] ? "active" : ""}" data-module="${m[0]}" title="${m[2]}">
+          <span class="ico">${m[1]}</span><span>${m[2]}</span>
+        </button>
+      `).join("");
+      document.querySelectorAll("[data-module]").forEach(btn => btn.onclick = () => {
+        state.activeModule = btn.dataset.module;
+        render();
+      });
+    }
+
+    function renderMetrics() {
+      const open = state.opportunities.filter(o => o.status !== "Closed").length;
+      const pursue = state.opportunities.filter(o => decisionFor(o) === "Pursue Immediately").length;
+      const partner = state.opportunities.filter(o => ["Subcontract","Teaming partner","Broker/referral"].includes(o.performanceMethod)).length;
+      const under250 = state.opportunities.filter(o => Number(o.estimatedValue) <= 250000).length;
+      const next = state.opportunities.reduce((min, o) => Math.min(min, daysLeft(o.deadline)), 999);
+      const data = [
+        ["Open", open],
+        ["Pursue", pursue],
+        ["Partner-led", partner],
+        ["Under $250k", under250],
+        ["Next deadline", next === 999 ? "N/A" : `${next}d`]
+      ];
+      document.getElementById("metrics").innerHTML = data.map(([label, value]) => `
+        <div class="metric"><span>${label}</span><strong>${value}</strong></div>
+      `).join("");
+    }
+
+    function renderOppList() {
+      const q = document.getElementById("search").value.toLowerCase();
+      const f = document.getElementById("filterDecision").value;
+      const items = state.opportunities.filter(o => {
+        const hay = [o.title,o.agency,o.naics,o.service,o.source].join(" ").toLowerCase();
+        return (!q || hay.includes(q)) && (!f || decisionFor(o) === f);
+      });
+      document.getElementById("oppList").innerHTML = items.length ? items.map(o => {
+        const decision = decisionFor(o);
+        return `
+          <button class="opp ${o.id === state.activeId ? "active" : ""}" data-id="${o.id}">
+            <strong>${escapeHtml(o.title)}</strong>
+            <small>${escapeHtml(o.agency)} · ${o.naics} · ${money(o.estimatedValue)}</small>
+            <div class="chips">
+              <span class="chip ${decisionClass(decision)}">${decision}</span>
+              <span class="chip">${o.performanceMethod}</span>
+              <span class="chip">${daysLeft(o.deadline)}d</span>
+            </div>
+          </button>
+        `;
+      }).join("") : `<div class="empty">No matching opportunities.</div>`;
+      document.querySelectorAll("[data-id]").forEach(btn => btn.onclick = () => {
+        state.activeId = btn.dataset.id;
+        render();
+      });
+    }
+
+    function renderTabs() {
+      const visible = ["bid","analyzer","scoring","compliance","proposal","pricing","partners","incumbent","contacts","intel","drive"];
+      document.getElementById("tabs").innerHTML = visible.map(id => {
+        const m = modules.find(x => x[0] === id);
+        return `<button class="${state.activeModule === id ? "active" : ""}" data-tab="${id}">${m[1]} ${m[2].replace(" Generator","").replace(" Engine","")}</button>`;
+      }).join("");
+      document.querySelectorAll("[data-tab]").forEach(btn => btn.onclick = () => {
+        state.activeModule = btn.dataset.tab;
+        render();
+      });
+    }
+
+    function renderContent() {
+      if (state.activeModule === "dashboard") return renderDashboard();
+      if (state.activeModule === "bid") return renderBid();
+      if (state.activeModule === "analyzer") return renderAnalyzer();
+      if (state.activeModule === "scoring") return renderScoring();
+      if (state.activeModule === "compliance") return renderCompliance();
+      if (state.activeModule === "proposal") return renderProposal();
+      if (state.activeModule === "pricing") return renderPricing();
+      if (state.activeModule === "partners") return renderPartners();
+      if (state.activeModule === "incumbent") return renderIncumbent();
+      if (state.activeModule === "contacts") return renderContacts();
+      if (state.activeModule === "intel") return renderIntel();
+      if (state.activeModule === "drive") return renderDrive();
+    }
+
+    function renderDashboard() {
+      const rows = state.opportunities.map(o => `
+        <tr>
+          <td><b>${escapeHtml(o.title)}</b><br><span class="sub">${escapeHtml(o.agency)}</span></td>
+          <td>${o.naics}<br><span class="sub">${o.service}</span></td>
+          <td>${o.deadline}<br><span class="sub">${daysLeft(o.deadline)} days</span></td>
+          <td><span class="chip ${decisionClass(decisionFor(o))}">${decisionFor(o)}</span></td>
+          <td>${o.performanceMethod}</td>
+          <td>${scoreOpp(o)}</td>
+        </tr>
+      `).join("");
+      setContent(`<table><thead><tr><th>Opportunity</th><th>NAICS / Service</th><th>Deadline</th><th>Decision</th><th>Method</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>
+        <div class="module-list">${modules.slice(1).map(m => `<div class="module"><b>${m[1]} ${m[2]}</b><span>${m[3]}</span></div>`).join("")}</div>`);
+    }
+
+    function renderBid() {
+      const o = currentOpp();
+      setContent(`
+        <div class="intake-box no-print">
+          <label>Quick Intake Paste<textarea id="quickIntake" placeholder="Paste SAM.gov, VSS, or MITN opportunity text here"></textarea></label>
+          <div class="actions" style="justify-content:flex-start">
+            <button id="parseIntake">Parse Intake</button>
+            <button id="loadSamTest">Use SAM.gov Test Case</button>
+          </div>
+        </div>
+        <div class="form-grid">
+          ${field("Title","title",o.title,"text","span-2")}
+          ${field("Status","status",o.status,"select","",["Open","Review","Drafting","Submitted","Closed"])}
+          ${field("Agency / Buyer","agency",o.agency)}
+          ${field("Official Source","source",o.source)}
+          ${field("Source URL","sourceUrl",o.sourceUrl)}
+          ${field("Deadline","deadline",o.deadline,"date")}
+          ${field("Estimated Value","estimatedValue",o.estimatedValue,"number")}
+          ${field("Stage","stage",o.stage)}
+          ${field("NAICS","naics",o.naics,"select","",trackedNaics)}
+          ${field("Preferred Service","service",o.service,"select","",preferredServices)}
+          ${field("Performance Method","performanceMethod",o.performanceMethod,"select","",performanceMethods)}
+          ${field("Next Action","nextAction",o.nextAction || "","text","span-3")}
+          <label class="span-3">Operating Notes<textarea data-field="notes">${escapeHtml(o.notes || "")}</textarea></label>
+          <label class="span-3">Missing Requirements<textarea data-field="missingRequirements">${escapeHtml(o.missingRequirements || "")}</textarea></label>
+        </div>
+        <div class="score-card" style="margin-top:14px">
+          <div class="chips">
+            <span class="chip ${decisionClass(decisionFor(o))}">${decisionFor(o)}</span>
+            <span class="chip">Score ${scoreOpp(o)}</span>
+            <span class="chip">${securityRule(o)}</span>
+          </div>
+          <ul class="decision-list">${decisionReasons(o).map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>
+        </div>
+      `);
+      bindOppFields();
+      document.getElementById("parseIntake").onclick = () => {
+        parseIntakeIntoOpp(document.getElementById("quickIntake").value, o);
+        save(false);
+        render();
+      };
+      document.getElementById("loadSamTest").onclick = () => {
+        const sample = seed.opportunities.find(item => item.id === "opp-sam-success-lake");
+        Object.assign(o, structuredClone(sample), { id: o.id });
+        save(false);
+        render();
+      };
+    }
+
+    function renderAnalyzer() {
+      const o = currentOpp();
+      setContent(`
+        <div class="form-grid">
+          <label class="span-3">Solicitation Summary<textarea data-field="solicitation">${escapeHtml(o.solicitation || "")}</textarea></label>
+          <label class="span-3">Instructions<textarea data-field="instructions">${escapeHtml(o.instructions || "")}</textarea></label>
+          <label class="span-3">Extracted Requirements<textarea data-field="requirements">${escapeHtml(o.requirements || "")}</textarea></label>
+          <label class="span-3">Missing Requirements<textarea data-field="missingRequirements">${escapeHtml(o.missingRequirements || "")}</textarea></label>
+        </div>
+      `);
+      bindOppFields();
+    }
+
+    function renderScoring() {
+      const o = currentOpp();
+      setContent(`
+        <div class="score-wrap">
+          <div class="checks">
+            ${scoreFields.map(field => `<label class="check"><input type="checkbox" data-score="${field}" ${o.score[field] ? "checked" : ""}><span>${field}</span></label>`).join("")}
+          </div>
+          <div class="score-card">
+            <div>
+              <div class="sub">Opportunity score</div>
+              <div class="score-number">${scoreOpp(o)}</div>
+              <div class="bar"><span style="width:${scoreOpp(o)}%"></span></div>
+            </div>
+            <div class="chips"><span class="chip ${decisionClass(decisionFor(o))}">${decisionFor(o)}</span></div>
+            <ul class="decision-list">${decisionReasons(o).map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>
+            <p class="sub">${securityRule(o)} Opportunities can stay active when iGeo is new to the service area if the work is reasonably subcontractable, brokerable, or fit for a teaming partner.</p>
+          </div>
+        </div>
+      `);
+      document.querySelectorAll("[data-score]").forEach(el => el.onchange = () => {
+        o.score[el.dataset.score] = el.checked;
+        save(false);
+        render();
+      });
+    }
+
+    function renderCompliance() {
+      const o = currentOpp();
+      const checklist = buildChecklist(o);
+      setContent(`
+        <div class="actions no-print" style="justify-content:flex-start;margin-bottom:10px">
+          <button id="copyChecklist">Copy Checklist</button>
+        </div>
+        <table><thead><tr><th>Done</th><th>Compliance Item</th><th>Owner</th><th>Notes</th></tr></thead><tbody>
+          ${checklist.map((item, i) => `<tr>
+            <td><input type="checkbox" data-check="${i}" ${item.done ? "checked" : ""}></td>
+            <td>${escapeHtml(item.item)}</td>
+            <td>${escapeHtml(item.owner)}</td>
+            <td>${escapeHtml(item.notes)}</td>
+          </tr>`).join("")}
+        </tbody></table>
+      `);
+      document.querySelectorAll("[data-check]").forEach(el => el.onchange = () => {
+        o.checklist = checklist.map((item, i) => ({ ...item, done: i == el.dataset.check ? el.checked : item.done }));
+        save(false);
+        render();
+      });
+      document.getElementById("copyChecklist").onclick = () => copyText(checklist.map(x => `${x.done ? "[x]" : "[ ]"} ${x.item} - ${x.owner} - ${x.notes}`).join("\n"));
+    }
+
+    function renderProposal() {
+      setContent(`
+        <div class="actions no-print" style="justify-content:flex-start;margin-bottom:10px">
+          <button id="copyProposal">Copy Draft</button>
+        </div>
+        <div class="doc" id="proposalDoc">${proposalHtml(currentOpp())}</div>
+      `);
+      document.getElementById("copyProposal").onclick = () => copyText(document.getElementById("proposalDoc").innerText);
+    }
+
+    function renderPricing() {
+      const o = currentOpp();
+      const rows = o.pricing || [];
+      const total = rows.reduce((sum, r) => sum + Number(r.qty || 0) * Number(r.unit || 0), 0);
+      setContent(`
+        <div class="actions no-print" style="justify-content:flex-start;margin-bottom:10px">
+          <button id="addPrice">＋ Line</button><span class="chip green">Total ${money(total)}</span>
+        </div>
+        <table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Type</th><th>Total</th><th></th></tr></thead><tbody>
+          ${rows.map((r, i) => `<tr>
+            <td><input data-price="${i}" data-key="item" value="${escapeAttr(r.item)}"></td>
+            <td><input data-price="${i}" data-key="qty" type="number" value="${escapeAttr(r.qty)}"></td>
+            <td><input data-price="${i}" data-key="unit" type="number" value="${escapeAttr(r.unit)}"></td>
+            <td><select data-price="${i}" data-key="type">${["Direct","Partner","Overhead","Fee","Profit"].map(x => `<option ${r.type === x ? "selected" : ""}>${x}</option>`).join("")}</select></td>
+            <td>${money(Number(r.qty || 0) * Number(r.unit || 0))}</td>
+            <td><button class="danger" data-del-price="${i}">×</button></td>
+          </tr>`).join("")}
+        </tbody></table>
+      `);
+      document.getElementById("addPrice").onclick = () => {
+        rows.push({ item: "New line", qty: 1, unit: 0, type: "Direct" });
+        save(false); render();
+      };
+      document.querySelectorAll("[data-price]").forEach(el => el.oninput = () => {
+        rows[el.dataset.price][el.dataset.key] = el.type === "number" ? Number(el.value) : el.value;
+        save(false); renderPricing();
+      });
+      document.querySelectorAll("[data-del-price]").forEach(el => el.onclick = () => {
+        rows.splice(el.dataset.delPrice, 1); save(false); render();
+      });
+    }
+
+    function renderPartners() {
+      setContent(`
+        <div class="actions no-print" style="justify-content:flex-start;margin-bottom:10px"><button id="addPartner">＋ Partner</button></div>
+        <table><thead><tr><th>Name</th><th>Services</th><th>Licenses / Insurance</th><th>Contact</th><th>Status</th><th></th></tr></thead><tbody>
+          ${state.partners.map((p, i) => rowInputs("partner", i, p, ["name","services","licenses","contact","status"])).join("")}
+        </tbody></table>
+      `);
+      bindTable("partner", state.partners);
+      document.getElementById("addPartner").onclick = () => { state.partners.push({ name:"", services:"", licenses:"", contact:"", status:"New" }); save(false); render(); };
+    }
+
+    function renderIncumbent() {
+      const o = currentOpp();
+      setContent(`
+        <div class="form-grid">
+          <label class="span-3">Incumbent Intelligence<textarea data-field="incumbent">${escapeHtml(o.incumbent || "")}</textarea></label>
+          <label class="span-3">Relationship Plan<textarea data-field="notes">${escapeHtml(o.notes || "")}</textarea></label>
+        </div>
+      `);
+      bindOppFields();
+    }
+
+    function renderContacts() {
+      setContent(`
+        <div class="actions no-print" style="justify-content:flex-start;margin-bottom:10px"><button id="addContact">＋ Contact</button></div>
+        <table><thead><tr><th>Agency</th><th>Name</th><th>Role</th><th>Email</th><th>Phone</th><th>Notes</th><th></th></tr></thead><tbody>
+          ${state.contacts.map((p, i) => rowInputs("contact", i, p, ["agency","name","role","email","phone","notes"])).join("")}
+        </tbody></table>
+      `);
+      bindTable("contact", state.contacts);
+      document.getElementById("addContact").onclick = () => { state.contacts.push({ agency:"", name:"", role:"", email:"", phone:"", notes:"" }); save(false); render(); };
+    }
+
+    function renderIntel() {
+      setContent(`
+        <div class="actions no-print" style="justify-content:flex-start;margin-bottom:10px"><button id="addIntel">＋ Intel</button></div>
+        <table><thead><tr><th>Date</th><th>Source</th><th>Summary</th><th>Action</th><th></th></tr></thead><tbody>
+          ${state.intel.map((p, i) => rowInputs("intel", i, p, ["date","source","summary","action"])).join("")}
+        </tbody></table>
+      `);
+      bindTable("intel", state.intel);
+      document.getElementById("addIntel").onclick = () => { state.intel.push({ date: today(), source:"", summary:"", action:"" }); save(false); render(); };
+    }
+
+    function renderDrive() {
+      const o = currentOpp();
+      setContent(`
+        <div class="form-grid">
+          ${field("Google Drive Folder","driveFolder",o.driveFolder,"text","span-3")}
+          ${field("Source URL","sourceUrl",o.sourceUrl,"text","span-3")}
+          <div class="span-3 score-card">
+            <b>Document Set</b>
+            <div class="chips">
+              <span class="chip">Solicitation</span>
+              <span class="chip">Addenda</span>
+              <span class="chip">Compliance checklist</span>
+              <span class="chip">Proposal draft</span>
+              <span class="chip">Pricing worksheet</span>
+              <span class="chip">Submitted response</span>
+            </div>
+          </div>
+        </div>
+      `);
+      bindOppFields();
+    }
+
+    function field(labelText, key, value, type = "text", cls = "", options = []) {
+      if (type === "select") {
+        return `<label class="${cls}">${labelText}<select data-field="${key}">${options.map(o => `<option ${value === o ? "selected" : ""}>${o}</option>`).join("")}</select></label>`;
+      }
+      return `<label class="${cls}">${labelText}<input data-field="${key}" type="${type}" value="${escapeAttr(value)}"></label>`;
+    }
+
+    function setContent(html) {
+      document.getElementById("content").innerHTML = html;
+    }
+
+    function bindOppFields() {
+      const o = currentOpp();
+      document.querySelectorAll("[data-field]").forEach(el => {
+        el.oninput = () => {
+          o[el.dataset.field] = el.type === "number" ? Number(el.value) : el.value;
+          save(false);
+          renderOppList();
+          renderMetrics();
+        };
+      });
+    }
+
+    function rowInputs(kind, i, obj, keys) {
+      return `<tr>${keys.map(k => `<td><input data-${kind}="${i}" data-key="${k}" value="${escapeAttr(obj[k])}"></td>`).join("")}<td><button class="danger" data-del-${kind}="${i}">×</button></td></tr>`;
+    }
+
+    function bindTable(kind, collection) {
+      document.querySelectorAll(`[data-${kind}]`).forEach(el => el.oninput = () => {
+        collection[el.dataset[kind]][el.dataset.key] = el.value;
+        save(false);
+      });
+      document.querySelectorAll(`[data-del-${kind}]`).forEach(el => el.onclick = () => {
+        collection.splice(el.dataset[`del${cap(kind)}`], 1);
+        save(false); render();
+      });
+    }
+
+    function cap(value) {
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
+    function buildChecklist(o) {
+      const base = [
+        ["Verify official source and current amendments", "Bid Lead", o.source || "Pending"],
+        ["Confirm deadline, timezone, and submission portal", "Bid Lead", o.deadline],
+        ["Clear missing requirements", "Bid Lead", o.missingRequirements || "No missing requirements recorded"],
+        ["Complete next action", "Bid Lead", o.nextAction || "No next action recorded"],
+        ["Prepare service approach and staffing plan", "Operations", o.service],
+        ["Build pricing worksheet and review margin", "Finance", money(o.estimatedValue)],
+        ["Gather insurance, W-9, business license, and references", "Admin", "Standard package"],
+        ["Create Google Drive folder and final response set", "Admin", o.driveFolder || "Folder needed"]
+      ];
+      if (o.score["Site visit required"]) base.push(["Attend or document site visit", "Operations", "Required"]);
+      if (o.score["Bonding required"]) base.push(["Confirm bonding capacity and bond forms", "Finance", "Required"]);
+      if (o.score["Security licensing required"]) base.push(["Verify security license, insurance, trained personnel, and compliance documents", "Partner Manager", "Security rule"]);
+      if (["Subcontract","Teaming partner","Broker/referral"].includes(o.performanceMethod)) base.push(["Confirm partner scope, price, compliance package, and agreement", "Partner Manager", o.performanceMethod]);
+      const saved = o.checklist || [];
+      return base.map((x, i) => ({ item: x[0], owner: x[1], notes: x[2], done: saved[i]?.done || false }));
+    }
+
+    function proposalHtml(o) {
+      return `
+        <div class="print-cover">
+          <h2>${escapeHtml(o.title)}</h2>
+          <p><b>Prepared for:</b> ${escapeHtml(o.agency)}<br><b>Prepared by:</b> iGeo Solutions LLC<br><b>Review date:</b> ${today()}</p>
+        </div>
+        <h3>Bid Engine Decision</h3>
+        <p><b>Decision:</b> ${decisionFor(o)} - <b>Score:</b> ${scoreOpp(o)} - <b>Performance Method:</b> ${escapeHtml(o.performanceMethod)}</p>
+        <ul>${decisionReasons(o).map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>
+        <p><b>Next Action:</b> ${escapeHtml(o.nextAction || "Not assigned.")}</p>
+        <h3>Executive Summary</h3>
+        <p>iGeo Solutions LLC is prepared to support this requirement through a practical operating model aligned to ${escapeHtml(o.service)} services, deadline control, compliance tracking, and documented quality management.</p>
+        <h3>Technical Approach</h3>
+        <p>${escapeHtml(o.solicitation || "Scope to be finalized after solicitation review.")}</p>
+        <h3>Staffing and Performance Method</h3>
+        <p>The planned method is <b>${escapeHtml(o.performanceMethod)}</b>. ${securityRule(o)}</p>
+        <h3>Compliance Plan</h3>
+        <ul>${buildChecklist(o).map(x => `<li>${escapeHtml(x.item)} - ${escapeHtml(x.owner)}</li>`).join("")}</ul>
+        <h3>Missing Requirements</h3>
+        <p>${escapeHtml(o.missingRequirements || "No missing requirements recorded.")}</p>
+        <h3>Pricing Summary</h3>
+        <p>Current worksheet total: <b>${money((o.pricing || []).reduce((sum, r) => sum + Number(r.qty || 0) * Number(r.unit || 0), 0))}</b>.</p>
+        <h3>Open Items</h3>
+        <p>${escapeHtml(o.instructions || "Confirm instructions, amendments, portal requirements, and required forms.")}</p>
+      `;
+    }
+
+    function securityRule(o) {
+      const security = o.service.includes("Security") || o.service.includes("Guard") || o.service.includes("Patrol");
+      if (!security) return "No security licensing flag.";
+      if (["Subcontract","Teaming partner","Broker/referral"].includes(o.performanceMethod)) return "Security support must be license, insurance, personnel, and compliance verified.";
+      return "Security work should be partner-supported unless iGeo has required licenses, insurance, trained personnel, and compliance documents.";
+    }
+
+    function exportWord() {
+      const o = currentOpp();
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(o.title)}</title><style>body{font-family:Arial,sans-serif;line-height:1.45;max-width:7.2in;margin:0 auto}.print-cover{border-bottom:2px solid #1f3a52;margin-bottom:18px;padding-bottom:12px}h2{font-size:24px}h3{margin-top:18px}</style></head><body>${proposalHtml(o)}</body></html>`;
+      const blob = new Blob([html], { type: "application/msword" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${exportName(o)}.doc`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportPdf() {
+      state.activeModule = "proposal";
+      render();
+      setTimeout(() => window.print(), 100);
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => toast("Copied"));
+    }
+
+    function exportName(o) {
+      return `iGeo_${fileName(o.agency || "Agency")}_${fileName(o.title || "Opportunity")}_${today()}`;
+    }
+
+    function fileName(value) {
+      return String(value).replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80) || "Untitled";
+    }
+
+    function parseIntakeIntoOpp(text, o) {
+      if (!text.trim()) return toast("Paste opportunity text first");
+      const get = (pattern) => (text.match(pattern) || [])[1]?.trim();
+      o.title = get(/(?:^|\n)([^\n]*(?:Janitorial|Custodial|Security|Porter|Cleaning|Courier|Grounds|Maintenance)[^\n]*)/i) || o.title;
+      o.agency = get(/Department\/Ind\.?\s*Agency\s*\n?([^\n]+)/i) || get(/Agency\s*\n?([^\n]+)/i) || o.agency;
+      o.source = text.includes("SAM.gov") || text.includes("Notice ID") ? `SAM.gov Notice ID ${get(/Notice ID\s*\n?([A-Z0-9-]+)/i) || ""}`.trim() : o.source;
+      o.deadline = normalizeDate(get(/(?:Date Offers Due|Current Date Offers Due|Current Response Date)\s*\n?([A-Za-z]+\s+\d{1,2},\s+\d{4})/i)) || o.deadline;
+      o.naics = get(/NAICS Code\s*\n?(\d{6})/i) || get(/\b(624190|621610|561110|561720|561612|561210|561990)\b/) || o.naics;
+      o.service = serviceFromText(text, o.service);
+      o.status = /Active/i.test(text) ? "Open" : o.status;
+      o.solicitation = get(/Description\s*\n+([\s\S]{0,700}?)(?:\nContact Information|\nPrimary Point|\nAttachments\/Links|$)/i) || o.solicitation;
+      o.instructions = [o.instructions, get(/All questions[\s\S]{0,350}?(?:accepted after this date\.|quote due date\.)/i)].filter(Boolean).join("\n");
+      o.requirements = requirementsFromText(text, o.requirements);
+      o.missingRequirements = missingFromText(text);
+      o.nextAction = "Download attachments, confirm submission instructions, and clear missing requirements.";
+      o.score = { ...o.score, ...checked(["Official source verified","Open opportunity","Deadline verified","Service based","Low capital","Subcontractable","No major equipment","Fits iGeo services"]) };
+      if (Number(o.estimatedValue || 0) > 0 && Number(o.estimatedValue) <= 250000) o.score["Under $250,000"] = true;
+      toast("Intake parsed");
+    }
+
+    function normalizeDate(value) {
+      if (!value) return "";
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
+    }
+
+    function serviceFromText(text, fallback) {
+      const lower = text.toLowerCase();
+      if (lower.includes("janitorial")) return "Janitorial";
+      if (lower.includes("custodial")) return "Custodial";
+      if (lower.includes("security")) return "Unarmed Security";
+      if (lower.includes("grounds")) return "Grounds Maintenance";
+      if (lower.includes("courier")) return "Courier Services";
+      return fallback;
+    }
+
+    function requirementsFromText(text, fallback) {
+      const items = [];
+      ["Solicitation.pdf","PWS","Wage Determination","Q&A","insurance","site visit","representations","certifications","pricing"].forEach(item => {
+        if (text.toLowerCase().includes(item.toLowerCase())) items.push(item);
+      });
+      return items.length ? items.join(", ") : fallback;
+    }
+
+    function missingFromText(text) {
+      const missing = [];
+      if (!/estimated value|award amount|budget/i.test(text)) missing.push("Estimated value");
+      if (!/Place of Performance\s*\n(?!\(blank\))/i.test(text)) missing.push("Place of performance details");
+      if (!/submission|submit|email/i.test(text)) missing.push("Submission method");
+      if (!/insurance/i.test(text)) missing.push("Insurance requirements");
+      if (!/site visit/i.test(text)) missing.push("Site visit status");
+      return missing.join(", ");
+    }
+
+    function escapeHtml(value = "") {
+      return String(value).replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" }[ch]));
+    }
+
+    function escapeAttr(value = "") {
+      return escapeHtml(value);
+    }
+
+    document.getElementById("newOpp").onclick = () => {
+      const id = `opp-${Date.now()}`;
+      state.opportunities.unshift({
+        id,
+        title: "New Opportunity",
+        agency: "",
+        source: "",
+        sourceUrl: "",
+        deadline: addDays(14),
+        status: "Review",
+        naics: trackedNaics[0],
+        service: preferredServices[0],
+        estimatedValue: 0,
+        performanceMethod: "Subcontract",
+        stage: "Intake",
+        driveFolder: "",
+        solicitation: "",
+        instructions: "",
+        requirements: "",
+        missingRequirements: "",
+        nextAction: "Verify source, deadline, requirements, and performance method.",
+        incumbent: "",
+        contactId: "",
+        notes: "",
+        score: checked(["Open opportunity","Service based","Subcontractable"]),
+        checklist: [],
+        pricing: []
+      });
+      state.activeId = id;
+      state.activeModule = "bid";
+      save(false);
+      render();
+    };
+
+    document.getElementById("saveData").onclick = () => save(true);
+    document.getElementById("exportWord").onclick = exportWord;
+    document.getElementById("exportPdf").onclick = exportPdf;
+    document.getElementById("search").oninput = renderOppList;
+    document.getElementById("filterDecision").onchange = renderOppList;
+
+    render();
+  </script>
+</body>
+</html>

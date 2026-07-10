@@ -136,12 +136,14 @@
             <h2>Bid Engine</h2>
           </div>
           <div class="header-actions">
+            <a class="button secondary" href="#today">Return to Operator Dashboard</a>
+            <a class="button secondary" href="/acquisition-os/full-bid-engine/" target="_blank" rel="noopener noreferrer">Open Full Bid Engine</a>
             <button id="exportAcquisitionCsv" class="button secondary" type="button"><span>CSV</span> Export</button>
             <button id="addOpportunity" class="button primary" type="button">Opportunity</button>
           </div>
         </div>
 
-        <section class="metric-grid" aria-label="Acquisition dashboard metrics">
+        <section id="acquisition-module-opportunity-dashboard" class="metric-grid" aria-label="Acquisition dashboard metrics">
           <article class="metric"><span>Tracked Opportunities</span><strong id="acqMetricTotal">0</strong></article>
           <article class="metric success"><span>Pursue Immediately</span><strong id="acqMetricPursue">0</strong></article>
           <article class="metric"><span>Subcontractor Needed</span><strong id="acqMetricSubcontractor">0</strong></article>
@@ -158,7 +160,7 @@
           <div id="acquisitionModuleList" class="acquisition-module-list"></div>
         </section>
 
-        <section class="panel module-tools">
+        <section id="acquisition-module-bid-engine" class="panel module-tools">
           <label class="field"><span>Search Opportunities</span><input id="acquisitionSearch" type="search" placeholder="Buyer, solicitation, service..." /></label>
           <label class="field"><span>Decision</span><select id="acquisitionDecisionFilter"></select></label>
           <label class="field"><span>Performance Method</span><select id="acquisitionPerformanceFilter"></select></label>
@@ -185,6 +187,15 @@
               <tbody id="acquisitionTable"></tbody>
             </table>
           </div>
+        </section>
+
+        <section id="acquisitionModulePlaceholder" class="panel acquisition-placeholder" hidden aria-live="polite">
+          <div class="panel-heading">
+            <h2>Module coming soon</h2>
+            <span id="acquisitionPlaceholderName" class="count-pill"></span>
+          </div>
+          <p><strong>Purpose:</strong> <span id="acquisitionPlaceholderPurpose"></span></p>
+          <p><strong>Next action:</strong> <span id="acquisitionPlaceholderNextAction"></span></p>
         </section>
       </section>
 
@@ -775,4 +786,3 @@
     <script src="app.js?v=final-clean"></script>
   </body>
 </html>
-

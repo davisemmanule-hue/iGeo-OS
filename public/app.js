@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   quotes: "igeo_quotes",
   vendors: "igeo_vendor_registrations",
   acquisitionOpportunities: "igeo_acquisition_opportunities",
+  fullBidEngine: "igeo-acquisition-os",
   viewMode: "igeo_operator_view_mode",
   capabilitySentCount: "igeo_capability_statements_sent_count",
 };
@@ -103,6 +104,56 @@ const acquisitionModules = [
   "Google Drive document storage",
   "Export to PDF and Word",
 ];
+const acquisitionModuleTargets = {
+  "Opportunity Dashboard": "acquisition-module-opportunity-dashboard",
+  "Bid Engine": "acquisition-module-bid-engine",
+};
+const acquisitionModulePlaceholders = {
+  "Solicitation Analyzer": {
+    purpose: "Review solicitation requirements, attachments, dates, and decision risks before pursuing.",
+    nextAction: "Upload or paste solicitation details when analyzer storage is connected.",
+  },
+  "Opportunity Scoring Engine": {
+    purpose: "Score opportunity fit, urgency, subcontracting need, and readiness criteria.",
+    nextAction: "Use the current opportunity score fields while the full scoring workspace is prepared.",
+  },
+  "Compliance Checklist Generator": {
+    purpose: "Build pursuit-specific compliance tasks for licensing, insurance, forms, and submission rules.",
+    nextAction: "Select an opportunity once checklist generation is connected.",
+  },
+  "Proposal Draft Generator": {
+    purpose: "Create first-draft proposal language from opportunity details and iGeo capability data.",
+    nextAction: "Choose an opportunity after proposal document generation is added.",
+  },
+  "Pricing Worksheet": {
+    purpose: "Estimate labor, supplies, travel, subcontractor costs, markup, and final bid pricing.",
+    nextAction: "Use Quotes for pricing until the Acquisition worksheet is added.",
+  },
+  "Subcontractor / Teaming Partner Tracker": {
+    purpose: "Track partners, subcontracting coverage, outreach status, and teaming notes.",
+    nextAction: "Add partner records after the tracker is connected to Contacts.",
+  },
+  "Incumbent Intelligence": {
+    purpose: "Capture incumbent contractor clues, past awards, buyer patterns, and competitive context.",
+    nextAction: "Add incumbent research after intelligence fields are added.",
+  },
+  "Procurement Contact Database": {
+    purpose: "Store buyer, specialist, contracting officer, and procurement contact details.",
+    nextAction: "Use opportunity contact fields until the dedicated database is added.",
+  },
+  "Daily Acquisition Intelligence Integration": {
+    purpose: "Collect daily opportunity signals and acquisition alerts into this workspace.",
+    nextAction: "Connect the intelligence feed after the source is configured.",
+  },
+  "Google Drive document storage": {
+    purpose: "Store solicitation files, drafts, checklists, pricing sheets, and exports in Google Drive.",
+    nextAction: "Connect Drive folders before storing Acquisition OS documents.",
+  },
+  "Export to PDF and Word": {
+    purpose: "Export proposal, checklist, and opportunity documents as PDF and Word files.",
+    nextAction: "Use CSV export for opportunities until document export is added.",
+  },
+};
 
 const workerServiceCategories = [
   "Commercial Cleaning",
@@ -368,6 +419,7 @@ let workers = loadCollection(STORAGE_KEYS.workers, []);
 let quotes = loadCollection(STORAGE_KEYS.quotes, []);
 let vendors = seedVendorRegistrations(loadCollection(STORAGE_KEYS.vendors, []));
 let acquisitionOpportunities = seedAcquisitionOpportunities(loadCollection(STORAGE_KEYS.acquisitionOpportunities, []));
+syncFullBidEngineFromQuickEntries(acquisitionOpportunities);
 let capabilityStatementsSentCount = Number(loadCollection(STORAGE_KEYS.capabilitySentCount, 0)) || 0;
 let activeReport = "all";
 let toastTimer;
@@ -503,6 +555,10 @@ function bindElements() {
     "acquisitionTable",
     "acquisitionScoreChecklist",
     "acquisitionModuleList",
+    "acquisitionModulePlaceholder",
+    "acquisitionPlaceholderName",
+    "acquisitionPlaceholderPurpose",
+    "acquisitionPlaceholderNextAction",
     "exportAcquisitionCsv",
     "acqMetricTotal",
     "acqMetricPursue",
@@ -678,6 +734,7 @@ function bindEvents() {
     if (deleteButton) deleteOpportunityById(deleteButton.dataset.deleteOpportunity);
   });
   els.exportAcquisitionCsv.addEventListener("click", () => exportDataset("acquisition", "csv"));
+  els.acquisitionModuleList.addEventListener("click", handleAcquisitionModuleClick);
 
   document.querySelectorAll("[data-copy-target], [data-copy-value]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1074,8 +1131,40 @@ function renderVendors() {
 function renderAcquisitionModules() {
   if (!els.acquisitionModuleList) return;
   els.acquisitionModuleList.innerHTML = acquisitionModules
-    .map((moduleName) => `<span>${escapeHtml(moduleName)}</span>`)
+    .map((moduleName) => `<button type="button" data-acquisition-module="${escapeHtml(moduleName)}">${escapeHtml(moduleName)}</button>`)
     .join("");
+}
+
+function handleAcquisitionModuleClick(event) {
+  const button = event.target.closest("[data-acquisition-module]");
+  if (!button) return;
+  showAcquisitionModule(button.dataset.acquisitionModule);
+}
+
+function showAcquisitionModule(moduleName) {
+  document.querySelectorAll("[data-acquisition-module]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.acquisitionModule === moduleName);
+  });
+  const targetId = acquisitionModuleTargets[moduleName];
+  if (targetId && document.getElementById(targetId)) {
+    if (els.acquisitionModulePlaceholder) els.acquisitionModulePlaceholder.hidden = true;
+    scrollToSection(targetId);
+    return;
+  }
+  showAcquisitionPlaceholder(moduleName);
+}
+
+function showAcquisitionPlaceholder(moduleName) {
+  if (!els.acquisitionModulePlaceholder) return;
+  const placeholder = acquisitionModulePlaceholders[moduleName] || {
+    purpose: "Support this Acquisition OS workflow inside the unified workspace.",
+    nextAction: "Define the fields and source records needed for this module.",
+  };
+  els.acquisitionPlaceholderName.textContent = moduleName;
+  els.acquisitionPlaceholderPurpose.textContent = placeholder.purpose;
+  els.acquisitionPlaceholderNextAction.textContent = placeholder.nextAction;
+  els.acquisitionModulePlaceholder.hidden = false;
+  scrollToSection("acquisitionModulePlaceholder");
 }
 
 function renderAcquisitionOpportunities() {
@@ -1469,6 +1558,7 @@ function saveAcquisitionOpportunity(event) {
   if (index >= 0) acquisitionOpportunities[index] = opportunity;
   else acquisitionOpportunities.unshift(opportunity);
   saveCollection(STORAGE_KEYS.acquisitionOpportunities, acquisitionOpportunities);
+  syncFullBidEngineFromQuickEntries(acquisitionOpportunities);
   closeAcquisitionDialog();
   render();
   showToast("Opportunity saved.");
@@ -1576,6 +1666,7 @@ function deleteOpportunityById(id, options = {}) {
   if (!id || !confirm("Delete this acquisition opportunity?")) return;
   acquisitionOpportunities = acquisitionOpportunities.filter((item) => item.id !== id);
   saveCollection(STORAGE_KEYS.acquisitionOpportunities, acquisitionOpportunities);
+  syncFullBidEngineFromQuickEntries(acquisitionOpportunities);
   if (options.closeDialog) closeAcquisitionDialog();
   render();
   showToast("Opportunity deleted.");
@@ -1854,6 +1945,72 @@ function seedAcquisitionOpportunities(existing) {
   });
   if (changed) saveCollection(STORAGE_KEYS.acquisitionOpportunities, current);
   return current;
+}
+
+function syncFullBidEngineFromQuickEntries(opportunities) {
+  const quickEntries = Array.isArray(opportunities) ? opportunities : [];
+  const fullState = loadFullBidEngineState();
+  const fullOpportunities = Array.isArray(fullState.opportunities) ? [...fullState.opportunities] : [];
+  const quickIds = new Set(quickEntries.map((opportunity) => opportunity.id));
+  const retained = fullOpportunities.filter((opportunity) => !opportunity.syncedFromQuickEntry || quickIds.has(opportunity.id));
+  quickEntries.forEach((opportunity) => {
+    const mapped = mapQuickEntryToFullBidEngineOpportunity(opportunity);
+    const index = retained.findIndex((item) => item.id === mapped.id);
+    if (index >= 0) retained[index] = { ...retained[index], ...mapped };
+    else retained.unshift(mapped);
+  });
+  fullState.opportunities = retained;
+  if (!fullState.activeId && retained[0]) fullState.activeId = retained[0].id;
+  saveCollection(STORAGE_KEYS.fullBidEngine, fullState);
+}
+
+function loadFullBidEngineState() {
+  return {
+    activeModule: "dashboard",
+    activeId: "",
+    partners: [],
+    contacts: [],
+    intel: [],
+    ...loadCollection(STORAGE_KEYS.fullBidEngine, {}),
+  };
+}
+
+function mapQuickEntryToFullBidEngineOpportunity(opportunity) {
+  const score = Object.fromEntries(
+    opportunityScoreFields.map((scoreField) => [scoreField.label, Boolean(opportunity[scoreField.value])])
+  );
+  return {
+    id: opportunity.id,
+    title: opportunity.opportunityName || "Untitled opportunity",
+    agency: opportunity.buyer || "",
+    source: [opportunity.source, opportunity.solicitationNumber].filter(Boolean).join(" "),
+    sourceUrl: opportunity.sourceLink || "",
+    deadline: opportunity.dueDate || "",
+    status: opportunity.openOpportunity === false ? "Closed" : "Open",
+    naics: opportunity.naics || "",
+    service: opportunity.serviceType || "",
+    estimatedValue: parseMoneyValue(opportunity.estimatedValue),
+    performanceMethod: opportunity.performanceMethod || "Subcontract",
+    stage: opportunity.decisionLabel || "Quick Entry",
+    driveFolder: "",
+    solicitation: opportunity.notes || "",
+    instructions: "",
+    requirements: "",
+    missingRequirements: "",
+    nextAction: opportunity.urgencyReason || "",
+    incumbent: "",
+    contactId: [opportunity.contactName, opportunity.contactEmail].filter(Boolean).join(" / "),
+    notes: opportunity.notes || "",
+    score,
+    checklist: [],
+    pricing: [],
+    syncedFromQuickEntry: true,
+  };
+}
+
+function parseMoneyValue(valueToParse) {
+  const parsed = Number(String(valueToParse || "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 async function initializePrimeCrmData() {
