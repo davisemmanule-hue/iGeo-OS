@@ -51,6 +51,22 @@
     </header>
 
     <main class="app-shell">
+      <section id="guidedWorkflow" class="workflow-panel panel" aria-label="Guided procurement workflow">
+        <div class="workflow-heading">
+          <div>
+            <p class="eyebrow">GUIDED PROCUREMENT WORKFLOW</p>
+            <h2 id="workflowTitle">What do I do next?</h2>
+            <p id="workflowGuidance" class="workflow-guidance">Select or add an opportunity to begin.</p>
+          </div>
+          <div class="workflow-controls">
+            <label for="workflowOpportunity">Current opportunity</label>
+            <select id="workflowOpportunity" aria-label="Current workflow opportunity"></select>
+            <button id="workflowNextAction" class="button primary" type="button">Find New Opportunity</button>
+          </div>
+        </div>
+        <ol id="workflowTracker" class="workflow-tracker" aria-label="Opportunity progress"></ol>
+      </section>
+
       <section id="today" class="today-panel panel" aria-label="Today dashboard">
         <div class="command-header">
           <div>
@@ -85,6 +101,15 @@
             <label><input type="checkbox" /> Send capability statements</label>
             <label><input type="checkbox" /> Review opportunities</label>
           </div>
+        </div>
+        <div class="daily-work-actions" aria-label="Today's guided work">
+          <article><span>Today's RFQs</span><strong id="workflowTodayRfqs">0</strong><button type="button" data-workflow-action="find">Find New Opportunity</button></article>
+          <article><span>Proposal Deadlines</span><strong id="workflowProposalDeadlines">0</strong><button type="button" data-workflow-action="continue">Continue Current Proposal</button></article>
+          <article><span>Follow-Ups Due</span><strong id="workflowFollowUps">0</strong><button type="button" data-workflow-action="contacts">Open Contacts</button></article>
+          <article><span>Urgent Gmail Alerts</span><strong id="workflowGmailAlerts">0</strong><button type="button" data-workflow-action="alerts">Review Alerts</button></article>
+          <article><span>Worker Shortages</span><strong id="workflowWorkerShortages">0</strong><button type="button" data-workflow-action="workforce">Open Workforce</button></article>
+          <article><span>Payments Due</span><strong id="workflowPaymentsDue">0</strong><button type="button" data-workflow-action="alerts">Review Payments</button></article>
+          <article><span>Awards</span><strong id="workflowAwards">0</strong><button type="button" data-workflow-action="contacts">Track Awards</button></article>
         </div>
       </section>
 

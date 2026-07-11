@@ -449,6 +449,7 @@ let quotes = loadCollection(STORAGE_KEYS.quotes, []);
 let vendors = seedVendorRegistrations(loadCollection(STORAGE_KEYS.vendors, []));
 let acquisitionOpportunities = seedAcquisitionOpportunities(loadCollection(STORAGE_KEYS.acquisitionOpportunities, []));
 syncFullBidEngineFromQuickEntries(acquisitionOpportunities);
+let workflowOpportunityId = "";
 let capabilityStatementsSentCount = Number(loadCollection(STORAGE_KEYS.capabilitySentCount, 0)) || 0;
 let activeReport = "all";
 let toastTimer;
@@ -494,6 +495,18 @@ function bindElements() {
     "todayRegistrationsPending",
     "todayQuotesWaiting",
     "todayContractsActive",
+    "workflowOpportunity",
+    "workflowTracker",
+    "workflowTitle",
+    "workflowGuidance",
+    "workflowNextAction",
+    "workflowTodayRfqs",
+    "workflowProposalDeadlines",
+    "workflowFollowUps",
+    "workflowGmailAlerts",
+    "workflowWorkerShortages",
+    "workflowPaymentsDue",
+    "workflowAwards",
     "alertContracts",
     "alertPayments",
     "alertDeadlines",
@@ -699,6 +712,13 @@ function fillSelect(select, options, allLabel) {
 function bindEvents() {
   bindCollapsiblePanel(els.myDayPanelToggle, els.myDayPanelContent);
   bindCollapsiblePanel(els.settingsPanelToggle, els.settingsPanelContent);
+  if (els.workflowOpportunity) els.workflowOpportunity.addEventListener("change", () => {
+    workflowOpportunityId = els.workflowOpportunity.value;
+    renderWorkflowPanel();
+  });
+  if (els.workflowNextAction) els.workflowNextAction.addEventListener("click", handleWorkflowNextAction);
+  if (els.workflowTracker) els.workflowTracker.addEventListener("click", handleWorkflowStageClick);
+  document.querySelectorAll("[data-workflow-action]").forEach((button) => button.addEventListener("click", () => runWorkflowAction(button.dataset.workflowAction)));
 
   if (els.globalSearchInput && els.globalSearchResults) {
     document.querySelector(".global-search")?.addEventListener("submit", (event) => event.preventDefault());
@@ -854,6 +874,92 @@ function render() {
   renderAcquisitionModules();
   renderCapabilityLibrary();
   renderGlobalSearchSuggestions();
+  renderWorkflowPanel();
+}
+
+const procurementWorkflowStages = [
+  ["found", "Opportunity Found"], ["imported", "Imported"], ["analyzed", "Analyzed"], ["decision", "GO / NO GO"],
+  ["drafting", "Proposal Drafting"], ["pricing", "Pricing"], ["ready", "Ready to Submit"], ["submitted", "Submitted"],
+  ["award", "Awaiting Award"], ["awarded", "Awarded"], ["contract", "Active Contract"], ["closed", "Closed"],
+];
+
+function renderWorkflowPanel() {
+  if (!els.workflowTracker || !els.workflowOpportunity) return;
+  const options = [...acquisitionOpportunities].sort((a, b) => compareDates(a.dueDate, b.dueDate));
+  if (!workflowOpportunityId || !options.some((item) => item.id === workflowOpportunityId)) workflowOpportunityId = chooseCurrentWorkflowOpportunity(options)?.id || "";
+  els.workflowOpportunity.innerHTML = `<option value="">No opportunity selected</option>${options.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.opportunityName || "Untitled opportunity")}</option>`).join("")}`;
+  els.workflowOpportunity.value = workflowOpportunityId;
+  const opportunity = getWorkflowOpportunity();
+  const state = deriveWorkflowState(opportunity);
+  els.workflowTitle.textContent = opportunity ? `${opportunity.opportunityName}: ${procurementWorkflowStages[state.index][1]}` : "What do I do next?";
+  els.workflowGuidance.textContent = state.guidance;
+  els.workflowNextAction.textContent = state.actionLabel;
+  els.workflowNextAction.dataset.action = state.action;
+  els.workflowTracker.innerHTML = procurementWorkflowStages.map(([key, label], index) => {
+    const stageClass = index < state.index ? "complete" : index === state.index ? "current" : "future";
+    const disabled = index > state.index ? " disabled" : "";
+    const status = index < state.index ? "Completed" : index === state.index ? "Current stage" : "Not available yet";
+    return `<li class="workflow-stage ${stageClass}"><button type="button" data-stage="${key}" data-index="${index}"${disabled}><span>${escapeHtml(label)}</span><small>${status}</small></button></li>`;
+  }).join("");
+  renderDailyWorkflowMetrics();
+}
+
+function chooseCurrentWorkflowOpportunity(options) {
+  return options.find((item) => !/ignore/i.test(item.decisionLabel || "")) || options[0];
+}
+
+function getWorkflowOpportunity() {
+  return acquisitionOpportunities.find((item) => item.id === workflowOpportunityId) || null;
+}
+
+function deriveWorkflowState(opportunity) {
+  if (!opportunity) return { index: 0, action: "find", actionLabel: "Find New Opportunity", guidance: "Find or import an opportunity. iGeo OS will guide the next step." };
+  const full = (loadFullBidEngineState().opportunities || []).find((item) => item.id === opportunity.id) || {};
+  const text = [full.status, full.stage, full.notes, full.nextAction].join(" ").toLowerCase();
+  if (/closed|closeout/.test(text) || opportunity.openOpportunity === false) return workflowState(11, "dashboard", "Review Closeout", "Archive the record, capture lessons learned, and preserve past performance.");
+  if (/active contract|in performance/.test(text)) return workflowState(10, "workforce", "Manage Contract", "Coordinate workforce, contacts, compliance, payments, and contract tasks.");
+  if (/awarded|contract awarded/.test(text)) return workflowState(9, "contacts", "Start Award Setup", "Confirm the award, buyer contacts, staffing, compliance, and kickoff requirements.");
+  if (/submitted/.test(full.status || "")) return workflowState(8, "continue", "Track Award", "Monitor buyer communications, record follow-up, and request a debrief if lost.");
+  if (/ready to submit/.test(text)) return workflowState(6, "continue", "Review Submission Package", "Confirm final files, submission method, contacts, and deadline before submitting.");
+  if ((full.pricing || []).length) return workflowState(5, "continue", "Approve Pricing", "Manually review labor, materials, subcontractors, overhead, profit, and final price.");
+  if (/drafting/.test(full.status || "") || (full.checklist || []).length) return workflowState(4, "continue", "Continue Proposal", "Complete the checklist, draft, staffing plan, capability statement, and required documents.");
+  if (/ignore/i.test(opportunity.decisionLabel || "")) return workflowState(3, "acquisition", "Review NO GO", "Confirm the no-go decision and retain the record for reporting.");
+  if (opportunity.decisionLabel && opportunity.decisionLabel !== "Worth Reviewing") return workflowState(4, "continue", "Open Proposal Workspace", "The opportunity has a pursuit path. Continue into the existing Full Bid Engine.");
+  if (full.solicitation || full.requirements || full.instructions) return workflowState(3, "continue", "Make GO / NO GO Decision", "Review score, risks, capital, insurance, subcontracting, and probability of success.");
+  if (opportunity.buyer && opportunity.solicitationNumber && opportunity.dueDate && opportunity.naics && opportunity.serviceType) return workflowState(2, "continue", "Analyze Opportunity", "Open the existing analyzer and verify scope, requirements, deadlines, and risk.");
+  return workflowState(1, "intake", "Verify Opportunity Intake", "Verify agency, solicitation, NAICS, buyer, source URL, due date, service, value, attachments, and contact.");
+}
+
+function workflowState(index, action, actionLabel, guidance) { return { index, action, actionLabel, guidance }; }
+
+function handleWorkflowNextAction() { runWorkflowAction(els.workflowNextAction.dataset.action); }
+function handleWorkflowStageClick(event) {
+  const button = event.target.closest("[data-stage]");
+  if (!button || button.disabled) return;
+  const index = Number(button.dataset.index);
+  runWorkflowAction(index <= 1 ? "intake" : index >= 4 ? "continue" : "acquisition");
+}
+function runWorkflowAction(action) {
+  if (action === "find") { activateModule("acquisition-os", { scroll: true }); openAcquisitionDialog(); return; }
+  if (action === "intake") { activateModule("acquisition-os", { scroll: true }); const item = getWorkflowOpportunity(); if (item) openAcquisitionDialog(item); return; }
+  if (action === "continue") { window.open("/acquisition-os/full-bid-engine/", "_blank", "noopener,noreferrer"); return; }
+  if (action === "alerts") { setActiveNavigation("alerts"); scrollToSection("alerts"); return; }
+  if (action === "dashboard") { setActiveNavigation("today"); scrollToSection("today"); return; }
+  if (["contacts", "workforce", "acquisition"].includes(action)) {
+    activateModule(action === "contacts" ? "prime-crm" : action === "workforce" ? "workforce-management" : "acquisition-os", { scroll: true });
+  }
+}
+
+function renderDailyWorkflowMetrics() {
+  const full = loadFullBidEngineState().opportunities || [];
+  const todayRfqs = acquisitionOpportunities.filter((item) => /rfq/i.test(item.solicitationType || "") && isWithinDays(item.dueDate, 1)).length;
+  const deadlines = acquisitionOpportunities.filter((item) => isWithinDays(item.dueDate, 7)).length;
+  const followUps = records.filter((item) => item.nextFollowUpDate === isoToday || isBefore(item.nextFollowUpDate, isoToday)).length;
+  const shortages = acquisitionOpportunities.filter((item) => /staff|worker|labor/i.test(item.notes || "") && !workers.some((worker) => worker.status === "Available")).length;
+  const awards = records.filter((item) => item.status === "Contract Awarded").length + full.filter((item) => /awarded/i.test([item.status, item.stage, item.notes].join(" "))).length;
+  setText("workflowTodayRfqs", todayRfqs); setText("workflowProposalDeadlines", deadlines); setText("workflowFollowUps", followUps);
+  setText("workflowGmailAlerts", Number(els.todayUrgentEmails?.textContent) || 0); setText("workflowWorkerShortages", shortages);
+  setText("workflowPaymentsDue", Number(els.alertPayments?.textContent) || 0); setText("workflowAwards", awards);
 }
 
 function bindCollapsiblePanel(toggle, content) {
