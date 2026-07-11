@@ -538,6 +538,22 @@
       .actions button { flex: 1 1 140px; }
     }
 
+    dialog { width:min(980px,calc(100% - 24px)); max-height:92vh; border:0; border-radius:10px; padding:0; box-shadow:var(--shadow); }
+    dialog::backdrop { background:rgba(23,37,50,.65); }
+    .dialog-body { padding:18px; overflow:auto; max-height:90vh; }
+    .dialog-head { display:flex; gap:12px; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+    .status-note { padding:10px 12px; border-radius:7px; background:#fff8e8; border:1px solid #ead19a; color:#6b4d13; }
+    .field-status { color:var(--muted); font-size:11px; display:block; margin-top:4px; }
+    .timeline { display:grid; gap:8px; margin:12px 0; }
+    .timeline-row { display:grid; grid-template-columns:24px minmax(150px,1fr) minmax(120px,1fr) 2fr; gap:8px; align-items:center; padding:9px; border:1px solid var(--line); border-radius:7px; }
+    .timeline-row.current { border-color:var(--teal); background:#f3fbfb; }
+    .timeline-row.complete { border-left:4px solid var(--green); }
+    .readiness { font-size:30px; color:var(--green); font-weight:800; }
+    .workspace-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .workspace-card { border:1px solid var(--line); border-radius:8px; padding:13px; min-width:0; }
+    .warning { color:var(--red); font-weight:700; }
+    @media(max-width:720px){.workspace-grid,.timeline-row{grid-template-columns:1fr}}
+
     @media print {
       body { background: white; }
       .sidebar, .topbar, .panel-head, .tabs, .opps, .toast, .no-print, .metrics { display: none !important; }
@@ -570,6 +586,8 @@
           <div class="sub" id="pageSub">Find, score, organize, and respond from one opportunity record.</div>
         </div>
         <div class="actions">
+          <button id="importSolicitation" class="primary">Import Solicitation</button>
+          <button id="buildWorkspace">Build Proposal Workspace</button>
           <button id="newOpp" class="primary" title="Create opportunity">＋ New</button>
           <button id="saveData" title="Save workspace">💾 Save</button>
           <button id="exportWord" title="Download Word-compatible brief">▣ Word</button>
@@ -606,6 +624,7 @@
     </main>
   </div>
   <div class="toast" id="toast">Saved</div>
+  <dialog id="importDialog"><div class="dialog-body"><div class="dialog-head"><div><h2>Import Solicitation</h2><p class="sub">Paste a link or text, or upload PDF, DOCX, or TXT. Review every field before saving.</p></div><button id="closeImport" aria-label="Close">X</button></div><div id="importMessage" class="status-note">Links are preserved. If direct extraction is blocked, paste text or upload a file.</div><div class="form-grid" style="margin-top:14px"><label class="span-3">Solicitation link<input id="importUrl" type="url" placeholder="https://sam.gov/... or procurement portal"></label><label class="span-3">Solicitation text<textarea id="importText" style="min-height:150px" placeholder="Paste the notice or important sections"></textarea></label><label class="span-3">Solicitation file<input id="importFile" type="file" accept=".pdf,.docx,.txt,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label></div><div class="actions" style="margin:14px 0"><button id="reviewImport" class="primary">Extract and Review</button><button id="cancelImport">Cancel</button></div><div id="importReview"></div></div></dialog>
 
   <script>
     const preferredServices = [
@@ -641,6 +660,13 @@
       ["intel","◆","Daily Acquisition Intelligence Integration","Daily source scan notes and opportunities to import."],
       ["drive","▣","Google Drive Document Storage","Folder, solicitation files, drafts, pricing, and final response links."]
     ];
+
+    modules.push(
+      ["workspace","W","Proposal Workspace","Unified proposal workspace and readiness review."],
+      ["timeline","T","Procurement Timeline","Opportunity-specific stages, blockers, and deadlines."],
+      ["assistant","?","Procurement Assistant","Rule-based next actions from saved data."],
+      ["submission","S","Final Submission Review","Required confirmations and submission tracking."]
+    );
 
     const seed = {
       activeModule: "bid",
@@ -780,6 +806,7 @@
         checklist: [],
         pricing: [],
         score: checked([]),
+        importMeta: {}, proposalSections: {}, timeline: [], finalReview: {}, submission: {}, pricingApproved: false,
         ...o,
         score: { ...checked([]), ...(o.score || {}) }
       }));
@@ -931,7 +958,7 @@
     }
 
     function renderTabs() {
-      const visible = ["bid","analyzer","scoring","compliance","proposal","pricing","partners","incumbent","contacts","intel","drive"];
+      const visible = ["bid","analyzer","scoring","compliance","workspace","pricing","partners","timeline","assistant","submission","proposal","incumbent","contacts","intel","drive"];
       document.getElementById("tabs").innerHTML = visible.map(id => {
         const m = modules.find(x => x[0] === id);
         return `<button class="${state.activeModule === id ? "active" : ""}" data-tab="${id}">${m[1]} ${m[2].replace(" Generator","").replace(" Engine","")}</button>`;
@@ -955,6 +982,10 @@
       if (state.activeModule === "contacts") return renderContacts();
       if (state.activeModule === "intel") return renderIntel();
       if (state.activeModule === "drive") return renderDrive();
+      if (state.activeModule === "workspace") return renderWorkspace();
+      if (state.activeModule === "timeline") return renderTimeline();
+      if (state.activeModule === "assistant") return renderAssistant();
+      if (state.activeModule === "submission") return renderSubmission();
     }
 
     function renderDashboard() {
@@ -1192,6 +1223,29 @@
       bindOppFields();
     }
 
+    const timelineStages = ["Opportunity Found","Imported","Intake Verified","Analyzed","Go / No-Go Decided","Compliance Reviewed","Proposal Drafted","Teaming Reviewed","Pricing Approved","Final Review Complete","Ready to Submit","Submitted","Awaiting Award","Awarded or Lost","Active Contract","Closed"];
+    const reviewItems = ["Solicitation information verified","Amendments reviewed","Questions answered","Compliance checklist complete","Required forms attached","Capability statement selected","Proposal reviewed","Staffing reviewed","Teaming reviewed","Pricing approved","Insurance requirements reviewed","Certifications reviewed","File names checked","Submission method confirmed","Due date and time confirmed"];
+
+    function proposalReadiness(o) {
+      const checks = buildChecklist(o);
+      const items = [o.importMeta?.verified, Boolean(o.solicitation), Boolean(o.instructions), decisionFor(o) !== "Worth Reviewing", checks.length > 0 && checks.every(x => x.done), Boolean(o.proposalSections?.technicalApproach), Boolean(o.proposalSections?.managementApproach), Boolean(o.proposalSections?.staffingPlan), Boolean(o.proposalSections?.pastPerformance) && o.finalReview?.["Proposal reviewed"], Boolean(o.proposalSections?.capabilityStatement) && o.finalReview?.["Capability statement selected"], (o.pricing || []).length > 0 && o.finalReview?.["Pricing approved"], !o.missingRequirements, reviewItems.every(x => o.finalReview?.[x])];
+      return Math.round(items.filter(Boolean).length / items.length * 100);
+    }
+
+    function renderWorkspace() {
+      const o=currentOpp(), marker='<span class="warning">Operator Review Required</span>', sections=[
+        ["technicalApproach","Technical Approach"],["managementApproach","Management Approach"],["staffingPlan","Staffing Plan"],["pastPerformance","Past Performance"],["capabilityStatement","Capability Statement Selection"],["assumptions","Assumptions and Open Questions"]
+      ];
+      setContent(`<div class="section-head"><div><h2>Proposal Workspace</h2><p class="sub">One record, using the existing analyzer, scoring, checklist, pricing, and exports.</p></div><div class="readiness">${proposalReadiness(o)}%</div></div><div class="workspace-grid"><div class="workspace-card"><h3>Opportunity Summary</h3><p>${escapeHtml(o.title)}<br>${escapeHtml(o.agency)} · ${escapeHtml(o.deadline)}</p></div><div class="workspace-card"><h3>Solicitation Analysis</h3><p>${escapeHtml(o.solicitation)||marker}</p></div><div class="workspace-card"><h3>Go / No-Go Review</h3><p>${decisionFor(o)} · Score ${scoreOpp(o)}</p></div><div class="workspace-card"><h3>Compliance Checklist</h3><p>${buildChecklist(o).filter(x=>x.done).length}/${buildChecklist(o).length} complete</p></div>${sections.map(([key,label])=>`<label class="workspace-card"><h3>${label}</h3><textarea data-section="${key}">${escapeHtml(o.proposalSections?.[key]||"")}</textarea>${o.proposalSections?.[key]?"":marker}</label>`).join("")}<div class="workspace-card"><h3>Pricing Worksheet</h3><p>${o.pricingApproved?"Approved":"Operator approval required"}</p><button data-go="pricing">Open Pricing</button></div><div class="workspace-card"><h3>Final Review and Submission</h3><p>${proposalReadiness(o)}% ready</p><button data-go="submission">Open Final Review</button></div></div>`);
+      document.querySelectorAll('[data-section]').forEach(el=>el.oninput=()=>{o.proposalSections[el.dataset.section]=el.value;save(false)}); document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{state.activeModule=b.dataset.go;render()});
+    }
+
+    function derivedStage(o) { if(o.status==="Closed")return 15;if(/awarded/i.test(o.status))return 13;if(/submitted/i.test(o.status)||o.submission?.confirmationNumber)return 11;if(reviewItems.every(x=>o.finalReview?.[x]))return 10;if(o.finalReview?.["Pricing approved"])return 8;if(o.proposalSections?.technicalApproach)return 6;if(buildChecklist(o).some(x=>x.done))return 5;if(decisionFor(o)!=="Worth Reviewing")return 4;if(o.solicitation)return 3;if(o.importMeta?.verified)return 2;if(o.importMeta?.importedAt)return 1;return 0; }
+    function renderTimeline() { const o=currentOpp(),current=derivedStage(o);o.timeline=o.timeline||[];setContent(`<h2>Procurement Timeline</h2><p class="status-note">Current stage: ${timelineStages[current]}. Next action: ${assistantAnswer(o).next}</p><div class="timeline">${timelineStages.map((name,i)=>{const saved=o.timeline[i]||{};return `<div class="timeline-row ${i<current?'complete':i===current?'current':''}"><input type="checkbox" data-stage="${i}" ${saved.complete||i<current?'checked':''}><b>${name}</b><input data-stage-note="${i}" data-key="operator" placeholder="Operator" value="${escapeAttr(saved.operator||'')}"><input data-stage-note="${i}" data-key="notes" placeholder="Notes / blocking issue" value="${escapeAttr(saved.notes||'')}"></div>`}).join('')}</div>`);document.querySelectorAll('[data-stage]').forEach(el=>el.onchange=()=>{o.timeline[el.dataset.stage]={...(o.timeline[el.dataset.stage]||{}),complete:el.checked,completedAt:el.checked?new Date().toISOString():''};save(false);render()});document.querySelectorAll('[data-stage-note]').forEach(el=>el.oninput=()=>{const i=el.dataset.stageNote;o.timeline[i]={...(o.timeline[i]||{}),[el.dataset.key]:el.value};save(false)}); }
+    function assistantAnswer(o){const missing=[];if(!o.importMeta?.verified)missing.push('solicitation intake verification');if(o.missingRequirements)missing.push(o.missingRequirements);const undone=buildChecklist(o).filter(x=>!x.done);if(undone.length)missing.push(`${undone.length} compliance items`);if(!o.pricingApproved)missing.push('pricing approval');if(!o.proposalSections?.technicalApproach)missing.push('technical approach');if(["Subcontract","Teaming partner","Broker/referral"].includes(o.performanceMethod)&&!o.proposalSections?.teamingApproved)missing.push('teaming approval');const days=daysLeft(o.deadline);return{missing,next:missing[0]?`Complete ${missing[0]}.`:reviewItems.every(x=>o.finalReview?.[x])?'Record submission confirmation.':'Complete final submission review.',deadline:`${o.deadline||'Missing'} (${Number.isFinite(days)?days+' days remaining':'verify date'})`,ready:proposalReadiness(o)===100};}
+    function renderAssistant(){const o=currentOpp(),a=assistantAnswer(o);setContent(`<h2>Procurement Assistant</h2><p class="sub">Rule-based guidance from saved opportunity and proposal data. This is not AI.</p><div class="workspace-grid"><div class="workspace-card"><h3>What should I do next?</h3><p>${escapeHtml(a.next)}</p></div><div class="workspace-card"><h3>What is blocking submission?</h3><ul>${a.missing.length?a.missing.map(x=>`<li>${escapeHtml(x)}</li>`).join(''):'<li>No saved blockers.</li>'}</ul></div><div class="workspace-card"><h3>Submission deadline</h3><p>${escapeHtml(a.deadline)}</p></div><div class="workspace-card"><h3>Ready to submit?</h3><p>${a.ready?'Yes':'No'} · ${proposalReadiness(o)}%</p></div></div>`);}
+    function renderSubmission(){const o=currentOpp();o.finalReview=o.finalReview||{};o.submission=o.submission||{};const ready=reviewItems.every(x=>o.finalReview[x]);setContent(`<h2>Final Submission Review</h2><p class="status-note">${ready?'All operator confirmations complete. Ready to Submit.':'Ready to Submit remains locked until every confirmation is saved.'}</p><div class="checks">${reviewItems.map(x=>`<label class="check"><input type="checkbox" data-review="${escapeAttr(x)}" ${o.finalReview[x]?'checked':''}><span>${x}</span></label>`).join('')}</div><div class="actions" style="justify-content:flex-start;margin:14px 0">${o.sourceUrl?`<a href="${escapeAttr(o.sourceUrl)}" target="_blank" rel="noopener"><button>Open Submission Portal</button></a>`:''}<button id="copySolicitation">Copy Solicitation Number</button><button id="submissionWord">Download Word Package</button><button id="submissionPdf">Download PDF Package</button></div><h3>Record Submission Confirmation</h3><div class="form-grid">${['date','time','confirmationNumber','submittedBy','method','notes','followUpDate'].map(k=>field(k.replace(/([A-Z])/g,' $1'),`submission.${k}`,o.submission[k]||'',k.includes('date')?'date':k==='time'?'time':'text')).join('')}</div>`);document.querySelectorAll('[data-review]').forEach(el=>el.onchange=()=>{o.finalReview[el.dataset.review]=el.checked;save(false);render()});document.querySelectorAll('[data-field^="submission."]').forEach(el=>el.oninput=()=>{o.submission[el.dataset.field.split('.')[1]]=el.value;if(o.submission.confirmationNumber)o.status='Submitted';save(false)});document.getElementById('copySolicitation').onclick=()=>copyText(o.importMeta?.solicitationNumber||o.source||'');document.getElementById('submissionWord').onclick=exportWord;document.getElementById('submissionPdf').onclick=exportPdf;}
+
     function field(labelText, key, value, type = "text", cls = "", options = []) {
       if (type === "select") {
         return `<label class="${cls}">${labelText}<select data-field="${key}">${options.map(o => `<option ${value === o ? "selected" : ""}>${o}</option>`).join("")}</select></label>`;
@@ -1379,6 +1433,12 @@
       return escapeHtml(value);
     }
 
+    const importFields = [["title","Opportunity title"],["solicitationNumber","Solicitation number"],["agency","Agency"],["buyer","Buyer"],["buyerEmail","Buyer email"],["buyerPhone","Buyer phone"],["sourceUrl","Source URL"],["deadline","Due date"],["dueTime","Due time"],["timeZone","Time zone"],["naics","NAICS"],["setAside","Set-aside"],["placeOfPerformance","Place of performance"],["service","Service category"],["estimatedValue","Estimated contract value"],["contractPeriod","Contract period"],["solicitation","Scope summary"],["siteVisit","Site-visit requirement"],["questionsDeadline","Questions deadline"],["requiredForms","Required forms"],["certifications","Required certifications"],["insurance","Insurance requirements"],["submissionMethod","Submission method"],["submissionAddress","Submission address or portal"],["requiredAttachments","Required attachments"],["amendments","Amendment information"]];
+    let importDraft=null;
+    function extractSolicitation(text,url){const get=p=>(text.match(p)||[])[1]?.trim()||'';return{sourceUrl:url,title:get(/(?:title|subject|opportunity)\s*[:\-]\s*([^\n]+)/i)||get(/^([^\n]{8,120})/),solicitationNumber:get(/(?:solicitation|notice|bid|rfp|rfq)(?:\s+(?:number|no\.?|id))?\s*[:#\-]\s*([A-Z0-9._\-/]+)/i),agency:get(/(?:agency|department)\s*[:\-]\s*([^\n]+)/i),buyer:get(/(?:buyer|contracting officer|point of contact)\s*[:\-]\s*([^\n]+)/i),buyerEmail:get(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i),buyerPhone:get(/(?:phone|tel)\s*[:\-]?\s*([+()\d .-]{7,})/i),deadline:normalizeDate(get(/(?:due date|offers due|response date|deadline)\s*[:\-]?\s*([^\n]+)/i)),dueTime:get(/(?:due|deadline)[^\n]*?\b(\d{1,2}:\d{2}\s*(?:AM|PM)?)\b/i),timeZone:get(/\b(EST|EDT|CST|CDT|MST|MDT|PST|PDT|ET|CT|MT|PT)\b/i),naics:get(/\bNAICS\s*(?:code)?\s*[:\-]?\s*(\d{6})/i),setAside:get(/set[ -]aside\s*[:\-]?\s*([^\n]+)/i),placeOfPerformance:get(/place of performance\s*[:\-]?\s*([^\n]+)/i),service:serviceFromText(text,''),estimatedValue:Number((get(/(?:estimated value|contract value|budget)\s*[:$\-]?\s*\$?([\d,]+)/i)||'').replace(/,/g,''))||0,contractPeriod:get(/(?:contract period|period of performance)\s*[:\-]?\s*([^\n]+)/i),solicitation:get(/(?:scope|description)\s*[:\-]?\s*([\s\S]{1,800})/i)||text.slice(0,800),siteVisit:get(/site visit[^\n]*/i),questionsDeadline:get(/questions?(?: deadline| due)?\s*[:\-]?\s*([^\n]+)/i),requiredForms:requirementsFromText(text,''),certifications:get(/certifications?\s*[:\-]?\s*([^\n]+)/i),insurance:get(/insurance\s*[:\-]?\s*([^\n]+)/i),submissionMethod:get(/(?:submission method|submit via|offers? (?:must be )?submitted)\s*[:\-]?\s*([^\n]+)/i),submissionAddress:get(/(?:submission (?:address|portal)|portal)\s*[:\-]?\s*([^\n]+)/i),requiredAttachments:get(/(?:required attachments?|attachments?)\s*[:\-]?\s*([^\n]+)/i),amendments:get(/amendments?\s*[:\-]?\s*([^\n]+)/i)};}
+    function showImportReview(){document.getElementById('importReview').innerHTML=`<h3>Review extracted information</h3><p class="sub">Correct fields, add missing information, then confirm. A new opportunity is always created.</p><div class="form-grid">${importFields.map(([k,l])=>`<label>${l}<input data-import-field="${k}" value="${escapeAttr(importDraft[k]||'')}"><span class="field-status">${importDraft[k]?'Extracted · Needs verification':'Missing · Manually enter'}</span></label>`).join('')}</div><label class="check" style="margin-top:14px"><input id="confirmImport" type="checkbox"><span>I verified this solicitation information</span></label><div class="actions" style="margin-top:14px"><button id="saveImport" class="primary">Save as New Opportunity</button><button id="cancelReview">Cancel Without Saving</button></div>`;document.querySelectorAll('[data-import-field]').forEach(el=>el.oninput=()=>importDraft[el.dataset.importField]=el.value);document.getElementById('cancelReview').onclick=()=>document.getElementById('importDialog').close();document.getElementById('saveImport').onclick=saveImportedOpportunity;}
+    function saveImportedOpportunity(){if(!document.getElementById('confirmImport').checked)return toast('Verify the information before saving');const id=`opp-${Date.now()}`;const o={id,status:'Review',performanceMethod:'Subcontract',stage:'Imported',driveFolder:'',instructions:'',requirements:importDraft.requiredForms||'',missingRequirements:importFields.filter(([k])=>!importDraft[k]).map(([,l])=>l).join(', '),nextAction:'Verify intake and analyze solicitation.',incumbent:'',contactId:[importDraft.buyer,importDraft.buyerEmail].filter(Boolean).join(' / '),notes:'',score:checked(['Open opportunity','Service based','Subcontractable']),checklist:[],pricing:[],proposalSections:{},timeline:[],finalReview:{},submission:{},pricingApproved:false,...importDraft,importMeta:{...importDraft,verified:true,importedAt:new Date().toISOString()}};state.opportunities.unshift(o);state.activeId=id;state.activeModule='workspace';save();document.getElementById('importDialog').close();render();}
+
     document.getElementById("newOpp").onclick = () => {
       const id = `opp-${Date.now()}`;
       state.opportunities.unshift({
@@ -1414,6 +1474,10 @@
     };
 
     document.getElementById("saveData").onclick = () => save(true);
+    document.getElementById('importSolicitation').onclick=()=>document.getElementById('importDialog').showModal();
+    document.getElementById('closeImport').onclick=document.getElementById('cancelImport').onclick=()=>document.getElementById('importDialog').close();
+    document.getElementById('buildWorkspace').onclick=()=>{state.activeModule='workspace';save(false);render()};
+    document.getElementById('reviewImport').onclick=async()=>{const url=document.getElementById('importUrl').value.trim();let text=document.getElementById('importText').value.trim();const file=document.getElementById('importFile').files[0];if(file){if(file.type==='text/plain'||file.name.toLowerCase().endsWith('.txt'))text=await file.text();else{try{const raw=await file.text();if(raw&&/\w{4,}/.test(raw))text+=`\n${raw}`;else throw new Error();}catch{document.getElementById('importMessage').textContent='This browser could not extract readable text from the PDF or DOCX. Paste its important text and continue manually.';}}}if(url&&!text)document.getElementById('importMessage').textContent='The source link is preserved. Direct website extraction is unavailable or may be blocked by CORS or authentication; paste text or complete the review manually.';importDraft=extractSolicitation(text,url);showImportReview();};
     document.getElementById("exportWord").onclick = exportWord;
     document.getElementById("exportPdf").onclick = exportPdf;
     document.getElementById("search").oninput = renderOppList;
