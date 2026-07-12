@@ -662,6 +662,7 @@
     ];
 
     modules.push(
+      ["subcontractors","N","Subcontractor Network","Qualify and match subcontractors to saved opportunities."],
       ["workspace","W","Proposal Workspace","Unified proposal workspace and readiness review."],
       ["timeline","T","Procurement Timeline","Opportunity-specific stages, blockers, and deadlines."],
       ["assistant","?","Procurement Assistant","Rule-based next actions from saved data."],
@@ -958,7 +959,7 @@
     }
 
     function renderTabs() {
-      const visible = ["bid","analyzer","scoring","compliance","workspace","pricing","partners","timeline","assistant","submission","proposal","incumbent","contacts","intel","drive"];
+      const visible = ["bid","analyzer","scoring","compliance","workspace","pricing","partners","subcontractors","timeline","assistant","submission","proposal","incumbent","contacts","intel","drive"];
       document.getElementById("tabs").innerHTML = visible.map(id => {
         const m = modules.find(x => x[0] === id);
         return `<button class="${state.activeModule === id ? "active" : ""}" data-tab="${id}">${m[1]} ${m[2].replace(" Generator","").replace(" Engine","")}</button>`;
@@ -986,6 +987,7 @@
       if (state.activeModule === "timeline") return renderTimeline();
       if (state.activeModule === "assistant") return renderAssistant();
       if (state.activeModule === "submission") return renderSubmission();
+      if (state.activeModule === "subcontractors") return renderSubcontractors();
     }
 
     function renderDashboard() {
@@ -1485,5 +1487,6 @@
 
     render();
   </script>
+  <script src="subcontractor-network.js"></script>
 </body>
 </html>
