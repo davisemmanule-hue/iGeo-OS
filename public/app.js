@@ -94,6 +94,7 @@ const opportunityScoreFields = [
   field("Site visit required", "siteVisitRequired"),
 ];
 const acquisitionModules = [
+  "Opportunity Intelligence Engine",
   "Opportunity Dashboard",
   "Bid Engine",
   "Solicitation Analyzer",
@@ -109,6 +110,7 @@ const acquisitionModules = [
   "Export to PDF and Word",
 ];
 const acquisitionModuleIcons = {
+  "Opportunity Intelligence Engine": "OI",
   "Opportunity Dashboard": "▦",
   "Bid Engine": "◆",
   "Solicitation Analyzer": "⌕",
@@ -124,6 +126,7 @@ const acquisitionModuleIcons = {
   "Export to PDF and Word": "⇩",
 };
 const acquisitionModuleLabels = {
+  "Opportunity Intelligence Engine": "Intelligence Engine",
   "Opportunity Scoring Engine": "Opportunity Scoring",
   "Compliance Checklist Generator": "Compliance Checklist",
   "Proposal Draft Generator": "Proposal Draft",
@@ -134,6 +137,7 @@ const acquisitionModuleLabels = {
   "Export to PDF and Word": "Export Word/PDF",
 };
 const acquisitionModuleTargets = {
+  "Opportunity Intelligence Engine": "opportunity-intelligence-engine",
   "Opportunity Dashboard": "acquisition-module-opportunity-dashboard",
   "Bid Engine": "acquisition-module-bid-engine",
 };

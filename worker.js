@@ -5,6 +5,7 @@ export default {
     if (url.pathname === "/api/executive-email-alerts") {
       return handleExecutiveEmailAlerts(request, env);
     }
+    if (url.pathname === "/api/opportunity-intelligence/collect") return handleOpportunityCollection(request, env);
 
     if (url.hostname === "www.igeosolutionsllc.com") {
       url.hostname = "igeosolutionsllc.com";
@@ -30,6 +31,25 @@ export default {
     return env.ASSETS.fetch(new Request(url, request));
   },
 };
+
+async function handleOpportunityCollection(request, env) {
+  if (!['GET', 'POST'].includes(request.method)) return json({ ok: false, error: 'Method not allowed.' }, 405);
+  const url = new URL(request.url); const days = Math.min(Math.max(Number(url.searchParams.get('days') || 30), 1), 90);
+  const sources = [], opportunities = [];
+  if (env.SAM_GOV_API_KEY) {
+    try {
+      const params = new URLSearchParams({ api_key: env.SAM_GOV_API_KEY, postedFrom: formatSamDate(new Date(Date.now() - days * 86400000)), postedTo: formatSamDate(new Date()), limit: '100', offset: '0' });
+      const response = await fetch(`https://api.sam.gov/opportunities/v2/search?${params}`, { headers: { accept: 'application/json' } });
+      if (!response.ok) throw new Error(`SAM.gov returned ${response.status}`);
+      const data = await response.json(); (data.opportunitiesData || []).forEach(item => opportunities.push(mapSamOpportunity(item)));
+      sources.push({ name: 'SAM.gov', status: 'connected', count: data.opportunitiesData?.length || 0 });
+    } catch { sources.push({ name: 'SAM.gov', status: 'temporarily unavailable', count: 0 }); }
+  } else sources.push({ name: 'SAM.gov', status: 'connection not configured', count: 0 });
+  sources.push({ name: 'USAspending.gov', status: 'award intelligence only', count: 0 });
+  return json({ ok: true, collectedAt: new Date().toISOString(), sources, opportunities });
+}
+function formatSamDate(date) { return `${String(date.getMonth()+1).padStart(2,'0')}/${String(date.getDate()).padStart(2,'0')}/${date.getFullYear()}`; }
+function mapSamOpportunity(item) { const contact=item.pointOfContact?.[0]||{}; return { id:`sam-${item.noticeId||item.solicitationNumber}`, origin:'automated', source:'SAM.gov', sourceUrl:item.uiLink||item.resourceLinks?.[0]||'', solicitationNumber:item.solicitationNumber||item.noticeId||'', title:item.title||'Untitled solicitation', buyer:item.fullParentPathName||item.department||'', agency:item.organizationName||item.subTier||'', solicitationType:item.type||item.baseType||'', contractType:item.typeOfSetAsideDescription||'', postedDate:item.postedDate||'', dueDate:item.responseDeadLine||item.archiveDate||'', naics:item.naicsCode||'', psc:item.classificationCode||'', placeOfPerformance:[item.placeOfPerformance?.city?.name,item.placeOfPerformance?.state?.code].filter(Boolean).join(', '), setAside:item.typeOfSetAsideDescription||item.typeOfSetAside||'', contactName:contact.fullName||'', contactEmail:contact.email||'', contactPhone:contact.phone||'', attachments:item.resourceLinks||[], scopeSummary:item.description||'', status:'New', collectedAt:new Date().toISOString() }; }
 
 const IMPORTANT_LABEL = "iGeo Important";
 const OWNER_EMAIL = "admin@igeosolutionsllc.com";
