@@ -17,6 +17,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
     <link rel="stylesheet" href="styles.css?v=final-clean" />
     <link rel="stylesheet" href="opportunity-intelligence.css?v=1" />
+    <link rel="stylesheet" href="acquisition-extensions.css?v=1" />
   </head>
   <body>
     <header class="top-nav">
@@ -191,6 +192,11 @@
           </aside>
 
           <div class="acquisition-content">
+            <section id="acquisition-extension-documentation" class="ax-shell" data-ax-module="Documentation Library"></section>
+            <section id="acquisition-extension-calendar" class="ax-shell" data-ax-module="Procurement Calendar" hidden></section>
+            <section id="acquisition-extension-versions" class="ax-shell" data-ax-module="Proposal Version Control" hidden></section>
+            <section id="acquisition-extension-registrations" class="ax-shell" data-ax-module="Vendor Registration Automation" hidden></section>
+            <section id="acquisition-extension-brokerage" class="ax-shell" data-ax-module="Supply & Product Brokerage" hidden></section>
             <section id="opportunity-intelligence-engine" class="oi-shell" aria-label="Opportunity Intelligence Engine"></section>
             <section id="acquisition-module-opportunity-dashboard" class="metric-grid" aria-label="Acquisition dashboard metrics">
               <article class="metric"><span>Tracked Opportunities</span><strong id="acqMetricTotal">0</strong></article>
@@ -828,5 +834,6 @@
     <script src="worker-intake-config.js?v=final-clean"></script>
     <script src="app.js?v=final-clean"></script>
     <script src="opportunity-intelligence.js?v=1"></script>
+    <script src="acquisition-extensions.js?v=1"></script>
   </body>
 </html>

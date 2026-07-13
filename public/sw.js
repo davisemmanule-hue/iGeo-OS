@@ -1,9 +1,13 @@
-const CACHE_NAME = "igeo-operations-final-clean";
+const CACHE_NAME = "igeo-operations-acquisition-extensions-v1";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./opportunity-intelligence.js",
+  "./opportunity-intelligence.css",
+  "./acquisition-extensions.js",
+  "./acquisition-extensions.css",
   "./branding-settings.js",
   "./integration-config.js",
   "./worker-intake-config.js",

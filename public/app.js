@@ -94,6 +94,11 @@ const opportunityScoreFields = [
   field("Site visit required", "siteVisitRequired"),
 ];
 const acquisitionModules = [
+  "Documentation Library",
+  "Procurement Calendar",
+  "Proposal Version Control",
+  "Vendor Registration Automation",
+  "Supply & Product Brokerage",
   "Opportunity Intelligence Engine",
   "Opportunity Dashboard",
   "Bid Engine",
@@ -110,6 +115,11 @@ const acquisitionModules = [
   "Export to PDF and Word",
 ];
 const acquisitionModuleIcons = {
+  "Documentation Library": "D",
+  "Procurement Calendar": "C",
+  "Proposal Version Control": "V",
+  "Vendor Registration Automation": "R",
+  "Supply & Product Brokerage": "S",
   "Opportunity Intelligence Engine": "OI",
   "Opportunity Dashboard": "▦",
   "Bid Engine": "◆",
@@ -126,6 +136,11 @@ const acquisitionModuleIcons = {
   "Export to PDF and Word": "⇩",
 };
 const acquisitionModuleLabels = {
+  "Documentation Library": "Documentation Library",
+  "Procurement Calendar": "Procurement Calendar",
+  "Proposal Version Control": "Proposal Versions",
+  "Vendor Registration Automation": "Registration Center",
+  "Supply & Product Brokerage": "Product Brokerage",
   "Opportunity Intelligence Engine": "Intelligence Engine",
   "Opportunity Scoring Engine": "Opportunity Scoring",
   "Compliance Checklist Generator": "Compliance Checklist",
@@ -137,6 +152,11 @@ const acquisitionModuleLabels = {
   "Export to PDF and Word": "Export Word/PDF",
 };
 const acquisitionModuleTargets = {
+  "Documentation Library": "acquisition-extension-documentation",
+  "Procurement Calendar": "acquisition-extension-calendar",
+  "Proposal Version Control": "acquisition-extension-versions",
+  "Vendor Registration Automation": "acquisition-extension-registrations",
+  "Supply & Product Brokerage": "acquisition-extension-brokerage",
   "Opportunity Intelligence Engine": "opportunity-intelligence-engine",
   "Opportunity Dashboard": "acquisition-module-opportunity-dashboard",
   "Bid Engine": "acquisition-module-bid-engine",
@@ -1334,6 +1354,7 @@ function showAcquisitionModule(moduleName) {
     button.classList.toggle("active", button.dataset.acquisitionModule === moduleName);
   });
   const targetId = acquisitionModuleTargets[moduleName];
+  if (window.IGEOAcquisitionExtensions) window.IGEOAcquisitionExtensions.show(moduleName);
   if (targetId && document.getElementById(targetId)) {
     if (els.acquisitionModulePlaceholder) els.acquisitionModulePlaceholder.hidden = true;
     scrollToSection(targetId);
