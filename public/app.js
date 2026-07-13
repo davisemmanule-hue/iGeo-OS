@@ -474,7 +474,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (shouldResetScroll) resetInitialScrollPosition();
   initializePrimeCrmData();
   syncWorkersFromGoogleSheet();
-  refreshExecutiveEmailAlerts();
   registerServiceWorker();
 });
 

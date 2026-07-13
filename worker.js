@@ -90,7 +90,13 @@ async function handleExecutiveEmailAlerts(request, env) {
   }
 
   const configError = validateGmailConfig(env);
-  if (configError) return json({ ok: false, error: configError }, 500);
+  if (configError) {
+    return json({
+      ok: true,
+      configured: false,
+      gmail: { critical: 0, pending: 0, contracts: 0, payments: 0, applications: 0 },
+    });
+  }
 
   try {
     const url = new URL(request.url);
