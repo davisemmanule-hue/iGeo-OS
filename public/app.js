@@ -1354,6 +1354,9 @@ function showAcquisitionModule(moduleName) {
     button.classList.toggle("active", button.dataset.acquisitionModule === moduleName);
   });
   const targetId = acquisitionModuleTargets[moduleName];
+  document.querySelectorAll("[data-acquisition-workspace-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.acquisitionWorkspacePanel !== moduleName;
+  });
   if (window.IGEOAcquisitionExtensions) window.IGEOAcquisitionExtensions.show(moduleName);
   if (targetId && document.getElementById(targetId)) {
     if (els.acquisitionModulePlaceholder) els.acquisitionModulePlaceholder.hidden = true;

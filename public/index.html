@@ -192,13 +192,13 @@
           </aside>
 
           <div class="acquisition-content">
-            <section id="acquisition-extension-documentation" class="ax-shell" data-ax-module="Documentation Library"></section>
-            <section id="acquisition-extension-calendar" class="ax-shell" data-ax-module="Procurement Calendar" hidden></section>
-            <section id="acquisition-extension-versions" class="ax-shell" data-ax-module="Proposal Version Control" hidden></section>
-            <section id="acquisition-extension-registrations" class="ax-shell" data-ax-module="Vendor Registration Automation" hidden></section>
-            <section id="acquisition-extension-brokerage" class="ax-shell" data-ax-module="Supply & Product Brokerage" hidden></section>
-            <section id="opportunity-intelligence-engine" class="oi-shell" aria-label="Opportunity Intelligence Engine"></section>
-            <section id="acquisition-module-opportunity-dashboard" class="metric-grid" aria-label="Acquisition dashboard metrics">
+            <section id="acquisition-extension-documentation" class="ax-shell" data-ax-module="Documentation Library" data-acquisition-workspace-panel="Documentation Library"></section>
+            <section id="acquisition-extension-calendar" class="ax-shell" data-ax-module="Procurement Calendar" data-acquisition-workspace-panel="Procurement Calendar" hidden></section>
+            <section id="acquisition-extension-versions" class="ax-shell" data-ax-module="Proposal Version Control" data-acquisition-workspace-panel="Proposal Version Control" hidden></section>
+            <section id="acquisition-extension-registrations" class="ax-shell" data-ax-module="Vendor Registration Automation" data-acquisition-workspace-panel="Vendor Registration Automation" hidden></section>
+            <section id="acquisition-extension-brokerage" class="ax-shell" data-ax-module="Supply & Product Brokerage" data-acquisition-workspace-panel="Supply & Product Brokerage" hidden></section>
+            <section id="opportunity-intelligence-engine" class="oi-shell" data-acquisition-workspace-panel="Opportunity Intelligence Engine" aria-label="Opportunity Intelligence Engine" hidden></section>
+            <section id="acquisition-module-opportunity-dashboard" class="metric-grid" data-acquisition-workspace-panel="Opportunity Dashboard" aria-label="Acquisition dashboard metrics" hidden>
               <article class="metric"><span>Tracked Opportunities</span><strong id="acqMetricTotal">0</strong></article>
               <article class="metric success"><span>Pursue Immediately</span><strong id="acqMetricPursue">0</strong></article>
               <article class="metric"><span>Subcontractor Needed</span><strong id="acqMetricSubcontractor">0</strong></article>
@@ -207,7 +207,7 @@
               <article class="metric urgent"><span>Security Review</span><strong id="acqMetricSecurity">0</strong></article>
             </section>
 
-            <section id="acquisition-module-bid-engine" class="panel module-tools">
+            <section id="acquisition-module-bid-engine" class="panel module-tools" data-acquisition-workspace-panel="Opportunity Dashboard" hidden>
               <label class="field"><span>Search Opportunities</span><input id="acquisitionSearch" type="search" placeholder="Buyer, solicitation, service..." /></label>
               <label class="field"><span>Decision</span><select id="acquisitionDecisionFilter"></select></label>
               <label class="field"><span>Performance Method</span><select id="acquisitionPerformanceFilter"></select></label>
@@ -215,7 +215,7 @@
               <label class="field"><span>Service</span><select id="acquisitionServiceFilter"></select></label>
             </section>
 
-            <section class="panel table-panel" aria-label="Acquisition opportunities">
+            <section class="panel table-panel" data-acquisition-workspace-panel="Opportunity Dashboard" aria-label="Acquisition opportunities" hidden>
               <div class="table-wrap">
                 <table>
                   <thead>
@@ -236,7 +236,7 @@
               </div>
             </section>
 
-            <section id="acquisitionModulePlaceholder" class="panel acquisition-placeholder" hidden aria-live="polite">
+            <section id="acquisitionModulePlaceholder" class="panel acquisition-placeholder" data-acquisition-workspace-panel="placeholder" hidden aria-live="polite">
               <div class="panel-heading">
                 <h2>Module coming soon</h2>
                 <span id="acquisitionPlaceholderName" class="count-pill"></span>
