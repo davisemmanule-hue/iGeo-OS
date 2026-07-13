@@ -1,3 +1,4 @@
+document.write('<script src="owners-playbook.js"></script>');
 const sections=[...document.querySelectorAll('main>details')];
 const nav=document.querySelector('#tocNav');
 const search=document.querySelector('#guideSearch');
