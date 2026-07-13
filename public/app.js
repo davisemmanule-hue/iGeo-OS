@@ -3064,6 +3064,7 @@ function resetInitialScrollPosition() {
 }
 
 function getInitialModule() {
+  if (window.location.pathname.startsWith("/acquisition-os/") && !window.location.pathname.startsWith("/acquisition-os/full-bid-engine")) return "acquisition-os";
   return window.location.hash ? window.location.hash.slice(1) : "prime-crm";
 }
 

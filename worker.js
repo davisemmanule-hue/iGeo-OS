@@ -7,6 +7,13 @@ export default {
     }
     if (url.pathname === "/api/opportunity-intelligence/collect") return handleOpportunityCollection(request, env);
 
+    const acquisitionWorkspaceRoutes = new Set([
+      "/acquisition-os/", "/acquisition-os/opportunities/", "/acquisition-os/documentation/",
+      "/acquisition-os/calendar/", "/acquisition-os/proposal-versions/", "/acquisition-os/registrations/",
+      "/acquisition-os/product-brokerage/", "/acquisition-os/opportunity-intelligence/",
+    ]);
+    if (acquisitionWorkspaceRoutes.has(url.pathname)) url.pathname = "/index.html";
+
     if (url.hostname === "www.igeosolutionsllc.com") {
       url.hostname = "igeosolutionsllc.com";
       return Response.redirect(url.toString(), 301);
