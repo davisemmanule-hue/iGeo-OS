@@ -1,0 +1,1 @@
+.oi-sources{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}.oi-source{display:grid;gap:.45rem;border:1px solid #dbe4ea;border-radius:12px;padding:.85rem;background:#fff}.oi-source span,.oi-source small{display:block;color:#60737d}.oi-source-status{font-weight:750;color:#18384b!important}@media(max-width:600px){.oi-sources{grid-template-columns:1fr}}
