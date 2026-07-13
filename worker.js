@@ -54,7 +54,7 @@ async function handleOpportunitySources(request, env) { if(request.method!=='GET
 
 const collectionAttempts=new Map();
 const SOURCE_ADAPTERS={
-  'sam-gov':{async collect({env,days}){if(!env.SAM_GOV_API_KEY)return{status:'Not Configured',records:[]};const params=new URLSearchParams({api_key:env.SAM_GOV_API_KEY,postedFrom:formatSamDate(new Date(Date.now()-days*86400000)),postedTo:formatSamDate(new Date()),limit:'100',offset:'0'}),response=await fetch(`https://api.sam.gov/opportunities/v2/search?${params}`,{headers:{accept:'application/json'}});if(!response.ok)throw new Error('Official source temporarily unavailable.');const data=await response.json();return{status:'Connected',records:(data.opportunitiesData||[]).map(mapSamOpportunity)}}
+  'sam-gov':{async collect({env,days}){if(!env.SAM_GOV_API_KEY)return{status:'Not Configured',records:[]};const params=new URLSearchParams({api_key:env.SAM_GOV_API_KEY,postedFrom:formatSamDate(new Date(Date.now()-days*86400000)),postedTo:formatSamDate(new Date()),limit:'100',offset:'0'}),response=await fetch(`https://api.sam.gov/opportunities/v2/search?${params}`,{headers:{accept:'application/json'}});if(!response.ok)throw new Error('Official source temporarily unavailable.');const data=await response.json();return{status:'Connected',records:(data.opportunitiesData||[]).map(mapSamOpportunity)}}}
 };
 async function handleOpportunityCollection(request,env){
   if(!['GET','POST'].includes(request.method))return json({ok:false,error:'Method not allowed.'},405);
