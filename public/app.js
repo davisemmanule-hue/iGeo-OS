@@ -1531,6 +1531,10 @@ function getVisibleAcquisitionOpportunities() {
 }
 
 function calculateOpportunityScore(opportunity) {
+  if (window.IGEOScoring) {
+    const result = window.IGEOScoring.score(opportunity);
+    return { points: result.fitScore, total: 100, summary: `${result.matchLabel} · ${result.recommendation}` };
+  }
   const positiveFields = opportunityScoreFields.filter((scoreField) => !["securityLicensingRequired", "bondingRequired", "siteVisitRequired"].includes(scoreField.value));
   const positivePoints = positiveFields.filter((scoreField) => Boolean(opportunity[scoreField.value])).length;
   const cautionCount = ["securityLicensingRequired", "bondingRequired", "siteVisitRequired"].filter((key) => opportunity[key]).length;

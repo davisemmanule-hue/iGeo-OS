@@ -835,6 +835,7 @@
     }
 
     function scoreOpp(opp) {
+      if (window.IGEOScoring) return window.IGEOScoring.score(opp).fitScore;
       let total = 0;
       scoreFields.forEach(field => {
         if (!opp.score[field]) return;
@@ -850,6 +851,10 @@
     }
 
     function decisionFor(opp) {
+      if (window.IGEOScoring) {
+        const result = window.IGEOScoring.score(opp);
+        return result.recommendation === "Bid" ? "Pursue Immediately" : result.recommendation === "Review" ? "Worth Reviewing" : "Ignore";
+      }
       const score = scoreOpp(opp);
       const security = opp.service.includes("Security") || opp.service.includes("Guard") || opp.service.includes("Patrol");
       if (opp.performanceMethod === "Ignore" || score < 35 || opp.status === "Closed") return "Ignore";
