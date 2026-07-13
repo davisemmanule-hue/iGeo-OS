@@ -6,6 +6,7 @@ export default {
       return handleExecutiveEmailAlerts(request, env);
     }
     if (url.pathname === "/api/opportunity-intelligence/collect") return handleOpportunityCollection(request, env);
+    if (url.pathname === "/api/opportunity-intelligence/sources") return handleOpportunitySources(request, env);
 
     const acquisitionWorkspaceRoutes = new Set([
       "/acquisition-os/", "/acquisition-os/opportunities/", "/acquisition-os/documentation/",
@@ -38,6 +39,18 @@ export default {
     return env.ASSETS.fetch(new Request(url, request));
   },
 };
+
+const OPPORTUNITY_SOURCES = [
+  { id:'sam-gov',sourceName:'SAM.gov',governmentLevel:'Federal',stateOrRegion:'Nationwide',buyerType:'Government',officialUrl:'https://sam.gov/content/opportunities',collectionMethod:'API',authenticationRequirement:'API key',checkFrequency:'Daily',enabled:true,manualReviewUrl:'https://sam.gov/content/opportunities' },
+  { id:'michigan-sigma',sourceName:'Michigan SIGMA VSS',governmentLevel:'State',stateOrRegion:'Michigan',buyerType:'Government',officialUrl:'https://sigma.michigan.gov/webapp/PRDVSS2X1/AltSelfService',collectionMethod:'Manual',authenticationRequirement:'Portal access may be required',checkFrequency:'Daily manual review',enabled:true,manualReviewUrl:'https://sigma.michigan.gov/webapp/PRDVSS2X1/AltSelfService' },
+  { id:'kentucky-eprocurement',sourceName:'Kentucky Vendor Self Service',governmentLevel:'State',stateOrRegion:'Kentucky',buyerType:'Government',officialUrl:'https://vss.ky.gov/',collectionMethod:'Manual',authenticationRequirement:'Portal access may be required',checkFrequency:'Daily manual review',enabled:true,manualReviewUrl:'https://vss.ky.gov/' },
+  { id:'texas-esbd',sourceName:'Texas Electronic State Business Daily',governmentLevel:'State',stateOrRegion:'Texas',buyerType:'Government',officialUrl:'https://www.txsmartbuy.gov/esbd',collectionMethod:'Manual',authenticationRequirement:'None for public search',checkFrequency:'Daily manual review',enabled:true,manualReviewUrl:'https://www.txsmartbuy.gov/esbd' },
+  { id:'dfw-local-portals',sourceName:'Dallas–Fort Worth Public Portals',governmentLevel:'Local',stateOrRegion:'Dallas–Fort Worth, Texas',buyerType:'Cities, counties, schools, transit, airports, utilities',officialUrl:'https://www.dallascityhall.com/departments/procurement/Pages/default.aspx',collectionMethod:'Manual',authenticationRequirement:'Varies by portal',checkFrequency:'Daily manual review',enabled:true,manualReviewUrl:'https://www.dallascityhall.com/departments/procurement/Pages/default.aspx' },
+  { id:'prime-supplier-portals',sourceName:'Prime and Commercial Supplier Portals',governmentLevel:'Commercial',stateOrRegion:'Priority regions',buyerType:'Prime contractors and facility/property managers',officialUrl:'',collectionMethod:'Manual',authenticationRequirement:'Varies; authentication must not be bypassed',checkFrequency:'Weekly manual review',enabled:false,manualReviewUrl:'' }
+];
+function sourceStatus(source, env) { if(!source.enabled)return'Disabled';if(source.id==='sam-gov')return env.SAM_GOV_API_KEY?'Not Configured':'Not Configured';return source.collectionMethod==='Manual'?'Manual Review Required':'Unsupported'; }
+function sourceView(source, env) { return {...source,connectionStatus:sourceStatus(source,env),lastSuccessfulCheck:null,lastAttemptedCheck:null,nextScheduledCheck:null,recordCount:0,errorState:'',operatorNotes:'',lastManualReviewDate:null}; }
+async function handleOpportunitySources(request, env) { if(request.method!=='GET')return json({ok:false,error:'Method not allowed.'},405);return json({ok:true,generatedAt:new Date().toISOString(),sources:OPPORTUNITY_SOURCES.map(source=>sourceView(source,env))}); }
 
 async function handleOpportunityCollection(request, env) {
   if (!['GET', 'POST'].includes(request.method)) return json({ ok: false, error: 'Method not allowed.' }, 405);
