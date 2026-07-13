@@ -159,7 +159,7 @@ const acquisitionModuleTargets = {
   "Supply & Product Brokerage": "acquisition-extension-brokerage",
   "Opportunity Intelligence Engine": "opportunity-intelligence-engine",
   "Opportunity Dashboard": "acquisition-module-opportunity-dashboard",
-  "Bid Engine": "acquisition-module-bid-engine",
+  "Bid Engine": "acquisition-bid-dashboard",
 };
 const acquisitionModulePlaceholders = {
   "Solicitation Analyzer": {
@@ -851,7 +851,10 @@ function bindEvents() {
   if (els.advancedModeToggle) els.advancedModeToggle.addEventListener("change", applyViewMode);
 
   document.querySelectorAll("[data-module-tab]").forEach((tab) => {
-    tab.addEventListener("click", () => activateModule(tab.dataset.moduleTab, { scroll: true }));
+    tab.addEventListener("click", () => {
+      activateModule(tab.dataset.moduleTab, { scroll: true });
+      if (tab.dataset.moduleTab === "acquisition-os") showAcquisitionModule("Bid Engine");
+    });
   });
   document.querySelectorAll('a[href^="#"]').forEach((link) => {
     link.addEventListener("click", (event) => {

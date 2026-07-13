@@ -1180,6 +1180,10 @@ td strong {
   overscroll-behavior: contain;
 }
 
+[data-acquisition-workspace-panel][hidden] {
+  display: none !important;
+}
+
 .security-rule {
   background: #fff5f4;
   border: 1px solid #f3bbb5;
