@@ -94,25 +94,15 @@ const opportunityScoreFields = [
   field("Site visit required", "siteVisitRequired"),
 ];
 const acquisitionModules = [
+  "Morning Brief",
+  "Opportunity Intelligence",
+  "Opportunity Dashboard",
+  "Bid Engine",
   "Documentation Library",
   "Procurement Calendar",
   "Proposal Version Control",
   "Vendor Registration Automation",
   "Supply & Product Brokerage",
-  "Opportunity Intelligence Engine",
-  "Opportunity Dashboard",
-  "Bid Engine",
-  "Solicitation Analyzer",
-  "Opportunity Scoring Engine",
-  "Compliance Checklist Generator",
-  "Proposal Draft Generator",
-  "Pricing Worksheet",
-  "Subcontractor / Teaming Partner Tracker",
-  "Incumbent Intelligence",
-  "Procurement Contact Database",
-  "Daily Acquisition Intelligence Integration",
-  "Google Drive document storage",
-  "Export to PDF and Word",
 ];
 const acquisitionModuleIcons = {
   "Documentation Library": "D",
@@ -120,7 +110,8 @@ const acquisitionModuleIcons = {
   "Proposal Version Control": "V",
   "Vendor Registration Automation": "R",
   "Supply & Product Brokerage": "S",
-  "Opportunity Intelligence Engine": "OI",
+  "Morning Brief": "MB",
+  "Opportunity Intelligence": "I",
   "Opportunity Dashboard": "▦",
   "Bid Engine": "◆",
   "Solicitation Analyzer": "⌕",
@@ -141,13 +132,14 @@ const acquisitionModuleLabels = {
   "Proposal Version Control": "Proposal Versions",
   "Vendor Registration Automation": "Registration Center",
   "Supply & Product Brokerage": "Product Brokerage",
-  "Opportunity Intelligence Engine": "Intelligence Engine",
+  "Morning Brief": "Morning Brief",
+  "Opportunity Intelligence": "Opportunity Intelligence",
   "Opportunity Scoring Engine": "Opportunity Scoring",
   "Compliance Checklist Generator": "Compliance Checklist",
   "Proposal Draft Generator": "Proposal Draft",
   "Subcontractor / Teaming Partner Tracker": "Teaming Tracker",
   "Procurement Contact Database": "Procurement Contacts",
-  "Daily Acquisition Intelligence Integration": "Daily Intelligence",
+  "Daily Acquisition Intelligence Integration": "Opportunity Intelligence",
   "Google Drive document storage": "Google Drive Storage",
   "Export to PDF and Word": "Export Word/PDF",
 };
@@ -157,7 +149,8 @@ const acquisitionModuleTargets = {
   "Proposal Version Control": "acquisition-extension-versions",
   "Vendor Registration Automation": "acquisition-extension-registrations",
   "Supply & Product Brokerage": "acquisition-extension-brokerage",
-  "Opportunity Intelligence Engine": "opportunity-intelligence-engine",
+  "Morning Brief": "acquisition-bid-dashboard",
+  "Opportunity Intelligence": "opportunity-intelligence-engine",
   "Opportunity Dashboard": "acquisition-module-opportunity-dashboard",
   "Bid Engine": "acquisition-bid-dashboard",
 };
@@ -2852,6 +2845,9 @@ function buildGlobalSearchIndex() {
     ["page:vendor-registration", "Registrations", "Page", "Vendor registration tracker", "registrations vendor portals sam gov"],
     ["page:capability-statements", "Capability Statements", "Page", "Capability library and send tracking", "capability statements pdf email services"],
     ["page:settings", "Settings", "Page", "Owner mode, partner notifications, automation status", "settings owner partner notifications automation"],
+    ["workspace:morning-brief", "Morning Brief", "Workspace", "Daily command center and recommended first task", "morning brief daily command center dashboard priorities"],
+    ["workspace:opportunity-intelligence", "Opportunity Intelligence", "Workspace", "Collected and manually entered contracting opportunities", "opportunity intelligence sources verification leads"],
+    ["workspace:source-registry", "Source Registry", "Workspace", "Connection status and manual-review procurement portals", "source registry connections last checked manual review"],
   ].forEach(([id, title, type, detail, keywords]) => addItem({ id, title, type, detail, keywords }));
 
   records.forEach((record) => {
@@ -2988,6 +2984,13 @@ function openGlobalSearchResult(id) {
     navigateToPage(rawId);
     return;
   }
+  if (type === "workspace") {
+    activateModule("acquisition-os", { scroll: true, preserveHash: true });
+    const moduleName = rawId === "morning-brief" ? "Morning Brief" : "Opportunity Intelligence";
+    showAcquisitionModule(moduleName);
+    if (rawId === "source-registry") setTimeout(() => document.getElementById("oiSources")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+    return;
+  }
   if (type === "prime") {
     activateModule("prime-crm", { scroll: true });
     openPrimeDialog(records.find((record) => record.id === rawId));
@@ -3048,6 +3051,7 @@ function activateModule(moduleId, options = {}) {
   document.querySelectorAll("[data-module-page]").forEach((page) => {
     page.classList.toggle("active", page.dataset.modulePage === moduleId);
   });
+  if (moduleId === "acquisition-os" && !options.preserveWorkspace) showAcquisitionModule("Morning Brief");
   if (!options.preserveHash) history.replaceState(null, "", `#${moduleId}`);
   if (options.scroll) scrollToSection(moduleId);
 }
