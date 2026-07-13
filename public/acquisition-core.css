@@ -1,1 +1,2 @@
 .ax-first-task{border-left:5px solid #0a66c2;background:#eef7ff;border-radius:10px;padding:1rem}.ax-first-task span{display:block;color:#526b78;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}.ax-first-task strong{display:block;margin-top:.3rem}
+@media(max-width:600px){.ax-first-task{padding:.85rem}.ax-dashboard-card strong{overflow-wrap:anywhere}}
