@@ -52,21 +52,17 @@ function sourceStatus(source, env) { if(!source.enabled)return'Disabled';if(sour
 function sourceView(source, env) { return {...source,connectionStatus:sourceStatus(source,env),lastSuccessfulCheck:null,lastAttemptedCheck:null,nextScheduledCheck:null,recordCount:0,errorState:'',operatorNotes:'',lastManualReviewDate:null}; }
 async function handleOpportunitySources(request, env) { if(request.method!=='GET')return json({ok:false,error:'Method not allowed.'},405);return json({ok:true,generatedAt:new Date().toISOString(),sources:OPPORTUNITY_SOURCES.map(source=>sourceView(source,env))}); }
 
-async function handleOpportunityCollection(request, env) {
-  if (!['GET', 'POST'].includes(request.method)) return json({ ok: false, error: 'Method not allowed.' }, 405);
-  const url = new URL(request.url); const days = Math.min(Math.max(Number(url.searchParams.get('days') || 30), 1), 90);
-  const sources = [], opportunities = [];
-  if (env.SAM_GOV_API_KEY) {
-    try {
-      const params = new URLSearchParams({ api_key: env.SAM_GOV_API_KEY, postedFrom: formatSamDate(new Date(Date.now() - days * 86400000)), postedTo: formatSamDate(new Date()), limit: '100', offset: '0' });
-      const response = await fetch(`https://api.sam.gov/opportunities/v2/search?${params}`, { headers: { accept: 'application/json' } });
-      if (!response.ok) throw new Error(`SAM.gov returned ${response.status}`);
-      const data = await response.json(); (data.opportunitiesData || []).forEach(item => opportunities.push(mapSamOpportunity(item)));
-      sources.push({ name: 'SAM.gov', status: 'connected', count: data.opportunitiesData?.length || 0 });
-    } catch { sources.push({ name: 'SAM.gov', status: 'temporarily unavailable', count: 0 }); }
-  } else sources.push({ name: 'SAM.gov', status: 'connection not configured', count: 0 });
-  sources.push({ name: 'USAspending.gov', status: 'award intelligence only', count: 0 });
-  return json({ ok: true, collectedAt: new Date().toISOString(), sources, opportunities });
+const collectionAttempts=new Map();
+const SOURCE_ADAPTERS={
+  'sam-gov':{async collect({env,days}){if(!env.SAM_GOV_API_KEY)return{status:'Not Configured',records:[]};const params=new URLSearchParams({api_key:env.SAM_GOV_API_KEY,postedFrom:formatSamDate(new Date(Date.now()-days*86400000)),postedTo:formatSamDate(new Date()),limit:'100',offset:'0'}),response=await fetch(`https://api.sam.gov/opportunities/v2/search?${params}`,{headers:{accept:'application/json'}});if(!response.ok)throw new Error('Official source temporarily unavailable.');const data=await response.json();return{status:'Connected',records:(data.opportunitiesData||[]).map(mapSamOpportunity)}}
+};
+async function handleOpportunityCollection(request,env){
+  if(!['GET','POST'].includes(request.method))return json({ok:false,error:'Method not allowed.'},405);
+  const now=Date.now(),client=request.headers.get('CF-Connecting-IP')||'anonymous',previous=collectionAttempts.get(client)||0;
+  if(request.method==='POST'&&now-previous<30000)return json({ok:false,error:'Refresh is available once every 30 seconds.',retryAfterSeconds:Math.ceil((30000-(now-previous))/1000)},429,{'retry-after':String(Math.ceil((30000-(now-previous))/1000))});
+  collectionAttempts.set(client,now);const url=new URL(request.url),days=Math.min(Math.max(Number(url.searchParams.get('days')||30),1),90),sources=[],opportunities=[],startedAt=new Date().toISOString();
+  for(const source of OPPORTUNITY_SOURCES){if(!source.enabled||source.collectionMethod==='Manual'){sources.push({...sourceView(source,env),lastAttemptedCheck:source.collectionMethod==='Manual'?null:startedAt});continue}const adapter=SOURCE_ADAPTERS[source.id];if(!adapter){sources.push({...sourceView(source,env),connectionStatus:'Unsupported'});continue}try{const result=await adapter.collect({env,days});opportunities.push(...result.records);sources.push({...sourceView(source,env),connectionStatus:result.status,lastAttemptedCheck:startedAt,lastSuccessfulCheck:result.status==='Connected'?new Date().toISOString():null,recordCount:result.records.length,errorState:''})}catch{sources.push({...sourceView(source,env),connectionStatus:'Temporarily Unavailable',lastAttemptedCheck:startedAt,errorState:'Collection unavailable; try again later.'})}}
+  return json({ok:true,collectedAt:new Date().toISOString(),summary:{addedRecords:opportunities.length,changedRecords:0,expiredRecords:0,errors:sources.filter(x=>x.errorState).length},sources,opportunities});
 }
 function formatSamDate(date) { return `${String(date.getMonth()+1).padStart(2,'0')}/${String(date.getDate()).padStart(2,'0')}/${date.getFullYear()}`; }
 function mapSamOpportunity(item) { const contact=item.pointOfContact?.[0]||{}; return { id:`sam-${item.noticeId||item.solicitationNumber}`, origin:'automated', source:'SAM.gov', sourceUrl:item.uiLink||item.resourceLinks?.[0]||'', solicitationNumber:item.solicitationNumber||item.noticeId||'', title:item.title||'Untitled solicitation', buyer:item.fullParentPathName||item.department||'', agency:item.organizationName||item.subTier||'', solicitationType:item.type||item.baseType||'', contractType:item.typeOfSetAsideDescription||'', postedDate:item.postedDate||'', dueDate:item.responseDeadLine||item.archiveDate||'', naics:item.naicsCode||'', psc:item.classificationCode||'', placeOfPerformance:[item.placeOfPerformance?.city?.name,item.placeOfPerformance?.state?.code].filter(Boolean).join(', '), setAside:item.typeOfSetAsideDescription||item.typeOfSetAside||'', contactName:contact.fullName||'', contactEmail:contact.email||'', contactPhone:contact.phone||'', attachments:item.resourceLinks||[], scopeSummary:item.description||'', status:'New', collectedAt:new Date().toISOString() }; }
@@ -321,12 +317,13 @@ function base64Url(value) {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "no-store",
+      ...extraHeaders,
     },
   });
 }
