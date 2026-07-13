@@ -846,7 +846,6 @@ function bindEvents() {
   document.querySelectorAll("[data-module-tab]").forEach((tab) => {
     tab.addEventListener("click", () => {
       activateModule(tab.dataset.moduleTab, { scroll: true });
-      if (tab.dataset.moduleTab === "acquisition-os") showAcquisitionModule("Bid Engine");
     });
   });
   document.querySelectorAll('a[href^="#"]').forEach((link) => {
@@ -854,6 +853,10 @@ function bindEvents() {
       const targetId = link.getAttribute("href").slice(1);
       if (!targetId) return;
       event.preventDefault();
+      if (targetId === "today") {
+        activateModule("today", { scroll: true });
+        return;
+      }
       if (document.querySelector(`[data-module-page="${targetId}"]`)) {
         activateModule(targetId, { scroll: true });
         return;
@@ -3046,13 +3049,20 @@ function navigateToPage(pageId) {
 }
 
 function activateModule(moduleId, options = {}) {
+  if (moduleId === "today") {
+    setActiveNavigation("today");
+    document.querySelectorAll("[data-module-page]").forEach((page) => page.classList.remove("active"));
+    if (!options.preserveHash && window.location.hash !== "#today") history.pushState({ moduleId: "today" }, "", "#today");
+    if (options.scroll) scrollToSection("today");
+    return;
+  }
   if (!document.querySelector(`[data-module-page="${moduleId}"]`)) moduleId = "prime-crm";
   setActiveNavigation(moduleId);
   document.querySelectorAll("[data-module-page]").forEach((page) => {
     page.classList.toggle("active", page.dataset.modulePage === moduleId);
   });
   if (moduleId === "acquisition-os" && !options.preserveWorkspace) showAcquisitionModule("Morning Brief");
-  if (!options.preserveHash) history.replaceState(null, "", `#${moduleId}`);
+  if (!options.preserveHash && window.location.hash !== `#${moduleId}`) history.pushState({ moduleId }, "", `#${moduleId}`);
   if (options.scroll) scrollToSection(moduleId);
 }
 
@@ -3079,7 +3089,7 @@ function resetInitialScrollPosition() {
 
 function getInitialModule() {
   if (window.location.pathname.startsWith("/acquisition-os/") && !window.location.pathname.startsWith("/acquisition-os/full-bid-engine")) return "acquisition-os";
-  return window.location.hash ? window.location.hash.slice(1) : "prime-crm";
+  return window.location.hash ? window.location.hash.slice(1) : "today";
 }
 
 function toCssVariable(key) {
