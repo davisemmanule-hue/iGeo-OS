@@ -152,7 +152,7 @@ const acquisitionModuleTargets = {
   "Morning Brief": "acquisition-bid-dashboard",
   "Opportunity Intelligence": "opportunity-intelligence-engine",
   "Opportunity Dashboard": "acquisition-module-opportunity-dashboard",
-  "Bid Engine": "acquisition-bid-dashboard",
+  "Bid Engine": "acquisition-engine-dashboard",
 };
 const acquisitionModulePlaceholders = {
   "Solicitation Analyzer": {
@@ -1357,9 +1357,10 @@ function showAcquisitionModule(moduleName) {
     panel.hidden = panel.dataset.acquisitionWorkspacePanel !== moduleName;
   });
   if (window.IGEOAcquisitionExtensions) window.IGEOAcquisitionExtensions.show(moduleName);
+  const workspace = document.querySelector(".acquisition-content");
+  if (workspace) workspace.scrollTo({ top: 0, left: 0 });
   if (targetId && document.getElementById(targetId)) {
     if (els.acquisitionModulePlaceholder) els.acquisitionModulePlaceholder.hidden = true;
-    scrollToSection(targetId);
     return;
   }
   showAcquisitionPlaceholder(moduleName);

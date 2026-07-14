@@ -586,6 +586,7 @@
           <div class="sub" id="pageSub">Find, score, organize, and respond from one opportunity record.</div>
         </div>
         <div class="actions">
+          <button id="returnDashboard">Return to Operator Dashboard</button>
           <button id="importSolicitation" class="primary">Import Solicitation</button>
           <button id="buildWorkspace">Build Proposal Workspace</button>
           <button id="newOpp" class="primary" title="Create opportunity">＋ New</button>
@@ -1484,6 +1485,7 @@
       render();
     };
 
+    document.getElementById("returnDashboard").onclick = () => location.assign("/#today");
     document.getElementById("saveData").onclick = () => save(true);
     document.getElementById('importSolicitation').onclick=()=>document.getElementById('importDialog').showModal();
     document.getElementById('closeImport').onclick=document.getElementById('cancelImport').onclick=()=>document.getElementById('importDialog').close();
