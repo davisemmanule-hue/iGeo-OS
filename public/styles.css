@@ -1244,6 +1244,14 @@ td strong {
   min-height: 42px;
 }
 
+.acquisition-quick-filters { display: flex; flex-wrap: wrap; gap: 8px; grid-column: 1 / -1; }
+.acquisition-quick-filters button { background: #f4f8fb; border: 1px solid var(--line); border-radius: 999px; color: #28495e; font-size: 13px; font-weight: 800; padding: 7px 12px; }
+.acquisition-quick-filters button.active { background: var(--primary-blue); border-color: var(--primary-blue); color: #fff; }
+.command-palette-open::before { background: rgba(15, 31, 43, 0.42); content: ""; inset: 0; position: fixed; z-index: 80; }
+.command-palette-open .global-search { background: #fff; border-radius: 14px; box-shadow: 0 24px 70px rgba(15, 31, 43, 0.3); left: 50%; max-width: 720px; padding: 18px; position: fixed; top: 9vh; transform: translateX(-50%); width: calc(100% - 32px); z-index: 90; }
+.command-palette-open .global-search-results { max-height: min(62vh, 520px); }
+.oi-source-summary { grid-template-columns: repeat(2, minmax(130px, 220px)); margin: 12px 0; }
+
 [data-acquisition-workspace-panel][hidden] {
   display: none !important;
 }

@@ -467,6 +467,7 @@ let vendors = seedVendorRegistrations(loadCollection(STORAGE_KEYS.vendors, []));
 let acquisitionOpportunities = seedAcquisitionOpportunities(loadCollection(STORAGE_KEYS.acquisitionOpportunities, []));
 syncFullBidEngineFromQuickEntries(acquisitionOpportunities);
 let workflowOpportunityId = "";
+let acquisitionQuickFilter = "all";
 let capabilityStatementsSentCount = Number(loadCollection(STORAGE_KEYS.capabilitySentCount, 0)) || 0;
 let activeReport = "all";
 let toastTimer;
@@ -745,6 +746,14 @@ function bindEvents() {
     document.addEventListener("click", (event) => {
       if (!event.target.closest(".global-search")) closeGlobalSearch();
     });
+    document.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        document.body.classList.add("command-palette-open");
+        els.globalSearchInput.focus();
+        els.globalSearchInput.select();
+      }
+    });
     window.addEventListener("hashchange", () => setActiveNavigation(window.location.hash.slice(1) || "today"));
   }
   ["searchInput", "statusFilter", "serviceFilter", "followFilter", "sortSelect"].forEach((id) => {
@@ -809,6 +818,13 @@ function bindEvents() {
   els.acquisitionForm.addEventListener("submit", saveAcquisitionOpportunity);
   ["acquisitionSearch", "acquisitionDecisionFilter", "acquisitionPerformanceFilter", "acquisitionNaicsFilter", "acquisitionServiceFilter"].forEach((id) => {
     els[id].addEventListener("input", renderAcquisitionOpportunities);
+  });
+  document.getElementById("acquisitionQuickFilters")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-acquisition-quick]");
+    if (!button) return;
+    acquisitionQuickFilter = button.dataset.acquisitionQuick;
+    document.querySelectorAll("[data-acquisition-quick]").forEach((item) => item.classList.toggle("active", item === button));
+    renderAcquisitionOpportunities();
   });
   document.getElementById("acqServiceType").addEventListener("change", applyAcquisitionSecurityRule);
   document.getElementById("acqPriorityRegion").addEventListener("change", updateAcquisitionUrgencyPreview);
@@ -1523,8 +1539,27 @@ function getVisibleAcquisitionOpportunities() {
     if (els.acquisitionPerformanceFilter.value !== "all" && opportunity.performanceMethod !== els.acquisitionPerformanceFilter.value) return false;
     if (els.acquisitionNaicsFilter.value !== "all" && opportunity.naics !== els.acquisitionNaicsFilter.value) return false;
     if (els.acquisitionServiceFilter.value !== "all" && opportunity.serviceType !== els.acquisitionServiceFilter.value) return false;
+    if (!passesAcquisitionQuickFilter(opportunity)) return false;
     return true;
   }).sort((a, b) => compareDates(a.dueDate, b.dueDate));
+}
+
+function passesAcquisitionQuickFilter(opportunity) {
+  if (acquisitionQuickFilter === "all") return true;
+  const due = opportunity.dueDate ? new Date(`${opportunity.dueDate}T23:59:59`) : null;
+  const now = new Date();
+  const endToday = new Date(now); endToday.setHours(23, 59, 59, 999);
+  const endWeek = new Date(endToday.getTime() + 6 * 86400000);
+  if (acquisitionQuickFilter === "due-today") return due && due >= now && due <= endToday;
+  if (acquisitionQuickFilter === "due-week") return due && due >= now && due <= endWeek;
+  if (acquisitionQuickFilter === "pursue") return opportunity.decisionLabel === "Pursue Immediately";
+  if (acquisitionQuickFilter === "subcontract") return opportunity.performanceMethod === "Subcontract" || opportunity.decisionLabel === "Subcontractor Needed";
+  const full = (loadFullBidEngineState().opportunities || []).find((item) => item.id === opportunity.id || item.title === opportunity.opportunityName) || {};
+  const state = `${full.status || ""} ${full.stage || ""}`.toLowerCase();
+  if (acquisitionQuickFilter === "ready") return state.includes("ready to submit");
+  if (acquisitionQuickFilter === "submitted") return state.includes("submitted") || Boolean(full.submission?.confirmationNumber);
+  if (acquisitionQuickFilter === "awarded") return state.includes("awarded");
+  return true;
 }
 
 function calculateOpportunityScore(opportunity) {
@@ -2823,6 +2858,7 @@ function closeGlobalSearch() {
   els.globalSearchResults.hidden = true;
   els.globalSearchResults.innerHTML = "";
   els.globalSearchInput.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("command-palette-open");
 }
 
 function getGlobalSearchMatches(query) {
@@ -2939,6 +2975,34 @@ function buildGlobalSearchIndex() {
     });
   });
 
+  const canonical = window.IGEOData?.get() || {};
+  (canonical.contacts || []).forEach((contact) => addItem({
+    id: `canonical-contact:${contact.id}`,
+    title: contact.name || contact.contactName || contact.companyName || "Contact",
+    type: "Contact",
+    detail: [contact.companyName, contact.role, contact.email].filter(Boolean).join(" - "),
+    keywords: Object.values(contact),
+  }));
+  const calendarRecords = loadCollection("igeo_procurement_calendar_v1", []);
+  calendarRecords.forEach((event) => addItem({ id: `calendar:${event.id}`, title: event.title || "Calendar Event", type: "Calendar", detail: [event.date, event.type].filter(Boolean).join(" - "), keywords: Object.values(event) }));
+  const fullBid = loadFullBidEngineState();
+  (fullBid.opportunities || []).filter((opportunity) => Object.values(opportunity.proposalSections || {}).some(Boolean)).forEach((opportunity) => addItem({
+    id: `proposal:${opportunity.id}`,
+    title: opportunity.title || "Proposal",
+    type: "Proposal",
+    detail: [opportunity.status, opportunity.stage, opportunity.deadline].filter(Boolean).join(" - "),
+    keywords: [opportunity.agency, opportunity.service, opportunity.source],
+  }));
+  loadCollection("igeo-subcontractor-network", []).forEach((subcontractor) => addItem({
+    id: `subcontractor:${subcontractor.id}`,
+    title: subcontractor.legalBusinessName || "Subcontractor",
+    type: "Subcontractor",
+    detail: [subcontractor.region, subcontractor.city, subcontractor.qualification].filter(Boolean).join(" - "),
+    keywords: [subcontractor.services, subcontractor.contactPerson, subcontractor.email, subcontractor.notes],
+  }));
+  const brokerage = loadCollection("igeo_supply_brokerage_v1", { opportunities: [], suppliers: [] });
+  (brokerage.suppliers || []).forEach((supplier) => addItem({ id: `supplier:${supplier.id}`, title: supplier.company || "Supplier", type: "Supplier", detail: [supplier.categories, supplier.states].filter(Boolean).join(" - "), keywords: Object.values(supplier) }));
+
   [...services, ...acquisitionNaics, ...solicitationTypes, ...performanceMethods, ...decisionLabels, ...priorityRegions].forEach((keyword) => {
     addItem({
       id: `keyword:${keyword}`,
@@ -3025,6 +3089,43 @@ function openGlobalSearchResult(id) {
   }
   if (type === "capability") {
     activateModule("capability-statements", { scroll: true });
+    setTimeout(() => [...document.querySelectorAll(".capability-card")].find((card) => card.textContent.includes(item.title))?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
+    return;
+  }
+  if (type === "canonical-contact") {
+    activateModule("prime-crm", { scroll: true });
+    els.searchInput.value = item.title;
+    render();
+    return;
+  }
+  if (type === "calendar") {
+    activateModule("acquisition-os", { scroll: true, preserveHash: true, preserveWorkspace: true });
+    showAcquisitionModule("Procurement Calendar");
+    setTimeout(() => document.querySelector(`[data-cal-edit="${CSS.escape(rawId)}"]`)?.click(), 0);
+    return;
+  }
+  if (type === "proposal") {
+    const state = loadFullBidEngineState();
+    state.activeId = rawId;
+    saveCollection(STORAGE_KEYS.fullBidEngine, state);
+    window.location.assign("/acquisition-os/full-bid-engine/");
+    return;
+  }
+  if (type === "subcontractor") {
+    const state = loadFullBidEngineState();
+    state.activeModule = "subcontractors";
+    saveCollection(STORAGE_KEYS.fullBidEngine, state);
+    window.location.assign("/acquisition-os/full-bid-engine/");
+    return;
+  }
+  if (type === "supplier") {
+    activateModule("acquisition-os", { scroll: true, preserveHash: true, preserveWorkspace: true });
+    showAcquisitionModule("Supply & Product Brokerage");
+    const root = document.getElementById("acquisition-extension-brokerage");
+    if (root) {
+      root.dataset.tab = "suppliers";
+      showAcquisitionModule("Supply & Product Brokerage");
+    }
     return;
   }
   if (type === "keyword") {

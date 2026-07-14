@@ -210,6 +210,16 @@
             </section>
 
             <section id="acquisition-module-bid-engine" class="panel module-tools" data-acquisition-workspace-panel="Opportunity Dashboard" hidden>
+              <div class="acquisition-quick-filters" id="acquisitionQuickFilters" aria-label="Opportunity quick filters">
+                <button type="button" class="active" data-acquisition-quick="all">All</button>
+                <button type="button" data-acquisition-quick="due-today">Due Today</button>
+                <button type="button" data-acquisition-quick="due-week">Due This Week</button>
+                <button type="button" data-acquisition-quick="pursue">Pursue Immediately</button>
+                <button type="button" data-acquisition-quick="subcontract">Subcontract</button>
+                <button type="button" data-acquisition-quick="ready">Ready to Submit</button>
+                <button type="button" data-acquisition-quick="submitted">Submitted</button>
+                <button type="button" data-acquisition-quick="awarded">Awarded</button>
+              </div>
               <label class="field"><span>Search Opportunities</span><input id="acquisitionSearch" type="search" placeholder="Buyer, solicitation, service..." /></label>
               <label class="field"><span>Decision</span><select id="acquisitionDecisionFilter"></select></label>
               <label class="field"><span>Performance Method</span><select id="acquisitionPerformanceFilter"></select></label>
