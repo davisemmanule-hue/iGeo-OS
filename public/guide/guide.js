@@ -1,4 +1,4 @@
-document.write('<script src="owners-playbook.js"></script>');
+document.write('<script src="production-guide.js"></script>');
 const sections=[...document.querySelectorAll('main>details')];
 const nav=document.querySelector('#tocNav');
 const search=document.querySelector('#guideSearch');
