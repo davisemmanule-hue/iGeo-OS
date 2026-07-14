@@ -402,6 +402,17 @@
       gap: 10px;
     }
 
+    .recon-sequence { display:flex; gap:7px; overflow-x:auto; padding:0 0 12px; margin:0 0 14px; }
+    .recon-sequence span { background:#eef3f6; border:1px solid var(--line); border-radius:999px; color:#425563; font-size:12px; font-weight:700; padding:7px 10px; white-space:nowrap; }
+    .recon-sequence .active { background:#e7f6ec; border-color:#9bd2ad; color:#176b3a; }
+    .thinkers-recon { border:1px solid #a9c4d4; border-radius:10px; background:#f8fbfd; margin-bottom:14px; overflow:hidden; }
+    .thinkers-recon summary { cursor:pointer; color:var(--ink); font-size:16px; font-weight:800; padding:14px; }
+    .thinkers-recon[open] summary { border-bottom:1px solid #d7e3ea; }
+    .recon-body { display:grid; gap:16px; padding:14px; }
+    .recon-body h3 { margin:0 0 8px; }
+    .recon-actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .recon-checks { grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
+
     .print-cover {
       border-bottom: 2px solid #1f3a52;
       margin-bottom: 18px;
@@ -670,6 +681,10 @@
       ["assistant","?","Procurement Assistant","Rule-based next actions from saved data."],
       ["submission","S","Final Submission Review","Required confirmations and submission tracking."]
     );
+
+    const reconFields = ["Property Type","Building Count","Estimated Size","Parking Notes","Loading Dock","Entrances","Dumpster Locations","Grounds Notes","Security Notes","Traffic Notes","Crew Estimate","Equipment Estimate","Travel Time","Weather Concerns","Operational Risks","Incumbent Contractor","Likely Competitors","Nearby Janitorial Supplier","Nearby Hardware Store","Nearby Equipment Rental","Nearby Fuel Station","Nearby Hotel","Nearby Restaurants","General Recon Notes"];
+    const reconChecks = ["Buyer Reviewed","Location Reviewed","Google Maps Reviewed","Google Earth Reviewed","Incumbent Identified","Operational Risks Reviewed","Staffing Estimated","Equipment Estimated","Travel Estimated","Subcontractor Needed","Supplier Needed","Recon Complete"];
+    const reconMethods = ["Self Perform","Subcontract","Partner","Broker","No Bid"];
 
     const seed = {
       activeModule: "bid",
@@ -1015,6 +1030,44 @@
         <div class="module-list">${modules.slice(1).map(m => `<div class="module"><b>${m[1]} ${m[2]}</b><span>${m[3]}</span></div>`).join("")}</div>`);
     }
 
+    function reconSearchUrl(action, o) {
+      const recon = o.thinkersRecon || {};
+      const location = [o.placeOfPerformance, recon["Property Type"], o.agency, o.title].filter(Boolean).join(" ");
+      const searches = {
+        maps: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`,
+        earth: `https://earth.google.com/web/search/${encodeURIComponent(location)}`,
+        incumbent: `https://www.google.com/search?q=${encodeURIComponent([recon["Incumbent Contractor"], o.agency, o.title, "incumbent contractor"].filter(Boolean).join(" "))}`,
+        buyer: `https://www.google.com/search?q=${encodeURIComponent([o.agency, o.buyer, "procurement buyer"].filter(Boolean).join(" "))}`,
+        property: `https://www.google.com/search?q=${encodeURIComponent([location, "property building"].filter(Boolean).join(" "))}`,
+        gis: `https://www.google.com/search?q=${encodeURIComponent([o.placeOfPerformance, o.agency, "county GIS property search"].filter(Boolean).join(" "))}`
+      };
+      return searches[action];
+    }
+
+    function renderThinkersRecon(o) {
+      const recon = o.thinkersRecon || {};
+      const checks = recon.checks || {};
+      return `<nav class="recon-sequence" aria-label="Bid preparation sequence"><span>Discovery</span><span class="active">Thinker's Recon</span><span>Solicitation Analyzer</span><span>Opportunity Scoring</span><span>Compliance</span><span>Pricing</span><span>Proposal</span><span>Ready to Submit</span><span>Submitted</span></nav>
+        <details class="thinkers-recon" ${checks["Recon Complete"] ? "" : "open"}>
+          <summary>Thinker's Recon</summary>
+          <div class="recon-body">
+            <div><h3>Operational intelligence</h3><p class="sub">Gather operational intelligence before analyzing the solicitation. Notes remain on this opportunity.</p></div>
+            <div class="form-grid">${reconFields.map(name => `<label>${name}<input data-recon-field="${escapeAttr(name)}" value="${escapeAttr(recon[name] || "")}"></label>`).join("")}</div>
+            <div><h3>Completion checklist</h3><div class="checks recon-checks">${reconChecks.map(name => `<label class="check"><input type="checkbox" data-recon-check="${escapeAttr(name)}" ${checks[name] ? "checked" : ""}><span>${name}</span></label>`).join("")}</div></div>
+            <div><h3>Quick actions</h3><div class="recon-actions"><button type="button" data-recon-search="maps">Open Google Maps</button><button type="button" data-recon-search="earth">Open Google Earth</button><button type="button" data-recon-search="incumbent">Search Incumbent</button><button type="button" data-recon-search="buyer">Search Buyer</button><button type="button" data-recon-search="property">Search Property</button><button type="button" data-recon-search="gis">Open County GIS</button></div></div>
+            <div><h3>Decision summary</h3><div class="form-grid"><label>Recommended Performance Method<select data-recon-field="Recommended Performance Method"><option value="">Select method</option>${reconMethods.map(name => `<option ${recon["Recommended Performance Method"] === name ? "selected" : ""}>${name}</option>`).join("")}</select></label><label class="span-2">Operator Decision<textarea data-recon-field="Operator Decision">${escapeHtml(recon["Operator Decision"] || "")}</textarea></label></div></div>
+          </div>
+        </details>`;
+    }
+
+    function bindThinkersRecon(o) {
+      o.thinkersRecon = o.thinkersRecon || { checks: {} };
+      o.thinkersRecon.checks = o.thinkersRecon.checks || {};
+      document.querySelectorAll("[data-recon-field]").forEach(el => el.oninput = () => { o.thinkersRecon[el.dataset.reconField] = el.value; save(false); });
+      document.querySelectorAll("[data-recon-check]").forEach(el => el.onchange = () => { o.thinkersRecon.checks[el.dataset.reconCheck] = el.checked; save(false); });
+      document.querySelectorAll("[data-recon-search]").forEach(button => button.onclick = () => { const url = reconSearchUrl(button.dataset.reconSearch, o); if (url) window.open(url, "_blank", "noopener,noreferrer"); });
+    }
+
     function renderBid() {
       const o = currentOpp();
       setContent(`
@@ -1025,6 +1078,7 @@
             <button id="loadSamTest">Use SAM.gov Test Case</button>
           </div>
         </div>
+        ${renderThinkersRecon(o)}
         <div class="form-grid">
           ${field("Title","title",o.title,"text","span-2")}
           ${field("Status","status",o.status,"select","",["Open","Review","Drafting","Submitted","Closed"])}
@@ -1051,6 +1105,7 @@
         </div>
       `);
       bindOppFields();
+      bindThinkersRecon(o);
       document.getElementById("parseIntake").onclick = () => {
         parseIntakeIntoOpp(document.getElementById("quickIntake").value, o);
         save(false);
