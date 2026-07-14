@@ -1203,6 +1203,9 @@ td strong {
 .acquisition-content::-webkit-scrollbar-track { background: #eef3f6; border-radius: 999px; }
 .acquisition-content::-webkit-scrollbar-thumb { background: #9aaaba; border: 2px solid #eef3f6; border-radius: 999px; }
 
+.acquisition-content .table-panel { overflow: visible; }
+.acquisition-content .table-wrap { overflow-x: auto; overflow-y: visible; }
+
 [data-acquisition-workspace-panel][hidden] {
   display: none !important;
 }
