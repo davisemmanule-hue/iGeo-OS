@@ -642,15 +642,11 @@
   <dialog id="importDialog"><div class="dialog-body"><div class="dialog-head"><div><h2>Import Solicitation</h2><p class="sub">Paste a link or text, or upload PDF, DOCX, or TXT. Review every field before saving.</p></div><button id="closeImport" aria-label="Close">X</button></div><div id="importMessage" class="status-note">Links are preserved. If direct extraction is blocked, paste text or upload a file.</div><div class="form-grid" style="margin-top:14px"><label class="span-3">Solicitation link<input id="importUrl" type="url" placeholder="https://sam.gov/... or procurement portal"></label><label class="span-3">Solicitation text<textarea id="importText" style="min-height:150px" placeholder="Paste the notice or important sections"></textarea></label><label class="span-3">Solicitation file<input id="importFile" type="file" accept=".pdf,.docx,.txt,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label></div><div class="actions" style="margin:14px 0"><button id="reviewImport" class="primary">Extract and Review</button><button id="cancelImport">Cancel</button></div><div id="importReview"></div></div></dialog>
 
   <script src="../../acquisition-core.js?v=2"></script>
+  <script src="../../business-profile.js?v=1"></script>
   <script>
-    const preferredServices = [
-      "Janitorial","Custodial","Floor Care","Porter Services","Commercial Cleaning",
-      "Administrative Support","Clerical Support","Data Entry","Temporary Staffing",
-      "Records Management","Courier Services","Relocation Services","Debris Removal",
-      "Grounds Maintenance","Property Maintenance","Home Health Support","AI Automation Services",
-      "Armed Security","Unarmed Security","Guard Services","Patrol Services","Facility Security Support"
-    ];
-    const trackedNaics = ["624190","621610","561110","561720","561612","561210","561990"];
+    const businessProfileRegistry = window.IGEOBusinessProfile?.get();
+    const preferredServices = window.IGEOBusinessProfile?.serviceNames() || [];
+    const trackedNaics = [...new Set((businessProfileRegistry?.services || []).flatMap(service => service.naics || []))];
     const performanceMethods = ["Self-perform","Subcontract","Teaming partner","Broker/referral","Ignore"];
     const scoreFields = [
       "Official source verified","Open opportunity","Deadline verified","Under $250,000","Service based",
@@ -1378,17 +1374,20 @@
     }
 
     function proposalHtml(o) {
+      const businessProfile = window.IGEOBusinessProfile?.get();
+      const legalName = businessProfile?.company?.legalName || "iGeo Solutions LLC";
+      const uei = businessProfile?.company?.uei || "";
       return `
         <div class="print-cover">
           <h2>${escapeHtml(o.title)}</h2>
-          <p><b>Prepared for:</b> ${escapeHtml(o.agency)}<br><b>Prepared by:</b> iGeo Solutions LLC<br><b>Review date:</b> ${today()}</p>
+          <p><b>Prepared for:</b> ${escapeHtml(o.agency)}<br><b>Prepared by:</b> ${escapeHtml(legalName)}${uei ? `<br><b>UEI:</b> ${escapeHtml(uei)}` : ""}<br><b>Review date:</b> ${today()}</p>
         </div>
         <h3>Bid Engine Decision</h3>
         <p><b>Decision:</b> ${decisionFor(o)} - <b>Score:</b> ${scoreOpp(o)} - <b>Performance Method:</b> ${escapeHtml(o.performanceMethod)}</p>
         <ul>${decisionReasons(o).map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>
         <p><b>Next Action:</b> ${escapeHtml(o.nextAction || "Not assigned.")}</p>
         <h3>Executive Summary</h3>
-        <p>iGeo Solutions LLC is prepared to support this requirement through a practical operating model aligned to ${escapeHtml(o.service)} services, deadline control, compliance tracking, and documented quality management.</p>
+        <p>${escapeHtml(legalName)} is prepared to support this requirement through a practical operating model aligned to ${escapeHtml(o.service)} services, deadline control, compliance tracking, and documented quality management.</p>
         <h3>Technical Approach</h3>
         <p>${escapeHtml(o.solicitation || "Scope to be finalized after solicitation review.")}</p>
         <h3>Staffing and Performance Method</h3>
@@ -1468,13 +1467,7 @@
     }
 
     function serviceFromText(text, fallback) {
-      const lower = text.toLowerCase();
-      if (lower.includes("janitorial")) return "Janitorial";
-      if (lower.includes("custodial")) return "Custodial";
-      if (lower.includes("security")) return "Unarmed Security";
-      if (lower.includes("grounds")) return "Grounds Maintenance";
-      if (lower.includes("courier")) return "Courier Services";
-      return fallback;
+      return window.IGEOBusinessProfile?.matchServices({ title: text })[0]?.name || fallback;
     }
 
     function requirementsFromText(text, fallback) {

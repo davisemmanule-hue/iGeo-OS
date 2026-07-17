@@ -1953,6 +1953,15 @@ form {
   }
 }
 
+.business-profile-registry { grid-column: 1 / -1; margin-top: 16px; }
+.business-profile-registry > details { border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.business-profile-registry summary { cursor: pointer; display: grid; gap: 3px; }
+.business-profile-registry summary span { color: var(--muted); font-size: 12px; }
+.business-profile-form { display: grid; gap: 16px; margin-top: 16px; }
+.business-service-list { display: grid; gap: 8px; }
+.business-service-list > details { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.business-service-list .form-grid { margin-top: 12px; }
+
 @media (max-width: 360px) {
   .app-shell {
     padding-left: 8px;

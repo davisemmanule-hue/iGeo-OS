@@ -30,7 +30,7 @@ const statuses = [
   "Inactive",
 ];
 
-const services = [
+const legacyServices = [
   "Janitorial",
   "Custodial",
   "Floor Care",
@@ -59,7 +59,7 @@ const services = [
   "Facility Security Support",
 ];
 
-const acquisitionNaics = ["624190", "621610", "561110", "561720", "561612", "561210", "561990"];
+const acquisitionNaics = [...new Set((window.IGEOBusinessProfile?.get().services || []).flatMap((service) => service.naics || []))];
 const solicitationTypes = ["RFQ", "RFP", "IFB", "Sources Sought", "Combined Synopsis/Solicitation", "Subcontract Lead", "Other"];
 const performanceMethods = ["Self-perform", "Subcontract", "Teaming partner", "Broker/referral", "Ignore"];
 const decisionLabels = ["Pursue Immediately", "Worth Reviewing", "Build Relationship", "Subcontractor Needed", "Ignore"];
@@ -104,6 +104,7 @@ const acquisitionModules = [
   "Vendor Registration Automation",
   "Supply & Product Brokerage",
 ];
+let services = window.IGEOBusinessProfile?.serviceNames() || legacyServices;
 const acquisitionModuleIcons = {
   "Documentation Library": "D",
   "Procurement Calendar": "C",
@@ -228,13 +229,14 @@ const branding = window.IGEO_BRANDING || {
   logo: { src: "igeo-logo.png", alt: "iGeo Solutions LLC logo" },
   colors: {},
 };
+const registeredCompany = window.IGEOBusinessProfile?.get() || {};
 const commandCenter = {
-  company: "iGeo Solutions LLC",
-  phone: "(616) 224-2325",
-  email: "admin@igeosolutionsllc.com",
-  website: "https://igeosolutionsllc.com/",
-  uei: "PQ6GHN6ZS287",
-  coverage: ["Kentucky", "Michigan", "Nationwide Subcontract Support"],
+  company: registeredCompany.company?.legalName || branding.companyName,
+  phone: registeredCompany.company?.businessPhone || "",
+  email: registeredCompany.company?.businessEmail || "",
+  website: registeredCompany.company?.website || "",
+  uei: registeredCompany.company?.uei || "",
+  coverage: registeredCompany.geographicCoverage || registeredCompany.company?.operatingStates || [],
 };
 const capabilityStatements = [
   capabilityStatement("Master Capability Statement", "All iGeo services"),
@@ -2602,7 +2604,7 @@ function capabilityStatement(title, service, links = {}) {
     "",
     `I am sharing the iGeo Solutions LLC ${title} for your review.`,
     "",
-    "iGeo Solutions LLC supports prime contractors and partner organizations with commercial cleaning, administrative support, AI automation, home health support, disability and ABA support, workforce support, and vendor packet readiness.",
+    `${commandCenter.company} supports prime contractors and partner organizations with the services maintained in the Business Profile Registry: ${services.join(", ")}.`,
     "",
     "Please let me know if there is a good opportunity to discuss subcontracting, vendor registration, or teaming support.",
     "",
@@ -2802,14 +2804,7 @@ function downloadCapabilityStatement() {
     `Coverage: ${commandCenter.coverage.join(", ")}`,
     "",
     "Core Services:",
-    "- Commercial Cleaning",
-    "- Administrative Support",
-    "- Data Entry",
-    "- Documentation Support",
-    "- Business Process Support",
-    "- AI Automation",
-    "- Home Health Support",
-    "- ABA Therapy Support",
+    ...services.map((service) => `- ${service}`),
   ].join("\n");
   download("igeo-capability-statement.txt", "text/plain", content);
   showToast("Capability statement downloaded.");
