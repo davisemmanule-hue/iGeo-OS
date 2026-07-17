@@ -2,9 +2,15 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (url.hostname === "www.igeosolutionsllc.com") {
+      url.hostname = "igeosolutionsllc.com";
+      return Response.redirect(url.toString(), 308);
+    }
+
     if (url.pathname === "/api/executive-email-alerts") {
       return handleExecutiveEmailAlerts(request, env);
     }
+    if (url.pathname === "/api/build-info") return handleBuildInfo(url, env);
     if (url.pathname === "/api/opportunity-intelligence/collect") return handleOpportunityCollection(request, env);
     if (url.pathname === "/api/opportunity-intelligence/sources") return handleOpportunitySources(request, env);
 
@@ -14,11 +20,6 @@ export default {
       "/acquisition-os/product-brokerage/", "/acquisition-os/opportunity-intelligence/",
     ]);
     if (acquisitionWorkspaceRoutes.has(url.pathname)) url.pathname = "/index.html";
-
-    if (url.hostname === "www.igeosolutionsllc.com") {
-      url.hostname = "igeosolutionsllc.com";
-      return Response.redirect(url.toString(), 301);
-    }
 
     if (url.pathname === "/worker-intake" || url.pathname === "/worker-intake/") {
       url.pathname = "/worker-intake.html";
@@ -39,6 +40,16 @@ export default {
     return env.ASSETS.fetch(new Request(url, request));
   },
 };
+
+function handleBuildInfo(url, env) {
+  const metadata = env.CF_VERSION_METADATA || {};
+  return json({
+    environment: url.hostname === "igeosolutionsllc.com" ? "Production" : "Development",
+    productionUrl: "https://igeosolutionsllc.com/",
+    deploymentVersion: metadata.id || "Unavailable",
+    deployedAt: metadata.timestamp || null,
+  });
+}
 
 const OPPORTUNITY_SOURCES = [
   { id:'sam-gov',sourceName:'SAM.gov',governmentLevel:'Federal',stateOrRegion:'Nationwide',buyerType:'Government',officialUrl:'https://sam.gov/content/opportunities',collectionMethod:'API',authenticationRequirement:'API key',checkFrequency:'Daily',enabled:true,manualReviewUrl:'https://sam.gov/content/opportunities' },

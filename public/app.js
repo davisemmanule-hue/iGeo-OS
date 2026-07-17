@@ -485,11 +485,41 @@ document.addEventListener("DOMContentLoaded", () => {
   activateModule(initialModule, { preserveHash: true });
   setActiveNavigation(initialHash || "today");
   render();
+  loadBuildMetadata();
   if (shouldResetScroll) resetInitialScrollPosition();
   initializePrimeCrmData();
   syncWorkersFromGoogleSheet();
   registerServiceWorker();
 });
+
+async function loadBuildMetadata() {
+  const hostname = window.location.hostname;
+  const fallbackEnvironment = hostname === "igeosolutionsllc.com" || hostname === "www.igeosolutionsllc.com"
+    ? "Production"
+    : hostname === "localhost" || hostname === "127.0.0.1" || !hostname
+      ? "Local"
+      : "Development";
+  let build = { environment: fallbackEnvironment, productionUrl: "https://igeosolutionsllc.com/", deploymentVersion: "Unavailable", deployedAt: null };
+  try {
+    const response = await fetch("/api/build-info", { headers: { accept: "application/json" }, cache: "no-store" });
+    if (!response.ok) throw new Error("Build metadata unavailable");
+    build = { ...build, ...(await response.json()) };
+  } catch {
+    // Development and local static servers may not expose the Worker metadata endpoint.
+  }
+  const setBuildText = (id, value) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  };
+  setBuildText("buildEnvironment", build.environment || fallbackEnvironment);
+  setBuildText("buildDeploymentVersion", build.deploymentVersion || "Unavailable");
+  setBuildText("buildDeployedAt", build.deployedAt ? new Date(build.deployedAt).toLocaleString() : "Unavailable");
+  const productionUrl = document.getElementById("buildProductionUrl");
+  if (productionUrl) {
+    productionUrl.href = build.productionUrl || "https://igeosolutionsllc.com/";
+    productionUrl.textContent = build.productionUrl || "https://igeosolutionsllc.com/";
+  }
+}
 
 function bindElements() {
   [
