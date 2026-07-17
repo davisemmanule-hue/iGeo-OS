@@ -1,11 +1,11 @@
 {
-  "name": "iGeo Operator Dashboard",
-  "short_name": "iGeo",
-  "description": "iGeo operator dashboard",
-  "id": "/?v=final-clean",
-  "start_url": "/?v=final-clean",
+  "name": "iGeo Solutions LLC",
+  "short_name": "iGeo Solutions",
+  "description": "iGeo Solutions LLC production Operator Dashboard and Acquisition OS.",
+  "id": "/",
+  "start_url": "/",
   "scope": "/",
-  "version": "final-clean",
+  "version": "1.0.x",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#0A66C2",
@@ -13,16 +13,16 @@
   "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "assets/icons/icon-192x192.png",
+      "src": "assets/icons/icon-192x192.png?v=pwa-branding-1",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/icon-512x512.png",
+      "src": "assets/icons/icon-512x512.png?v=pwa-branding-1",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }

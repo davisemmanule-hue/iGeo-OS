@@ -1,4 +1,4 @@
-const CACHE_NAME = "igeo-operations-environment-clarity-v3";
+const CACHE_NAME = "igeo-operations-pwa-branding-v4";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
