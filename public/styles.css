@@ -158,11 +158,14 @@ h3 {
 }
 
 .global-search {
-  grid-column: 1 / -1;
   margin: 0;
   padding: 0;
   position: relative;
 }
+
+.header-tools { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr) auto; min-width: 0; }
+.header-copilot { align-items: center; background: var(--blue-soft); border: 1px solid #b8ddfb; border-radius: 8px; color: var(--secondary-blue); display: inline-flex; font-weight: 900; gap: 7px; justify-content: center; min-height: 46px; padding: 0 14px; text-decoration: none; }
+.header-copilot img { height: 22px; width: 22px; }
 
 .global-search-label {
   color: var(--muted);
@@ -354,9 +357,7 @@ h3 {
 .workflow-panel {
   display: grid;
   gap: 16px;
-  position: sticky;
-  top: 82px;
-  z-index: 8;
+  position: static;
 }
 
 .workflow-heading {
@@ -1093,25 +1094,21 @@ td strong {
   display: grid;
   gap: 18px;
   grid-template-columns: 270px minmax(0, 1fr);
-  height: max(420px, calc(100dvh - 260px));
-  max-height: 760px;
+  height: auto;
+  max-height: none;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
-
-.partner-grid .external-shortcut { gap: 7px; }
-.partner-grid .external-shortcut img { flex: 0 0 auto; height: 20px; width: 20px; }
 
 .acquisition-sidebar {
   background: #172532;
   border-radius: 8px;
   color: #eef4f6;
   padding: 18px 14px;
-  height: 100%;
+  height: auto;
   min-height: 0;
-  overflow-y: auto;
-  position: sticky;
-  top: 88px;
+  overflow: visible;
+  position: static;
 }
 
 .acquisition-brand {
@@ -1191,13 +1188,13 @@ td strong {
   align-content: start;
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  height: auto;
   overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
+  overflow-y: visible;
+  overscroll-behavior-y: auto;
   padding: 18px;
   scrollbar-color: #9aaaba #eef3f6;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
 }
@@ -1609,22 +1606,23 @@ form {
 
 @media (max-width: 768px) {
   html {
-    scroll-padding-top: 12px;
+    scroll-padding-top: calc(12px + env(safe-area-inset-top));
   }
 
   .top-nav {
     position: static;
     gap: 0;
-    padding: 10px 12px;
+    padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
   }
 
   .workflow-panel { position: static; }
   .daily-work-actions { grid-template-columns: repeat(2,minmax(0,1fr)); }
 
   .global-search {
-    margin-top: 10px;
     width: 100%;
   }
+
+  .header-tools { grid-column: 1 / -1; margin-top: 10px; width: 100%; }
 
   .global-search-box,
   .global-search input {
@@ -1742,6 +1740,7 @@ form {
   .acquisition-workspace {
     grid-template-columns: 1fr;
     height: auto;
+    max-height: none;
     min-height: 0;
     overflow: visible;
   }
@@ -1923,6 +1922,11 @@ form {
   .acquisition-module-list {
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-width: 430px) {
+  .header-tools { grid-template-columns: 1fr; }
+  .header-copilot { width: 100%; }
 }
 
 @media (max-width: 620px) {

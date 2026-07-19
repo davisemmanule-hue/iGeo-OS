@@ -955,13 +955,15 @@ const procurementWorkflowStages = [
 
 function renderWorkflowPanel() {
   if (!els.workflowTracker || !els.workflowOpportunity) return;
-  const options = [...acquisitionOpportunities].sort((a, b) => compareDates(a.dueDate, b.dueDate));
+  const options = acquisitionOpportunities
+    .filter(hasUsableOpportunityTitle)
+    .sort((a, b) => compareDates(a.dueDate, b.dueDate));
   if (!workflowOpportunityId || !options.some((item) => item.id === workflowOpportunityId)) workflowOpportunityId = chooseCurrentWorkflowOpportunity(options)?.id || "";
-  els.workflowOpportunity.innerHTML = `<option value="">No opportunity selected</option>${options.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.opportunityName || "Untitled opportunity")}</option>`).join("")}`;
+  els.workflowOpportunity.innerHTML = `<option value="">No Active Opportunities</option>${options.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.opportunityName || item.title)}</option>`).join("")}`;
   els.workflowOpportunity.value = workflowOpportunityId;
   const opportunity = getWorkflowOpportunity();
   const state = deriveWorkflowState(opportunity);
-  els.workflowTitle.textContent = opportunity ? `${opportunity.opportunityName}: ${procurementWorkflowStages[state.index][1]}` : "What do I do next?";
+  els.workflowTitle.textContent = opportunity ? `${opportunity.opportunityName || opportunity.title}: ${procurementWorkflowStages[state.index][1]}` : "No Active Opportunities";
   els.workflowGuidance.textContent = state.guidance;
   els.workflowNextAction.textContent = state.actionLabel;
   els.workflowNextAction.dataset.action = state.action;
@@ -1405,8 +1407,6 @@ function showAcquisitionModule(moduleName) {
     panel.hidden = panel.dataset.acquisitionWorkspacePanel !== moduleName;
   });
   if (window.IGEOAcquisitionExtensions) window.IGEOAcquisitionExtensions.show(moduleName);
-  const workspace = document.querySelector(".acquisition-content");
-  if (workspace) workspace.scrollTo({ top: 0, left: 0 });
   if (targetId && document.getElementById(targetId)) {
     if (els.acquisitionModulePlaceholder) els.acquisitionModulePlaceholder.hidden = true;
     return;
@@ -1547,6 +1547,7 @@ function getVisibleVendors() {
 function getVisibleAcquisitionOpportunities() {
   const query = els.acquisitionSearch.value.trim().toLowerCase();
   return acquisitionOpportunities.filter((opportunity) => {
+    if (!hasUsableOpportunityTitle(opportunity)) return false;
     const searchable = [
       opportunity.opportunityName,
       opportunity.source,
@@ -2231,7 +2232,7 @@ function seedAcquisitionOpportunities(existing) {
 }
 
 function syncFullBidEngineFromQuickEntries(opportunities) {
-  const quickEntries = Array.isArray(opportunities) ? opportunities : [];
+  const quickEntries = (Array.isArray(opportunities) ? opportunities : []).filter(hasUsableOpportunityTitle);
   const fullState = loadFullBidEngineState();
   const fullOpportunities = Array.isArray(fullState.opportunities) ? [...fullState.opportunities] : [];
   const quickIds = new Set(quickEntries.map((opportunity) => opportunity.id));
@@ -2264,7 +2265,7 @@ function mapQuickEntryToFullBidEngineOpportunity(opportunity) {
   );
   return {
     id: opportunity.id,
-    title: opportunity.opportunityName || "Untitled opportunity",
+    title: opportunity.opportunityName || opportunity.title,
     agency: opportunity.buyer || "",
     source: [opportunity.source, opportunity.solicitationNumber].filter(Boolean).join(" "),
     sourceUrl: opportunity.sourceLink || "",
@@ -3208,10 +3209,12 @@ function scrollToSection(sectionId) {
 }
 
 function resetInitialScrollPosition() {
-  requestAnimationFrame(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    setTimeout(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }), 0);
-  });
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+}
+
+function hasUsableOpportunityTitle(opportunity) {
+  const title = String(opportunity?.opportunityName || opportunity?.title || "").trim();
+  return Boolean(title) && !/^untitled opportunity$/i.test(title);
 }
 
 function getInitialModule() {

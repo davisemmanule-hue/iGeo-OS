@@ -58,10 +58,9 @@
       background: #172532;
       color: #eef4f6;
       padding: 18px 14px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow: auto;
+      position: static;
+      height: auto;
+      overflow: visible;
     }
 
     .brand {
@@ -241,8 +240,8 @@
       display: grid;
       gap: 8px;
       padding: 10px;
-      max-height: calc(100vh - 250px);
-      overflow: auto;
+      max-height: none;
+      overflow: visible;
     }
 
     .opp {
@@ -545,7 +544,8 @@
     }
 
     @media (max-width: 720px) {
-      .main { padding: 14px; }
+      body { padding-bottom: env(safe-area-inset-bottom); }
+      .main { padding: calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom)); }
       .topbar, .toolbar, .form-grid, .checks, .metrics, .module-list { grid-template-columns: 1fr; }
       .span-2, .span-3 { grid-column: span 1; }
       .actions { justify-content: stretch; }
@@ -959,6 +959,7 @@
       const q = document.getElementById("search").value.toLowerCase();
       const f = document.getElementById("filterDecision").value;
       const items = state.opportunities.filter(o => {
+        if (!String(o.title || "").trim() || /^untitled opportunity$/i.test(String(o.title).trim())) return false;
         const hay = [o.title,o.agency,o.naics,o.service,o.source].join(" ").toLowerCase();
         return (!q || hay.includes(q)) && (!f || decisionFor(o) === f);
       });
