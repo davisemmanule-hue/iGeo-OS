@@ -2,6 +2,13 @@
 
 Items are ordered by expected contract-winning value. Resume after Codex credits reset.
 
+## Completed in the Version 1.0 stabilization release
+
+- Business Profile Registry and shared Service Library foundation.
+- Explainable opportunity decision output using the existing scoring authority.
+- Natural page scrolling, Operator Settings flow correction, Copilot header shortcut, and suppression of placeholder opportunities.
+- Production documentation synchronized for the affected operator behavior.
+
 ## 1. Houston Opportunity Collection and Validation
 
 - Description: Validate and connect Harris County Bonfire and Houston City College Bonfire through lawful public structured endpoints, then ingest through the existing canonical opportunity pipeline.

@@ -18,7 +18,7 @@ Single operational dashboard for iGeo Solutions LLC.
 - Owner View
 - Settings
 - Business Profile Registry and Service Library (inside Settings)
-- External Copilot shortcut (Simple Work; no API integration)
+- External Copilot shortcut beside Search in the application header (no API integration)
 
 ## Main App
 

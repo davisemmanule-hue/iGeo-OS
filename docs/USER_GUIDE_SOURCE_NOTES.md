@@ -37,7 +37,11 @@ The registry supplies company and service information to Opportunity Intelligenc
 
 ## External Shortcuts
 
-The **Copilot** link in **Simple Work** opens `https://copilot.microsoft.com/` in a separate tab. It is an external shortcut, not an iGeo module or API integration.
+The **Copilot** link beside **Search iGeo OS** opens `https://copilot.microsoft.com/` in a separate tab. It is an external shortcut, not an iGeo module or API integration.
+
+## Scrolling and Settings
+
+The application uses the browser's natural page scroll on desktop and mobile. Acquisition OS workspaces expand within the page; do not look for a second workspace scrollbar. **Operator Settings** expands in normal page flow and pushes the footer downward. If an installed PWA retains older scrolling behavior after this release, close it completely and reopen it so the current service-worker cache can activate.
 
 ## Production Verification
 
