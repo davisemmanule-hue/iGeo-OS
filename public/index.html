@@ -53,7 +53,7 @@
     </header>
 
     <main class="app-shell">
-      <section id="guidedWorkflow" class="workflow-panel panel" aria-label="Guided procurement workflow">
+      <section id="guidedWorkflow" class="workflow-panel panel today-only" aria-label="Guided procurement workflow">
         <div class="workflow-heading">
           <div>
             <p class="eyebrow">GUIDED PROCUREMENT WORKFLOW</p>
@@ -69,7 +69,7 @@
         <ol id="workflowTracker" class="workflow-tracker" aria-label="Opportunity progress"></ol>
       </section>
 
-      <section id="today" class="today-panel panel" aria-label="Today dashboard">
+      <section id="today" class="today-panel panel today-only" aria-label="Today dashboard">
         <div class="command-header">
           <div>
             <p class="eyebrow">Operator Dashboard</p>
@@ -87,9 +87,10 @@
           <article class="today-card"><span>Quotes Waiting</span><strong id="todayQuotesWaiting">0</strong></article>
           <article class="today-card"><span>Contracts Active</span><strong id="todayContractsActive">0</strong></article>
         </div>
+        <section id="acquisition-bid-dashboard" class="ax-shell today-morning-brief" aria-label="Morning Brief"></section>
       </section>
 
-      <section id="my-day" class="my-day-panel panel" aria-label="My Day">
+      <section id="my-day" class="my-day-panel panel today-only" aria-label="My Day">
         <button id="myDayPanelToggle" class="collapsible-panel-toggle" type="button" aria-expanded="false" aria-controls="myDayPanelContent">
           <span>My Day Checklist</span>
           <span class="collapsible-panel-arrow" aria-hidden="true">&#9660;</span>
@@ -115,7 +116,7 @@
         </div>
       </section>
 
-      <section id="alerts" class="alerts-panel panel" aria-label="Alerts">
+      <section id="alerts" class="alerts-panel panel today-only" aria-label="Alerts">
         <div class="command-header">
           <div>
             <p class="eyebrow">ALERTS</p>
@@ -132,7 +133,7 @@
         </div>
       </section>
 
-      <section class="partner-panel panel" aria-label="Partner view">
+      <section class="partner-panel panel today-only" aria-label="Partner view">
         <div class="command-header">
           <div>
             <p class="eyebrow">PARTNER VIEW</p>
@@ -150,7 +151,7 @@
         </div>
       </section>
 
-      <section class="owner-panel panel" aria-label="Owner View">
+      <section class="owner-panel panel today-only" aria-label="Owner View">
         <div class="command-header">
           <div>
             <p class="eyebrow">OWNER VIEW</p>
@@ -169,7 +170,7 @@
         <div class="module-heading">
           <div>
             <p class="eyebrow">Acquisition OS</p>
-            <h2>Bid Engine</h2>
+            <h2 id="acquisitionWorkspaceTitle">Bid Engine</h2>
           </div>
           <div class="header-actions acquisition-action-bar">
             <a class="button secondary" href="#today">Return to Operator Dashboard</a>
@@ -192,7 +193,6 @@
           </aside>
 
           <div class="acquisition-content">
-            <section id="acquisition-bid-dashboard" class="ax-shell" data-acquisition-workspace-panel="Morning Brief"></section>
             <section id="acquisition-engine-dashboard" class="ax-shell" data-acquisition-workspace-panel="Bid Engine" hidden></section>
             <section id="acquisition-extension-documentation" class="ax-shell" data-ax-module="Documentation Library" data-acquisition-workspace-panel="Documentation Library"></section>
             <section id="acquisition-extension-calendar" class="ax-shell" data-ax-module="Procurement Calendar" data-acquisition-workspace-panel="Procurement Calendar" hidden></section>
@@ -545,7 +545,7 @@
         </section>
       </section>
 
-      <section id="settings" class="settings-panel panel" aria-label="Settings">
+      <section id="settings" class="settings-panel panel module-page" data-module-page="settings" aria-label="Settings">
         <button id="settingsPanelToggle" class="collapsible-panel-toggle" type="button" aria-expanded="false" aria-controls="settingsPanelContent">
           <span>Operator Settings</span>
           <span class="collapsible-panel-arrow" aria-hidden="true">&#9660;</span>

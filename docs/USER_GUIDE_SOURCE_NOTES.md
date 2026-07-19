@@ -6,9 +6,9 @@ The authoritative operating documentation is the [Acquisition OS Production Guid
 
 1. Open `https://igeosolutionsllc.com/`.
 2. Review **Today** and the guided procurement workflow.
-3. Click **Acquisition OS**, then **Morning Brief**.
+3. Review **Morning Brief** on **Today**.
 4. Follow **Recommended First Task** and review deadlines.
-5. Open **Opportunity Intelligence** to review collected or manually entered opportunities and Source Registry status.
+5. Click **Acquisition OS** to open directly into **Opportunity Intelligence** and review collected or manually entered opportunities and Source Registry status.
 
 ## One Opportunity Workflow
 
@@ -42,6 +42,8 @@ The **Copilot** link beside **Search iGeo OS** opens `https://copilot.microsoft.
 ## Scrolling and Settings
 
 The application uses the browser's natural page scroll on desktop and mobile. Acquisition OS workspaces expand within the page; do not look for a second workspace scrollbar. **Operator Settings** expands in normal page flow and pushes the footer downward. If an installed PWA retains older scrolling behavior after this release, close it completely and reopen it so the current service-worker cache can activate.
+
+Today is the only operator dashboard. Guided Workflow, Morning Brief, My Day Checklist, Alerts, Partner View, and Owner View are visible on Today and are hidden while another workspace is active. Workspace pages begin with their own work rather than repeating Today.
 
 ## Production Verification
 

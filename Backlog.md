@@ -9,6 +9,13 @@ Items are ordered by expected contract-winning value. Resume after Codex credits
 - Natural page scrolling, Operator Settings flow correction, Copilot header shortcut, and suppression of placeholder opportunities.
 - Production documentation synchronized for the affected operator behavior.
 
+## Contract Execution Workspace
+
+- Description: Consolidate awarded-contract staffing, subcontractors, schedules, deliverables, invoices, performance, and quality control only after the existing awarded-contract operating records and owner workflow are validated.
+- Business value: 9/10
+- Estimated effort: 8/10
+- Reason deferred: The current workspace-simplification release prohibits new modules and business workflows. Creating an unvalidated contract-execution workspace would add a feature rather than organize existing production behavior.
+
 ## 1. Houston Opportunity Collection and Validation
 
 - Description: Validate and connect Harris County Bonfire and Houston City College Bonfire through lawful public structured endpoints, then ingest through the existing canonical opportunity pipeline.

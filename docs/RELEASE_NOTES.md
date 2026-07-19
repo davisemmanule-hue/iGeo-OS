@@ -6,6 +6,9 @@ This production release adds the authoritative Business Profile Registry foundat
 
 ## Operator-visible changes
 
+- Today is the only dashboard. Guided Workflow, Morning Brief, My Day Checklist, Alerts, Partner View, and Owner View no longer repeat above other workspaces.
+- Acquisition OS opens directly into Opportunity Intelligence, and its heading identifies the selected workspace.
+- Settings behaves as a focused workspace and opens Operator Settings for immediate work.
 - Acquisition OS and the Full Bid Engine use the browser's natural page scroll instead of competing nested vertical scroll regions.
 - Operator Settings expands in normal page flow and no longer relies on a height-capped parent workspace.
 - Copilot is available beside Search and opens externally while iGeo remains open.

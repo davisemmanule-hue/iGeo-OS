@@ -354,6 +354,23 @@ h3 {
   gap: 16px;
 }
 
+body:not([data-active-module="today"]) .today-only {
+  display: none !important;
+}
+
+body:not([data-active-module="today"]) .app-shell {
+  gap: 14px;
+  padding-top: 18px;
+}
+
+body:not([data-active-module="today"]) .module-page.active {
+  gap: 14px;
+}
+
+.today-morning-brief {
+  margin-top: 2px;
+}
+
 .workflow-panel {
   display: grid;
   gap: 16px;

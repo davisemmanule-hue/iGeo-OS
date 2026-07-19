@@ -94,7 +94,6 @@ const opportunityScoreFields = [
   field("Site visit required", "siteVisitRequired"),
 ];
 const acquisitionModules = [
-  "Morning Brief",
   "Opportunity Intelligence",
   "Opportunity Dashboard",
   "Bid Engine",
@@ -111,7 +110,6 @@ const acquisitionModuleIcons = {
   "Proposal Version Control": "V",
   "Vendor Registration Automation": "R",
   "Supply & Product Brokerage": "S",
-  "Morning Brief": "MB",
   "Opportunity Intelligence": "I",
   "Opportunity Dashboard": "▦",
   "Bid Engine": "◆",
@@ -133,7 +131,6 @@ const acquisitionModuleLabels = {
   "Proposal Version Control": "Proposal Versions",
   "Vendor Registration Automation": "Registration Center",
   "Supply & Product Brokerage": "Product Brokerage",
-  "Morning Brief": "Morning Brief",
   "Opportunity Intelligence": "Opportunity Intelligence",
   "Opportunity Scoring Engine": "Opportunity Scoring",
   "Compliance Checklist Generator": "Compliance Checklist",
@@ -150,7 +147,6 @@ const acquisitionModuleTargets = {
   "Proposal Version Control": "acquisition-extension-versions",
   "Vendor Registration Automation": "acquisition-extension-registrations",
   "Supply & Product Brokerage": "acquisition-extension-brokerage",
-  "Morning Brief": "acquisition-bid-dashboard",
   "Opportunity Intelligence": "opportunity-intelligence-engine",
   "Opportunity Dashboard": "acquisition-module-opportunity-dashboard",
   "Bid Engine": "acquisition-engine-dashboard",
@@ -768,6 +764,11 @@ function bindEvents() {
   if (els.workflowNextAction) els.workflowNextAction.addEventListener("click", handleWorkflowNextAction);
   if (els.workflowTracker) els.workflowTracker.addEventListener("click", handleWorkflowStageClick);
   document.querySelectorAll("[data-workflow-action]").forEach((button) => button.addEventListener("click", () => runWorkflowAction(button.dataset.workflowAction)));
+  document.getElementById("acquisition-bid-dashboard")?.addEventListener("click", (event) => {
+    if (event.target.closest("[data-dashboard-module], [data-first-task], [data-current-opportunity]")) {
+      activateModule("acquisition-os", { scroll: true, preserveWorkspace: true });
+    }
+  }, true);
 
   if (els.globalSearchInput && els.globalSearchResults) {
     document.querySelector(".global-search")?.addEventListener("submit", (event) => event.preventDefault());
@@ -1399,6 +1400,8 @@ function handleAcquisitionModuleClick(event) {
 }
 
 function showAcquisitionModule(moduleName) {
+  const workspaceTitle = document.getElementById("acquisitionWorkspaceTitle");
+  if (workspaceTitle) workspaceTitle.textContent = moduleName;
   document.querySelectorAll("[data-acquisition-module]").forEach((button) => {
     button.classList.toggle("active", button.dataset.acquisitionModule === moduleName);
   });
@@ -3079,9 +3082,13 @@ function openGlobalSearchResult(id) {
     return;
   }
   if (type === "workspace") {
+    if (rawId === "morning-brief") {
+      activateModule("today", { scroll: true });
+      setTimeout(() => document.getElementById("acquisition-bid-dashboard")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+      return;
+    }
     activateModule("acquisition-os", { scroll: true, preserveHash: true });
-    const moduleName = rawId === "morning-brief" ? "Morning Brief" : "Opportunity Intelligence";
-    showAcquisitionModule(moduleName);
+    showAcquisitionModule("Opportunity Intelligence");
     if (rawId === "source-registry") setTimeout(() => document.getElementById("oiSources")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
     return;
   }
@@ -3178,6 +3185,7 @@ function navigateToPage(pageId) {
 
 function activateModule(moduleId, options = {}) {
   if (moduleId === "today") {
+    document.body.dataset.activeModule = "today";
     setActiveNavigation("today");
     document.querySelectorAll("[data-module-page]").forEach((page) => page.classList.remove("active"));
     if (!options.preserveHash && window.location.hash !== "#today") history.pushState({ moduleId: "today" }, "", "#today");
@@ -3185,11 +3193,16 @@ function activateModule(moduleId, options = {}) {
     return;
   }
   if (!document.querySelector(`[data-module-page="${moduleId}"]`)) moduleId = "prime-crm";
+  document.body.dataset.activeModule = moduleId;
   setActiveNavigation(moduleId);
   document.querySelectorAll("[data-module-page]").forEach((page) => {
     page.classList.toggle("active", page.dataset.modulePage === moduleId);
   });
-  if (moduleId === "acquisition-os" && !options.preserveWorkspace) showAcquisitionModule("Morning Brief");
+  if (moduleId === "acquisition-os" && !options.preserveWorkspace) showAcquisitionModule("Opportunity Intelligence");
+  if (moduleId === "settings" && els.settingsPanelToggle && els.settingsPanelContent) {
+    els.settingsPanelContent.hidden = false;
+    els.settingsPanelToggle.setAttribute("aria-expanded", "true");
+  }
   if (!options.preserveHash && window.location.hash !== `#${moduleId}`) history.pushState({ moduleId }, "", `#${moduleId}`);
   if (options.scroll) scrollToSection(moduleId);
 }
