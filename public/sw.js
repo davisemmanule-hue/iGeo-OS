@@ -1,4 +1,4 @@
-const CACHE_NAME = "igeo-operations-pwa-branding-v4";
+const CACHE_NAME = "igeo-operations-pwa-branding-v5";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -21,6 +21,7 @@ const STATIC_ASSETS = [
   "./assets/icons/apple-touch-icon.png",
   "./assets/icons/icon-192x192.png",
   "./assets/icons/icon-512x512.png",
+  "./assets/icons/copilot-shortcut.svg",
 ];
 
 self.addEventListener("install", (event) => {

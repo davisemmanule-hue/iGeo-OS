@@ -1099,6 +1099,9 @@ td strong {
   overflow: hidden;
 }
 
+.partner-grid .external-shortcut { gap: 7px; }
+.partner-grid .external-shortcut img { flex: 0 0 auto; height: 20px; width: 20px; }
+
 .acquisition-sidebar {
   background: #172532;
   border-radius: 8px;

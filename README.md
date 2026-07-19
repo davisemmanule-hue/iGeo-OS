@@ -17,6 +17,8 @@ Single operational dashboard for iGeo Solutions LLC.
 - Partner View
 - Owner View
 - Settings
+- Business Profile Registry and Service Library (inside Settings)
+- External Copilot shortcut (Simple Work; no API integration)
 
 ## Main App
 
@@ -32,3 +34,9 @@ Development/testing entry points:
 All production bug verification must use `https://igeosolutionsllc.com`. The build identifier shown in Operator Settings comes from Cloudflare runtime version metadata. It is labeled **Deployment Version** unless a deployed Git SHA is independently available and verified.
 
 Cloudflare Worker assets are served from `public/`.
+
+## Operating Documentation
+
+Authoritative Production Guide: `https://igeosolutionsllc.com/guide/`
+
+Repository onboarding notes: `docs/USER_GUIDE_SOURCE_NOTES.md`
