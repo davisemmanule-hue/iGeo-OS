@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const PROFILE_VERSION = 1;
+  const PROFILE_VERSION = 2;
   const baseServices = [
     ["Janitorial", "Facilities", "561720", "janitorial,custodial,cleaning", "Government, schools, commercial facilities", "Self-perform or subcontract"],
     ["Custodial", "Facilities", "561720", "custodial,cleaning,day porter", "Government, schools, healthcare", "Self-perform or subcontract"],
@@ -43,6 +43,11 @@
     deliveryModel,
     canSubcontract: /subcontract|partner|licensed/.test(deliveryModel.toLowerCase()),
   }));
+  const searchProfileNames = ["Commercial Cleaning","Janitorial","Custodial","Administrative Support","Clerical Support","Data Entry","Staffing","Temporary Staffing","Facility Services","Facility Maintenance","Grounds Maintenance","Property Maintenance","Security","Courier Services","Transportation","AI Automation","Business Process Support","Home Health","ABA Services"];
+  const defaultSearchProfiles = searchProfileNames.map((name) => {
+    const service = defaultServices.find((item) => item.name === name || item.name.startsWith(name));
+    return { id:`search-${name.toLowerCase().replace(/[^a-z0-9]+/g,"-")}`, name, keywords: service ? [...service.keywords] : [name.toLowerCase()], enabled:true };
+  });
 
   const DEFAULT_PROFILE = {
     profileVersion: PROFILE_VERSION,
@@ -60,6 +65,7 @@
     },
     structure: { entityType: "Limited Liability Company", ownership: "", smallBusinessStatus: "Small Business", socioeconomicDesignations: [] },
     services: defaultServices,
+    searchProfiles: defaultSearchProfiles,
     certifications: [],
     insurance: [],
     licenses: [],
@@ -87,6 +93,7 @@
       capacity: { ...DEFAULT_PROFILE.capacity, ...(source.capacity || {}) },
       documents: { ...DEFAULT_PROFILE.documents, ...(source.documents || {}) },
       services: Array.isArray(source.services) && source.services.length ? source.services : clone(defaultServices),
+      searchProfiles: Array.isArray(source.searchProfiles) && source.searchProfiles.length ? source.searchProfiles : clone(defaultSearchProfiles),
     };
   }
   function get() { return mergeProfile(window.IGEOData?.get()?.businessProfile); }
@@ -158,6 +165,11 @@
           ${field("Keywords", `services.${index}.keywords`, list(service.keywords).join(", "))}${field("Typical buyers", `services.${index}.typicalBuyers`, list(service.typicalBuyers).join(", "))}
           ${field("Delivery model", `services.${index}.deliveryModel`, service.deliveryModel)}<label>Can subcontract<select data-profile-field="services.${index}.canSubcontract"><option value="true" ${service.canSubcontract ? "selected" : ""}>Yes</option><option value="false" ${!service.canSubcontract ? "selected" : ""}>No</option></select></label>
         </div></details>`).join("")}</div>
+        <h3>Opportunity Search Profiles</h3><p>Active profiles control which collected notices enter the analysis queue. Edit keywords here without changing code.</p>
+        <div class="business-service-list">${profile.searchProfiles.map((searchProfile,index)=>`<details><summary>${escapeHtml(searchProfile.name)}</summary><div class="form-grid">
+          ${field("Profile name",`searchProfiles.${index}.name`,searchProfile.name)}${field("Keywords",`searchProfiles.${index}.keywords`,list(searchProfile.keywords).join(", "))}
+          <label>Active<select data-profile-field="searchProfiles.${index}.enabled"><option value="true" ${searchProfile.enabled!==false?"selected":""}>Yes</option><option value="false" ${searchProfile.enabled===false?"selected":""}>No</option></select></label>
+        </div></details>`).join("")}</div>
         <button class="button primary" type="submit">Save Business Profile</button><span id="businessProfileStatus" role="status" aria-live="polite"></span>
       </form></details>`;
     host.querySelector("form").addEventListener("submit", (event) => {
@@ -175,7 +187,8 @@
     });
   }
 
-  window.IGEOBusinessProfile = { PROFILE_VERSION, get, update, serviceNames, matchServices };
+  function searchProfiles() { return get().searchProfiles.filter((profile) => profile.enabled !== false); }
+  window.IGEOBusinessProfile = { PROFILE_VERSION, get, update, serviceNames, matchServices, searchProfiles };
   ensureProfile();
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderSettings); else renderSettings();
 })();

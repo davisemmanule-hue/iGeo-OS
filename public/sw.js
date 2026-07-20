@@ -1,4 +1,4 @@
-const CACHE_NAME = "igeo-operations-mobile-fit-v8";
+const CACHE_NAME = "igeo-opportunity-collector-v9";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
