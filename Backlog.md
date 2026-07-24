@@ -64,3 +64,8 @@ Items are ordered by expected contract-winning value. Resume after Codex credits
 - Business value: 5/10
 - Estimated effort: 4/10
 - Reason deferred: Documentation before verified production behavior would create drift.
+# Acquisition Intelligence deferred work
+
+- **Server-side permanent intelligence databases and unattended regional scheduling** — Business value: high. Estimated effort: high. Deferred because canonical production records currently use browser-local persistence; implementing a second server database would violate the single-source-of-truth requirement without an approved storage, authentication, migration, and ownership decision.
+- **Regional intelligence dashboards and new relationship/recompete workspaces** — Business value: medium. Estimated effort: high. Deferred because the request prohibits duplicate dashboards and new navigation; these should be projections of the canonical CRM and opportunity data after server persistence is approved.
+- **Additional state, local, commercial, and prime-contractor collectors** — Business value: high. Estimated effort: source-dependent. Deferred until each official source method, terms, rate limits, and production verification are approved. Manual-review source records remain the safe fallback.

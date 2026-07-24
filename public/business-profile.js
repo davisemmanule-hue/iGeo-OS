@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const PROFILE_VERSION = 2;
+  const PROFILE_VERSION = 3;
   const baseServices = [
     ["Janitorial", "Facilities", "561720", "janitorial,custodial,cleaning", "Government, schools, commercial facilities", "Self-perform or subcontract"],
     ["Custodial", "Facilities", "561720", "custodial,cleaning,day porter", "Government, schools, healthcare", "Self-perform or subcontract"],
@@ -42,8 +42,17 @@
     typicalBuyers: typicalBuyers.split(","),
     deliveryModel,
     canSubcontract: /subcontract|partner|licensed/.test(deliveryModel.toLowerCase()),
+    capabilityTypes: [...(/self-perform/i.test(deliveryModel) ? ["Direct"] : []), ...(/subcontract|licensed partner/i.test(deliveryModel) ? ["Managed Subcontractor"] : [])],
+    partnerRegion:"",partnerReady:false,partnerPersonnelAvailable:false,partnerEquipmentAvailable:false,significantCapitalRequired:false,
   }));
-  const searchProfileNames = ["Commercial Cleaning","Janitorial","Custodial","Administrative Support","Clerical Support","Data Entry","Staffing","Temporary Staffing","Facility Services","Facility Maintenance","Grounds Maintenance","Property Maintenance","Security","Courier Services","Transportation","AI Automation","Business Process Support","Home Health","ABA Services"];
+  defaultServices.push({
+    id:"service-mobile-snow-cone-trucks-event-concessions",name:"Mobile Snow Cone Trucks / Event Concessions",category:"Event Services",
+    description:"iGeo-managed event concessions delivered through a ready strategic partner with personnel and equipment.",naics:[],
+    keywords:["snow cone","snowball","shaved ice","mobile concessions","food truck","festival vendor","event concessions","community event","employee appreciation","summer recreation","parks and recreation","special events","fair","carnival"],
+    typicalBuyers:["Cities","counties","parks and recreation","schools","universities","commercial event buyers"],deliveryModel:"iGeo-managed strategic partner",canSubcontract:false,
+    capabilityTypes:["Strategic Partner"],partnerRegion:"Frederick, Maryland",partnerReady:true,partnerPersonnelAvailable:true,partnerEquipmentAvailable:true,significantCapitalRequired:false
+  });
+  const searchProfileNames = ["Commercial Cleaning","Janitorial","Custodial","Administrative Support","Clerical Support","Data Entry","Staffing","Temporary Staffing","Facility Services","Facility Maintenance","Grounds Maintenance","Property Maintenance","Security","Courier Services","Transportation","AI Automation","Business Process Support","Home Health","ABA Services","Mobile Snow Cone Trucks / Event Concessions"];
   const defaultSearchProfiles = searchProfileNames.map((name) => {
     const service = defaultServices.find((item) => item.name === name || item.name.startsWith(name));
     return { id:`search-${name.toLowerCase().replace(/[^a-z0-9]+/g,"-")}`, name, keywords: service ? [...service.keywords] : [name.toLowerCase()], enabled:true };
@@ -70,7 +79,7 @@
     insurance: [],
     licenses: [],
     bonding: { status: "Not recorded", capacity: "" },
-    capacity: { workforce: "", vehicles: "", equipment: "", preferredContractSize: "", maximumStartupCapital: "" },
+    capacity: { workforce: "", vehicles: "", equipment: "", preferredContractSize: "", maximumStartupCapital: "", maximumPaymentGapDays: "" },
     geographicCoverage: ["Michigan", "Kentucky", "Nationwide Subcontract Support"],
     documents: {
       capabilityStatement: { status: "Available", reference: "Capability Statement Library" },
@@ -83,6 +92,13 @@
 
   const clone = (value) => JSON.parse(JSON.stringify(value));
   const list = (value) => Array.isArray(value) ? value : String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+  function mergeServices(existing) {
+    const supplied=Array.isArray(existing)?existing:[],byId=new Map(supplied.map(service=>[service.id,service]));
+    const merged=defaultServices.map(base=>{const saved=byId.get(base.id)||{};return{...clone(base),...saved,capabilityTypes:Array.isArray(saved.capabilityTypes)&&saved.capabilityTypes.length?saved.capabilityTypes:clone(base.capabilityTypes)}});
+    supplied.filter(service=>!defaultServices.some(base=>base.id===service.id)).forEach(service=>merged.push(service));
+    return merged;
+  }
+  function mergeSearchProfiles(existing){const supplied=Array.isArray(existing)?existing:[],byId=new Map(supplied.map(profile=>[profile.id,profile]));return[...defaultSearchProfiles.map(base=>({...clone(base),...(byId.get(base.id)||{})})),...supplied.filter(profile=>!defaultSearchProfiles.some(base=>base.id===profile.id))]}
   function mergeProfile(existing) {
     const source = existing || {};
     return {
@@ -92,8 +108,8 @@
       bonding: { ...DEFAULT_PROFILE.bonding, ...(source.bonding || {}) },
       capacity: { ...DEFAULT_PROFILE.capacity, ...(source.capacity || {}) },
       documents: { ...DEFAULT_PROFILE.documents, ...(source.documents || {}) },
-      services: Array.isArray(source.services) && source.services.length ? source.services : clone(defaultServices),
-      searchProfiles: Array.isArray(source.searchProfiles) && source.searchProfiles.length ? source.searchProfiles : clone(defaultSearchProfiles),
+      services: mergeServices(source.services),
+      searchProfiles: mergeSearchProfiles(source.searchProfiles),
     };
   }
   function get() { return mergeProfile(window.IGEOData?.get()?.businessProfile); }
@@ -153,6 +169,7 @@
           ${field("Bonding capacity", "bonding.capacity", profile.bonding.capacity)}${field("Workforce capacity", "capacity.workforce", profile.capacity.workforce)}
           ${field("Vehicles", "capacity.vehicles", profile.capacity.vehicles)}${field("Equipment", "capacity.equipment", profile.capacity.equipment)}
           ${field("Preferred contract size", "capacity.preferredContractSize", profile.capacity.preferredContractSize)}${field("Maximum startup capital", "capacity.maximumStartupCapital", profile.capacity.maximumStartupCapital)}
+          ${field("Maximum supported payment gap (days)", "capacity.maximumPaymentGapDays", profile.capacity.maximumPaymentGapDays)}
           ${field("Geographic coverage", "geographicCoverage", profile.geographicCoverage.join(", "))}
         </div>
         <h3>Documents</h3><div class="form-grid">
@@ -163,7 +180,10 @@
           ${field("Name", `services.${index}.name`, service.name)}${field("Category", `services.${index}.category`, service.category)}
           ${field("Description", `services.${index}.description`, service.description)}${field("NAICS", `services.${index}.naics`, list(service.naics).join(", "))}
           ${field("Keywords", `services.${index}.keywords`, list(service.keywords).join(", "))}${field("Typical buyers", `services.${index}.typicalBuyers`, list(service.typicalBuyers).join(", "))}
-          ${field("Delivery model", `services.${index}.deliveryModel`, service.deliveryModel)}<label>Can subcontract<select data-profile-field="services.${index}.canSubcontract"><option value="true" ${service.canSubcontract ? "selected" : ""}>Yes</option><option value="false" ${!service.canSubcontract ? "selected" : ""}>No</option></select></label>
+          ${field("Delivery model", `services.${index}.deliveryModel`, service.deliveryModel)}${field("Capability types (Direct, Managed Subcontractor, Strategic Partner)", `services.${index}.capabilityTypes`, list(service.capabilityTypes).join(", "))}<label>Can subcontract<select data-profile-field="services.${index}.canSubcontract"><option value="true" ${service.canSubcontract ? "selected" : ""}>Yes</option><option value="false" ${!service.canSubcontract ? "selected" : ""}>No</option></select></label>
+          ${field("Strategic partner region", `services.${index}.partnerRegion`, service.partnerRegion||"")}<label>Partner ready<select data-profile-field="services.${index}.partnerReady"><option value="true" ${service.partnerReady?"selected":""}>Yes</option><option value="false" ${!service.partnerReady?"selected":""}>No</option></select></label>
+          <label>Partner personnel available<select data-profile-field="services.${index}.partnerPersonnelAvailable"><option value="true" ${service.partnerPersonnelAvailable?"selected":""}>Yes</option><option value="false" ${!service.partnerPersonnelAvailable?"selected":""}>No</option></select></label><label>Partner equipment available<select data-profile-field="services.${index}.partnerEquipmentAvailable"><option value="true" ${service.partnerEquipmentAvailable?"selected":""}>Yes</option><option value="false" ${!service.partnerEquipmentAvailable?"selected":""}>No</option></select></label>
+          <label>Significant iGeo capital required<select data-profile-field="services.${index}.significantCapitalRequired"><option value="false" ${!service.significantCapitalRequired?"selected":""}>No</option><option value="true" ${service.significantCapitalRequired?"selected":""}>Yes</option></select></label>
         </div></details>`).join("")}</div>
         <h3>Opportunity Search Profiles</h3><p>Active profiles control which collected notices enter the analysis queue. Edit keywords here without changing code.</p>
         <div class="business-service-list">${profile.searchProfiles.map((searchProfile,index)=>`<details><summary>${escapeHtml(searchProfile.name)}</summary><div class="form-grid">
