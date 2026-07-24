@@ -11,7 +11,6 @@ export default {
       return handleExecutiveEmailAlerts(request, env);
     }
     if (url.pathname === "/api/build-info") return handleBuildInfo(url, env);
-    if (url.pathname === "/api/diagnostics/sam") return handleSamDiagnostics(request, url, env);
     if (url.pathname === "/api/opportunity-intelligence/collect") return handleOpportunityCollection(request, env);
     if (url.pathname === "/api/opportunity-intelligence/sources") return handleOpportunitySources(request, env);
 
@@ -65,21 +64,6 @@ function sourceView(source, env) { return {...source,sourceType:source.sourceTyp
 async function handleOpportunitySources(request, env) { if(request.method!=='GET')return json({ok:false,error:'Method not allowed.'},405);return json({ok:true,generatedAt:new Date().toISOString(),sources:OPPORTUNITY_SOURCES.map(source=>sourceView(source,env))}); }
 
 const collectionAttempts=new Map();
-const samDiagnosticAttempts=new Map();
-async function handleSamDiagnostics(request,url,env){
-  if(request.method!=="GET")return json({ok:false,error:"Method not allowed."},405);
-  const secretPresent=typeof env.SAM_GOV_API_KEY==='string'&&env.SAM_GOV_API_KEY.trim().length>0;
-  const diagnostic={ok:true,environment:url.hostname==='igeosolutionsllc.com'?'Production':'Preview',secretPresent,requestAttempted:false,requestIncludesApiKey:false,samResponseStatus:null};
-  if(!secretPresent)return json(diagnostic);
-  const client=request.headers.get('CF-Connecting-IP')||'anonymous',now=Date.now(),previous=samDiagnosticAttempts.get(client)||0;
-  if(now-previous<30000)return json({...diagnostic,error:"Diagnostic request is available once every 30 seconds."},429,{'retry-after':String(Math.ceil((30000-(now-previous))/1000))});
-  samDiagnosticAttempts.set(client,now);
-  const params=new URLSearchParams({api_key:env.SAM_GOV_API_KEY,postedFrom:formatSamDate(new Date(Date.now()-86400000)),postedTo:formatSamDate(new Date()),status:'active',limit:'1',offset:'0'});
-  diagnostic.requestIncludesApiKey=params.has('api_key')&&params.get('api_key').length>0;
-  diagnostic.requestAttempted=true;
-  try{const response=await fetch(`https://api.sam.gov/opportunities/v2/search?${params}`,{headers:{accept:'application/json'}});diagnostic.samResponseStatus=response.status}catch{diagnostic.requestError='SAM.gov request could not be completed.'}
-  return json(diagnostic);
-}
 const SOURCE_ADAPTERS={
   'sam-gov':{async collect({env,days}){if(!env.SAM_GOV_API_KEY)return{status:'Not Configured',records:[],totalRecords:0};const params=new URLSearchParams({api_key:env.SAM_GOV_API_KEY,postedFrom:formatSamDate(new Date(Date.now()-days*86400000)),postedTo:formatSamDate(new Date()),status:'active',limit:'1000',offset:'0'}),response=await fetch(`https://api.sam.gov/opportunities/v2/search?${params}`,{headers:{accept:'application/json'}});if(response.status===429)throw new Error('SAM.gov rate limit reached; collection will retry later.');if(!response.ok)throw new Error('SAM.gov collection is temporarily unavailable.');const data=await response.json(),active=Array.isArray(data.opportunitiesData)?data.opportunitiesData.filter(isActiveSamOpportunity):[],records=active.map(mapSamOpportunity);return{status:'Connected',records,totalRecords:Number(data.totalRecords||records.length)}}}
 };
