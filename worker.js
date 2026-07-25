@@ -11,6 +11,7 @@ export default {
       return handleExecutiveEmailAlerts(request, env);
     }
     if (url.pathname === "/api/build-info") return handleBuildInfo(url, env);
+    if (url.pathname === "/api/opportunity-intelligence/attachment-check") return handleAttachmentCheck(request);
     if (url.pathname === "/api/opportunity-intelligence/collect") return handleOpportunityCollection(request, env);
     if (url.pathname === "/api/opportunity-intelligence/sources") return handleOpportunitySources(request, env);
 
@@ -62,6 +63,20 @@ const OPPORTUNITY_SOURCES = [
 function sourceStatus(source, env) { if(!source.enabled)return'Disabled';if(source.id==='sam-gov')return env.SAM_GOV_API_KEY?'Not Checked':'Not Configured';return source.collectionMethod==='Manual'?'Manual Review Required':'Unsupported'; }
 function sourceView(source, env) { return {...source,sourceType:source.sourceType||`${source.governmentLevel||'Public'} procurement portal`,loginRequired:Boolean(source.loginRequired||/required|varies/i.test(source.authenticationRequirement||'')),searchMethod:source.searchMethod||source.collectionMethod,active:Boolean(source.enabled),connectionStatus:sourceStatus(source,env),lastSuccessfulCheck:null,lastAttemptedCheck:null,nextScheduledCheck:null,recordCount:0,errorState:'',operatorNotes:source.operatorNotes||'',lastManualReviewDate:null}; }
 async function handleOpportunitySources(request, env) { if(request.method!=='GET')return json({ok:false,error:'Method not allowed.'},405);return json({ok:true,generatedAt:new Date().toISOString(),sources:OPPORTUNITY_SOURCES.map(source=>sourceView(source,env))}); }
+async function handleAttachmentCheck(request){
+  if(request.method!=='GET')return json({ok:false,error:'Method not allowed.'},405);
+  const candidate=new URL(request.url).searchParams.get('url')||'';
+  let attachment;
+  try{attachment=new URL(candidate)}catch{return json({ok:true,available:false,reason:'Invalid attachment URL.'})}
+  const approved=attachment.protocol==='https:'&&(/(^|\.)sam\.gov$/i.test(attachment.hostname)||/(^|\.)amazonaws\.com$/i.test(attachment.hostname));
+  if(!approved)return json({ok:true,available:null,reason:'Attachment host cannot be checked safely.'});
+  try{
+    let response=await fetch(attachment.toString(),{method:'HEAD',redirect:'manual'});
+    if(response.status===405)response=await fetch(attachment.toString(),{headers:{Range:'bytes=0-0'},redirect:'manual'});
+    const available=(response.status>=200&&response.status<400),disposition=response.headers.get('content-disposition')||'',match=/filename\*?=(?:UTF-8''|"?)([^;\"]+)/i.exec(disposition);
+    return json({ok:true,available,status:response.status,filename:match?decodeURIComponent(match[1]):''});
+  }catch{return json({ok:true,available:false,reason:'Attachment unavailable from source.'})}
+}
 
 const collectionAttempts=new Map();
 const SOURCE_ADAPTERS={
