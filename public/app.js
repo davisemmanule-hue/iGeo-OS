@@ -3231,6 +3231,11 @@ function hasUsableOpportunityTitle(opportunity) {
 }
 
 function getInitialModule() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("workspace") === "opportunity-intelligence" && params.get("decision")) {
+    sessionStorage.setItem("igeo_open_decision", params.get("decision"));
+    return "acquisition-os";
+  }
   if (window.location.pathname.startsWith("/acquisition-os/") && !window.location.pathname.startsWith("/acquisition-os/full-bid-engine")) return "acquisition-os";
   return window.location.hash ? window.location.hash.slice(1) : "today";
 }

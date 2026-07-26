@@ -1,4 +1,4 @@
-const CACHE_NAME = "igeo-opportunity-actions-v17";
+const CACHE_NAME = "igeo-opportunity-actions-v18";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
