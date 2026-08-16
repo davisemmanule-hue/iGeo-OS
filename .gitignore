@@ -16,3 +16,9 @@ build/
 .localappdata/
 .wrangler/
 netlify-deploy/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
